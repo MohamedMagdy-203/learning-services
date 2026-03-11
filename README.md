@@ -1,6 +1,6 @@
 # learning-services
 
-##  Contribution Guidelines & Git Workflow
+## Contribution Guidelines & Git Workflow
 
 To maintain high code quality and avoid merge conflicts, all team members **MUST** strictly follow these rules:
 
@@ -17,6 +17,7 @@ To maintain high code quality and avoid merge conflicts, all team members **MUST
 ### 2. Commits
 
 Use descriptive, conventional commit messages:
+
 - ✅ `feat: add Tavily web search integration`
 - ✅ `fix: handle empty pdf files during extraction`
 - ✅ `chore: update requirements.txt`
@@ -30,3 +31,12 @@ Use descriptive, conventional commit messages:
 - Wait for at least **1 Approval** (from the Team Lead) before merging.
 - Ensure your code doesn't break existing functionality before requesting a review.
 
+### 4.Setup
+Frist install the pre-commit one time
+
+- `pip install pre-commit`
+- `pre-commit install`
+
+Then install the requirements
+
+- `pip install requirements.txt`
