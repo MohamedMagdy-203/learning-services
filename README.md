@@ -32,6 +32,7 @@ Use descriptive, conventional commit messages:
 - Ensure your code doesn't break existing functionality before requesting a review.
 
 ### 4.Setup
+
 Frist install the pre-commit one time
 
 - `pip install pre-commit`
