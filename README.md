@@ -1,6 +1,6 @@
 # learning-services
 
-## 🤝 Contribution Guidelines & Git Workflow
+##  Contribution Guidelines & Git Workflow
 
 To maintain high code quality and avoid merge conflicts, all team members **MUST** strictly follow these rules:
 
@@ -29,3 +29,4 @@ Use descriptive, conventional commit messages:
 - Fill out the provided PR Template.
 - Wait for at least **1 Approval** (from the Team Lead) before merging.
 - Ensure your code doesn't break existing functionality before requesting a review.
+
