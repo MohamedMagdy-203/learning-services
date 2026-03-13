@@ -1,0 +1,2 @@
+class FetchRoadmapContextError(Exception):
+    pass
