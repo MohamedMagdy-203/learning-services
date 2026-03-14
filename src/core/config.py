@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     APP_NAME: str = "Learning Services"
     APP_VERSION: str = "1.0.0"
     MAIN_BACKEND_URL: str = "http://localhost:3000"
+    TAVILY_API_KEY: str = "tvly-..."
 
 
 @lru_cache
