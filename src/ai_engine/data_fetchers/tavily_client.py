@@ -15,7 +15,7 @@ async def fetch_subtopic_content(
         content: str = ""
         sources: List[Dict[str, str]] = []
         tavily_client = AsyncTavilyClient(api_key=settings.TAVILY_API_KEY)
-        tavily_response: Dict[str, Any] = await tavily_client.search(
+        tavily_response: Dict[str, Any] = await tavily_client.search(  # type: ignore
             query=search_string, include_raw_content=True
         )  # type: ignore
 
