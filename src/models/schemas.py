@@ -1,8 +1,11 @@
 from pydantic import BaseModel
 from typing import List, Dict, Optional
+from pydantic import ConfigDict
+from pydantic.alias_generators import to_camel
 
 
 class UserProfileSchema(BaseModel):
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
     id: str
     tracks: List[str]
     learningStyle: Optional[str] = None
