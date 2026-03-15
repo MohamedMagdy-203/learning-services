@@ -3,4 +3,4 @@ class FetchRoadmapContextError(Exception):
 
 
 class TavilyCallingError(Exception):
-    pass
+    DEFAULT_MESSAGE = "There an error at calling Tavily"
