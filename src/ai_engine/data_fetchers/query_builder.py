@@ -3,7 +3,8 @@ from src.models.schemas import RoadmapGenerationRequest
 
 def query_builder(requested_data: RoadmapGenerationRequest) -> str:
     # User Info
-    track_name = requested_data.user_profile_schema.tracks[0]
+    tracks = requested_data.user_profile_schema.tracks
+    track_name = tracks[0] if tracks else "General"
 
     # Subtopic Info
     subtopic_name = requested_data.target_subtopic_schema.Name
