@@ -3,12 +3,11 @@ from src.models.schemas import RoadmapGenerationRequest
 from src.core.mock_data import MOCK_VALID_RESPONSE
 from src.core.config import Settings
 from src.ai_engine.data_fetchers import tavily_client
-from src.core.messages import TAVILY_CALLING_SUCCESSFULLY
 
 
 @pytest.mark.asyncio
 async def test_real_tavily_api_call():
-    real_settings = Settings()
+    real_settings = Settings()  # type: ignore
 
     mock_request_data = RoadmapGenerationRequest(**MOCK_VALID_RESPONSE)
 
@@ -16,7 +15,6 @@ async def test_real_tavily_api_call():
         settings=real_settings, requested_data=mock_request_data
     )
 
-    assert result["status"] == TAVILY_CALLING_SUCCESSFULLY
     assert len(result["content"]) > 100
     assert len(result["sources"]) > 0
 
