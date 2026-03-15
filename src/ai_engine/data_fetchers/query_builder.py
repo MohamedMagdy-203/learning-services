@@ -14,7 +14,7 @@ def query_builder(requested_data: RoadmapGenerationRequest) -> str:
     search_query = (
         f"{subtopic_name} {subtopic_description} "
         f"{subtopic_difficulty} level "
-        f"guide tutorial explanation documentation examples "
+        f"guide tutorial explanation documentation papers examples"
         f"{track_name} "
     )
     return search_query
