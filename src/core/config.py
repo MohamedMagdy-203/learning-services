@@ -7,9 +7,9 @@ class Settings(BaseSettings):
     APP_NAME: str = "Learning Services"
     APP_VERSION: str = "1.0.0"
     MAIN_BACKEND_URL: str = "http://localhost:3000"
-    TAVILY_API_KEY: str = "tvly-..."
+    TAVILY_API_KEY: str
 
 
 @lru_cache
 def get_settings():
-    return Settings()
+    return Settings()  # type: ignore
