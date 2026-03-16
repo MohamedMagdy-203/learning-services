@@ -246,6 +246,8 @@ Use descriptive, conventional commit messages:
 
 ## License
 
-MIT License
+This project is protected under a **Custom Educational & Contributor License**.
 
-Copyright (c) 2026 Learning Services Team
+The source code is open for **personal learning and educational purposes only**. You are highly encouraged to fork the repository and submit Pull Requests to help us improve the project. However, commercial use, unauthorized redistribution, or using this code in production environments without explicit permission is strictly prohibited.
+
+For full details, please refer to the `LICENSE` file in the root directory.
