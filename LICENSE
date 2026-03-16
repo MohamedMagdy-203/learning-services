@@ -1,21 +1,21 @@
-# MIT License
+# Learning Services Custom Educational & Contributor License
 
 Copyright (c) 2026 Learning Services Team
+All rights reserved.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+This software and its associated documentation files (the "Software") are the exclusive property of the Learning Services Team. By accessing, downloading, or using this Software, you agree to the following terms:
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+1. PERMITTED USE:
+   - Educational Purposes: You are granted a limited, non-exclusive, non-transferable right to download, view, and study the source code strictly for your personal learning and educational purposes.
+   - Project Contributions: You may modify the source code solely for the purpose of proposing improvements, bug fixes, or new features back to the original repository via Pull Requests.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+2. PROHIBITED USE:
+   - No Commercial Use: You may NOT use this Software, or any derivative works, for any commercial, professional, or production-grade purposes.
+   - No Redistribution: You may NOT copy, distribute, publish, or host this Software (whether modified or unmodified) on any platform, public repository, or server, except within a personal fork used exclusively to submit contributions back to the original authors.
+   - No Sublicensing: You may NOT sell, rent, lease, or sublicense the Software.
+
+3. CONTRIBUTIONS:
+   By submitting any modifications or Pull Requests to this repository, you grant the Learning Services Team a perpetual, worldwide, non-exclusive, royalty-free, irrevocable license to use, modify, and distribute your contributions as part of the Software.
+
+DISCLAIMER:
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
