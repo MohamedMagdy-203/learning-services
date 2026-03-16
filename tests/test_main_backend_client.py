@@ -19,7 +19,7 @@ async def test_fetch_roadmap_success():
 
     assert result["roadmap_context"].user_profile_schema.id == "user_123"
     assert (
-        result["roadmap_context"].target_subtopic_schema.Name == "Async/Await in Python"
+        result["roadmap_context"].target_subtopic_schema.Name == "Database Fundamentals"
     )
 
 
