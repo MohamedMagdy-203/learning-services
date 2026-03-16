@@ -17,7 +17,7 @@ async def fetch_and_clean_subtopic_content(
     cleaned_results = []
     for result in raw_results["results"]:
         cleaned_content = clean_content(result["raw_content"])
-        cleaned_results.append(
+        cleaned_results.append(  # type: ignore
             {  # type: ignore
                 "title": result["title"],
                 "url": result["url"],
