@@ -5,7 +5,6 @@ from src.core.mock_data import MOCK_TAVILY_RESPONSE, MOCK_VALID_RESPONSE
 from src.core.config import Settings
 from src.core.exceptions import TavilyCallingError
 from src.ai_engine.data_fetchers import tavily_client
-from src.core.messages import TAVILY_CALLING_ERROR, TAVILY_CALLING_SUCCESSFULLY
 
 mock_requested_data = RoadmapGenerationRequest(**MOCK_VALID_RESPONSE)
 mock_settings = Settings(TAVILY_API_KEY="test_key_123")
@@ -19,11 +18,13 @@ async def test_fetch_subtopic_content_success(mock_tavily_class: MagicMock):
         settings=mock_settings, requested_data=mock_requested_data
     )
 
-    assert result["status"] == TAVILY_CALLING_SUCCESSFULLY
-    assert "Asyncio is a library" in result["content"]
-    assert "event loop" in result["content"]
-    assert len(result["sources"]) == 2
-    assert result["sources"][0]["url"] == "https://realpython.com/async-io-python/"
+    assert "results" in result
+    assert len(result["results"]) == 2
+
+    first_result = result["results"][0]
+    assert first_result["url"] == "https://realpython.com/async-io-python/"
+    assert "Asyncio is a library" in first_result["raw_content"]
+    assert "concurrent code" in first_result["raw_content"]
 
 
 @pytest.mark.asyncio
@@ -38,4 +39,4 @@ async def test_fetch_subtopic_content_error(mock_tavily_class: MagicMock):
             settings=mock_settings, requested_data=mock_requested_data
         )
 
-    assert exc_info.value.args[0] == TAVILY_CALLING_ERROR
+    assert exc_info.value.args[0] == TavilyCallingError.DEFAULT_MESSAGE
