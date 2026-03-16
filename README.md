@@ -8,11 +8,6 @@
   - [System Architecture \& Workflow](#system-architecture--workflow)
     - [Step-by-Step Flow Explanation](#step-by-step-flow-explanation)
   - [Project Structure](#project-structure)
-  - [Tech Stack](#tech-stack)
-  - [Setup \& Installation](#setup--installation)
-    - [1. Prerequisites](#1-prerequisites)
-    - [2. Clone the Repository](#2-clone-the-repository)
-    - [3. Environment Setup](#3-environment-setup)
     - [4. Install Dependencies](#4-install-dependencies)
     - [5. Setup Pre-commit Hooks](#5-setup-pre-commit-hooks)
   - [Running the Application](#running-the-application)
@@ -66,26 +61,56 @@ Below is the high-level data flow of the Learning Services AI Engine:
 
 ## Project Structure
 
-The codebase is organized modularly to separate API routing, core
-configurations, data models, and the AI engine logic:
+The codebase is organized modularly to separate API routing, core configurations, data models, and the AI engine logic:
 
-- **`src/ai_engine/`**: Contains the core logic for data fetching and processing.
-  - **`data_fetchers/`**
-  - **`llm_generators/`**
-  - **`text_processing/`**
-  - **`vector_store/`**
-- **`src/core/`**: Contains global configurations (`config.py`),
-    custom error handling (`exceptions.py`), and system messages
-    (`messages.py`).
-- **`src/models/`**: Contains Pydantic schemas (`schemas.py`) for data
-    validation (e.g., `UserProfileSchema`, `RoadmapGenerationRequest`).
-- **`src/routers/`**: Contains FastAPI routers (`base.py`) defining
-    the API endpoints.
-- **`src/services/`**: Contains external service clients, such as
-    `main_backend_client.py` for fetching roadmap context from the main
-    backend.
-- **`tests/`**: Contains the test suite utilizing `pytest`, including
-    unit tests and integration tests.
+```text
+learning-services/
+├── src/
+│   ├── ai_engine/                   # Core logic for data fetching, processing, and LLMs
+│   │   ├── data_fetchers/           # Modules for retrieving and cleaning external data
+│   │   │   ├── __init__.py
+│   │   │   ├── cleaned_tavily_data.py # Pipeline orchestrator to fetch and clean subtopic content
+│   │   │   ├── data_cleaner.py      # Regex-based text sanitization (removes HTML, boilerplate, URLs)
+│   │   │   ├── query_builder.py     # Logic to construct targeted search queries based on user profile
+│   │   │   └── tavily_client.py     # Async client wrapper for Tavily web search API
+│   │   ├── llm_generators/          # Handlers for prompt building and Large Language Model calls
+│   │   │   └── __init__.py
+│   │   ├── text_processing/         # Logic for splitting text into manageable chunks and embeddings
+│   │   │   └── __init__.py
+│   │   └── vector_store/            # Database operations for storing and querying vector embeddings
+│   │       └── __init__.py
+│   ├── core/                        # Application-wide settings, utilities, and constants
+│   │   ├── __init__.py
+│   │   ├── config.py                # Pydantic BaseSettings for environment variables validation
+│   │   ├── constants.py             # Global constant values used across the application
+│   │   ├── exceptions.py            # Custom exception classes (e.g., TavilyCallingError)
+│   │   ├── messages.py              # Standardized string messages for API responses
+│   │   └── mock_data.py             # Static sample data used for testing and development fallback
+│   ├── models/                      # Data structures and validation models
+│   │   ├── __init__.py
+│   │   └── schemas.py               # Pydantic schemas (UserProfileSchema, TargetSubtopicSchema)
+│   ├── routers/                     # FastAPI route definitions and controllers
+│   │   ├── __init__.py
+│   │   ├── base.py                  # Base router including the root/welcome API endpoint
+│   │   └── data.py                  # Endpoints for data retrieval and processing requests
+│   ├── services/                    # Clients for communicating with internal/external microservices
+│   │   ├── __init__.py
+│   │   └── main_backend_client.py   # HTTPX client to fetch roadmap context from the main backend
+│   ├── __init__.py
+│   └── main.py                      # FastAPI application instance and entry point
+├── tests/                           # Automated testing suite (Unit & Integration tests)
+│   ├── __init__.py
+│   ├── conftest.py                  # Pytest configuration and custom CLI options (e.g., --integration)
+│   ├── test_cleaned_tavily_data.py  # Tests for the data fetching and cleaning pipeline
+│   ├── test_config.py               # Unit tests verifying application configuration loading
+│   ├── test_main_backend_client.py  # Mocked tests verifying the main backend HTTP client
+│   ├── test_tavily_client.py        # Unit tests for Tavily API interactions (with mocked responses)
+│   └── test_tavily_integration.py   # Real API integration tests verifying live Tavily web searches
+├── .env.example                     # Template showing required environment variables
+├── .gitignore                       # List of files and folders to be ignored by Git version control
+├── .pre-commit-config.yaml          # Configuration for code formatting and linting hooks (Black, Ruff)
+├── README.md                        # Main project documentation and contribution guidelines
+└── requirements.txt                 # List of project Python dependencies and versions
 
 ## Tech Stack
 
