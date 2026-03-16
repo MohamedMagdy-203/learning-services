@@ -8,6 +8,11 @@
   - [System Architecture \& Workflow](#system-architecture--workflow)
     - [Step-by-Step Flow Explanation](#step-by-step-flow-explanation)
   - [Project Structure](#project-structure)
+  - [Tech Stack](#tech-stack)
+  - [Setup \& Installation](#setup--installation)
+    - [1. Prerequisites](#1-prerequisites)
+    - [2. Clone the Repository](#2-clone-the-repository)
+    - [3. Environment Setup](#3-environment-setup)
     - [4. Install Dependencies](#4-install-dependencies)
     - [5. Setup Pre-commit Hooks](#5-setup-pre-commit-hooks)
   - [Running the Application](#running-the-application)
@@ -33,7 +38,7 @@ quizzes, mindmaps, and summaries.
 
 Below is the high-level data flow of the Learning Services AI Engine:
 
-![System Architecture Flowchart](Screenshot%202026-03-16%20063140.png)
+![System Architecture Flowchart](![alt text](Project_Flow_Diagram.png))
 
 ### Step-by-Step Flow Explanation
 
@@ -111,6 +116,7 @@ learning-services/
 ├── .pre-commit-config.yaml          # Configuration for code formatting and linting hooks (Black, Ruff)
 ├── README.md                        # Main project documentation and contribution guidelines
 └── requirements.txt                 # List of project Python dependencies and versions
+```
 
 ## Tech Stack
 
