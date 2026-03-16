@@ -1,8 +1,8 @@
-# Learning Services API
+# Learning Services
 
 ## Table of Contents
 
-- [Learning Services API](#learning-services-api)
+- [Learning Services](#learning-services)
   - [Table of Contents](#table-of-contents)
   - [Overview](#overview)
   - [System Architecture \& Workflow](#system-architecture--workflow)
@@ -25,7 +25,7 @@
 
 ## Overview
 
-The Learning Services API is an intelligent backend engine designed to
+The Learning Services is an intelligent backend engine designed to
 generate personalized educational roadmaps and learning materials. By
 leveraging user profile data (such as learning styles, study time, and
 goals) alongside specific target subtopics, the system dynamically
