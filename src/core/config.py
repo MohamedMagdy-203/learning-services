@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     APP_VERSION: str = "1.0.0"
     MAIN_BACKEND_URL: str = "http://localhost:3000"
     TAVILY_API_KEY: str
+    GEMINI_API_KEY: str
 
 
 @lru_cache
