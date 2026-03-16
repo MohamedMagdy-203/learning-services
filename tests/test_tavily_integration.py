@@ -3,6 +3,9 @@ from src.models.schemas import RoadmapGenerationRequest
 from src.core.mock_data import MOCK_VALID_RESPONSE
 from src.core.config import Settings
 from src.ai_engine.data_fetchers import tavily_client
+import logging
+
+logging.basicConfig(level=logging.INFO)
 
 
 @pytest.mark.integration
