@@ -75,3 +75,24 @@ MOCK_LLM_RESPONSE = """{
     "reason": "Covers both SQL and NoSQL which aligns with backend track."
   }
 }"""
+
+MOCK_RANKED_RESULT = {
+    "best_course": {
+        "title": "SQL for Beginners - Coursera",
+        "url": "https://www.coursera.org/learn/sql-for-beginners",
+        "reason": "Matches beginner difficulty.",
+        "raw_content": MOCK_CLEANED_RESPONSE[0]["raw_content"],
+    },
+    "best_video": {
+        "title": "Database Fundamentals - YouTube",
+        "url": "https://www.youtube.com/watch?v=abc123",
+        "reason": "Visual tutorial for visual learner.",
+        "raw_content": MOCK_CLEANED_RESPONSE[1]["raw_content"],
+    },
+    "best_blog": {
+        "title": "The Beginner Guide to Databases",
+        "url": "https://mimo.org/blog/databases",
+        "reason": "Covers SQL and NoSQL.",
+        "raw_content": MOCK_CLEANED_RESPONSE[2]["raw_content"],
+    },
+}
