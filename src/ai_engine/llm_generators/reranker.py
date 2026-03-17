@@ -1,6 +1,6 @@
 import logging
 from typing import Any
-from google import genai
+from google import genai  # type: ignore
 from src.models.schemas import RoadmapGenerationRequest
 from src.ai_engine.llm_generators.reranker_prompt import build_reranker_prompt
 from src.ai_engine.llm_generators.reranker_parser import (
@@ -11,8 +11,14 @@ from src.core.config import get_settings
 
 logger = logging.getLogger(__name__)
 
-_settings = get_settings()
-_client = genai.Client(api_key=_settings.GEMINI_API_KEY)
+_client: genai.Client | None = None  # type: ignore
+
+
+def _get_client() -> genai.Client:  # type: ignore
+    global _client
+    if _client is None:
+        _client = genai.Client(api_key=get_settings().GEMINI_API_KEY)  # type: ignore
+    return _client  # type: ignore
 
 
 async def rerank_sources(
@@ -42,7 +48,7 @@ async def rerank_sources(
         requested_data.target_subtopic_schema.Name,
     )
 
-    response = await _client.aio.models.generate_content(  # type: ignore
+    response = await _get_client().aio.models.generate_content(  # type: ignore
         model="gemini-3-flash-preview",
         contents=prompt,
     )
