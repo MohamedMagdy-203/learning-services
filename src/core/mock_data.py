@@ -17,8 +17,11 @@ MOCK_VALID_RESPONSE: Dict[str, Any] = {  # type: ignore
     },
     "weakness_schema": {
         "Topics": {
-            "Concurrency": "Struggles with the difference between threading and async",
-            "API Integration": "Needs practice with httpx",
+            "Data Modeling": "Struggles with designing efficient database schemas and defining relationships between tables",
+            "SQL vs NoSQL": "Confused about when to use relational databases versus non-relational databases",
+            "Normalization": "Has difficulty understanding normalization and avoiding data redundancy",
+            "Query Writing": "Needs practice writing efficient SQL queries (JOINs, filtering, aggregation)",
+            "Data Integrity": "Limited understanding of constraints like primary keys, foreign keys, and transactions",
         }
     },
 }
@@ -26,74 +29,74 @@ MOCK_VALID_RESPONSE: Dict[str, Any] = {  # type: ignore
 MOCK_TAVILY_RESPONSE: Dict[str, Any] = {
     "results": [
         {
-            "title": "Mastering Async/Await in Python",
-            "url": "https://realpython.com/async-io-python/",
-            "raw_content": "Asyncio is a library to write concurrent code using the async/await syntax. It is a perfect fit for IO-bound and high-level structured network code.",
+            "title": "SQL for Beginners — Full Database Course",
+            "url": "https://www.youtube.com/watch?v=HXV3zeQKqGY",
+            "raw_content": "This full course covers SQL fundamentals including SELECT, INSERT, UPDATE, DELETE, JOINs, and database design for beginners. Learn how to create and manage relational databases from scratch.",
         },
         {
-            "title": "Python Concurrency vs Threading",
-            "url": "https://example.com/python-concurrency",
-            "raw_content": "The main difference between threading and async is that threading uses OS-level threads, while async uses an event loop on a single thread.",
+            "title": "Database Design and Normalization",
+            "url": "https://www.geeksforgeeks.org/database-normalization-normal-forms/",
+            "raw_content": "Database normalization is the process of organizing a relational database to reduce data redundancy and improve data integrity. Normal forms include 1NF, 2NF, 3NF, and BCNF.",
         },
     ]
 }
 
 MOCK_CLEANED_RESPONSE = [
     {
-        "title": "SQL for Beginners - Coursera",
-        "url": "https://www.coursera.org/learn/sql-for-beginners",
-        "raw_content": "This course covers SQL fundamentals for backend developers."
+        "title": "The Complete SQL Bootcamp — Udemy",
+        "url": "https://www.udemy.com/course/the-complete-sql-bootcamp/",
+        "raw_content": "Learn SQL from scratch with hands-on exercises. This course covers relational database design, SQL queries, JOINs, aggregations, subqueries, and database normalization for backend developers."
         * 20,
     },
     {
-        "title": "Database Fundamentals - YouTube",
-        "url": "https://www.youtube.com/watch?v=abc123",
-        "raw_content": "A visual tutorial on database design and normalization." * 20,
+        "title": "Database Fundamentals for Beginners — YouTube",
+        "url": "https://www.youtube.com/watch?v=wR0jg0eQsZA",
+        "raw_content": "A visual step-by-step tutorial covering relational vs non-relational databases, entity-relationship diagrams, primary and foreign keys, and basic SQL syntax for complete beginners."
+        * 20,
     },
     {
-        "title": "The Beginner Guide to Databases",
-        "url": "https://mimo.org/blog/databases",
-        "raw_content": "An article covering relational and non-relational databases."
+        "title": "SQL vs NoSQL — When to Use Which",
+        "url": "https://www.mongodb.com/nosql-explained/nosql-vs-sql",
+        "raw_content": "A comprehensive guide explaining the key differences between SQL and NoSQL databases, their use cases, trade-offs, and how to choose the right database for your backend application."
         * 20,
     },
 ]
 
-
 MOCK_LLM_RESPONSE = """{
   "best_course": {
-    "title": "SQL for Beginners - Coursera",
-    "url": "https://www.coursera.org/learn/sql-for-beginners",
-    "reason": "Matches beginner difficulty and visual learning style."
+    "title": "The Complete SQL Bootcamp — Udemy",
+    "url": "https://www.udemy.com/course/the-complete-sql-bootcamp/",
+    "reason": "Covers SQL and database design hands-on, directly addressing the learner's weaknesses in query writing and normalization."
   },
   "best_video": {
-    "title": "Database Fundamentals - YouTube",
-    "url": "https://www.youtube.com/watch?v=abc123",
-    "reason": "Visual tutorial perfectly suited for a visual learner."
+    "title": "Database Fundamentals for Beginners — YouTube",
+    "url": "https://www.youtube.com/watch?v=wR0jg0eQsZA",
+    "reason": "Visual tutorial perfectly suited for a visual learner starting from scratch with databases."
   },
   "best_blog": {
-    "title": "The Beginner Guide to Databases",
-    "url": "https://mimo.org/blog/databases",
-    "reason": "Covers both SQL and NoSQL which aligns with backend track."
+    "title": "SQL vs NoSQL — When to Use Which",
+    "url": "https://www.mongodb.com/nosql-explained/nosql-vs-sql",
+    "reason": "Directly addresses the learner's weakness in understanding when to use SQL vs NoSQL databases."
   }
 }"""
 
 MOCK_RANKED_RESULT = {
     "best_course": {
-        "title": "SQL for Beginners - Coursera",
-        "url": "https://www.coursera.org/learn/sql-for-beginners",
-        "reason": "Matches beginner difficulty.",
+        "title": "The Complete SQL Bootcamp — Udemy",
+        "url": "https://www.udemy.com/course/the-complete-sql-bootcamp/",
+        "reason": "Covers SQL and database design hands-on.",
         "raw_content": MOCK_CLEANED_RESPONSE[0]["raw_content"],
     },
     "best_video": {
-        "title": "Database Fundamentals - YouTube",
-        "url": "https://www.youtube.com/watch?v=abc123",
+        "title": "Database Fundamentals for Beginners — YouTube",
+        "url": "https://www.youtube.com/watch?v=wR0jg0eQsZA",
         "reason": "Visual tutorial for visual learner.",
         "raw_content": MOCK_CLEANED_RESPONSE[1]["raw_content"],
     },
     "best_blog": {
-        "title": "The Beginner Guide to Databases",
-        "url": "https://mimo.org/blog/databases",
-        "reason": "Covers SQL and NoSQL.",
+        "title": "SQL vs NoSQL — When to Use Which",
+        "url": "https://www.mongodb.com/nosql-explained/nosql-vs-sql",
+        "reason": "Addresses SQL vs NoSQL weakness.",
         "raw_content": MOCK_CLEANED_RESPONSE[2]["raw_content"],
     },
 }
