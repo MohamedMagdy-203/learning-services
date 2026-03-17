@@ -124,7 +124,7 @@ learning-services/
 - **Validation:** Pydantic
 - **Database / ORM:** SQLAlchemy, PostgreSQL (psycopg2-binary)
 - **HTTP Client:** HTTPX
-- **AI & Search:** Tavily Python Client, Tiktoken
+- **AI & Search:** Tavily Python Client, Google GenAI, Tiktoken
 - **Testing:** Pytest, Respx, Pytest-Asyncio
 - **Code Quality:** Pre-commit, Black, Ruff
 
@@ -157,6 +157,7 @@ APP_NAME="Learning Services"
 APP_VERSION="1.0.0"
 MAIN_BACKEND_URL="http://localhost:3000"
 TAVILY_API_KEY="Your Tavily api key"
+GEMINI_API_KEY = "Your Gemini api key"
 ```
 
 ### 4. Install Dependencies
