@@ -7,7 +7,7 @@ from src.core.exceptions import TavilyCallingError
 from src.ai_engine.data_fetchers import tavily_client
 
 mock_requested_data = RoadmapGenerationRequest(**MOCK_VALID_RESPONSE)
-mock_settings = Settings(TAVILY_API_KEY="test_key_123")
+mock_settings = Settings(TAVILY_API_KEY="test_key_123", GEMINI_API_KEY="test_key")
 
 
 @pytest.mark.asyncio
