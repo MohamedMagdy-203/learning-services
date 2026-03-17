@@ -36,3 +36,42 @@ MOCK_TAVILY_RESPONSE: Dict[str, Any] = {
         },
     ]
 }
+
+MOCK_CLEANED_RESPONSE = [
+    {
+        "title": "SQL for Beginners - Coursera",
+        "url": "https://www.coursera.org/learn/sql-for-beginners",
+        "raw_content": "This course covers SQL fundamentals for backend developers."
+        * 20,
+    },
+    {
+        "title": "Database Fundamentals - YouTube",
+        "url": "https://www.youtube.com/watch?v=abc123",
+        "raw_content": "A visual tutorial on database design and normalization." * 20,
+    },
+    {
+        "title": "The Beginner Guide to Databases",
+        "url": "https://mimo.org/blog/databases",
+        "raw_content": "An article covering relational and non-relational databases."
+        * 20,
+    },
+]
+
+
+MOCK_LLM_RESPONSE = """{
+  "best_course": {
+    "title": "SQL for Beginners - Coursera",
+    "url": "https://www.coursera.org/learn/sql-for-beginners",
+    "reason": "Matches beginner difficulty and visual learning style."
+  },
+  "best_video": {
+    "title": "Database Fundamentals - YouTube",
+    "url": "https://www.youtube.com/watch?v=abc123",
+    "reason": "Visual tutorial perfectly suited for a visual learner."
+  },
+  "best_blog": {
+    "title": "The Beginner Guide to Databases",
+    "url": "https://mimo.org/blog/databases",
+    "reason": "Covers both SQL and NoSQL which aligns with backend track."
+  }
+}"""
