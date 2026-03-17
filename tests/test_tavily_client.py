@@ -1,4 +1,4 @@
-import pytest
+import pytest  # type: ignore
 from unittest.mock import patch, MagicMock, AsyncMock
 from src.models.schemas import RoadmapGenerationRequest
 from src.core.mock_data import MOCK_TAVILY_RESPONSE, MOCK_VALID_RESPONSE
@@ -10,7 +10,7 @@ mock_requested_data = RoadmapGenerationRequest(**MOCK_VALID_RESPONSE)
 mock_settings = Settings(TAVILY_API_KEY="test_key_123", GEMINI_API_KEY="test_key")
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio  # type: ignore
 @patch("src.ai_engine.data_fetchers.tavily_client.AsyncTavilyClient")
 async def test_fetch_subtopic_content_success(mock_tavily_class: MagicMock):
     mock_tavily_class.return_value.search = AsyncMock(
@@ -29,21 +29,21 @@ async def test_fetch_subtopic_content_success(mock_tavily_class: MagicMock):
     assert len(result["results"]) == 2
 
     first_result = result["results"][0]
-    assert first_result["url"] == "https://realpython.com/async-io-python/"
-    assert "Asyncio is a library" in first_result["raw_content"]
-    assert "concurrent code" in first_result["raw_content"]
+    assert first_result["url"] == "https://www.youtube.com/watch?v=HXV3zeQKqGY"
+    assert "SQL for Beginners" in first_result["title"]
+    assert "full course covers SQL" in first_result["raw_content"]
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio  # type: ignore
 @patch("src.ai_engine.data_fetchers.tavily_client.AsyncTavilyClient")
-async def test_fetch_subtopic_content_error(mock_tavily_class: MagicMock):
+async def test_fetch_subtopic_content_error(mock_tavily_class: MagicMock) -> None:
     mock_tavily_class.return_value.search = AsyncMock(
         side_effect=Exception("Fake Network Error")
     )
 
-    with pytest.raises(TavilyCallingError) as exc_info:
+    with pytest.raises(TavilyCallingError) as exc_info:  # type: ignore
         await tavily_client.fetch_subtopic_content(
             settings=mock_settings, requested_data=mock_requested_data
         )
 
-    assert exc_info.value.args[0] == TavilyCallingError.DEFAULT_MESSAGE
+    assert exc_info.value.args[0] == TavilyCallingError.DEFAULT_MESSAGE  # type: ignore
