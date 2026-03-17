@@ -15,6 +15,7 @@ class UserProfileSchema(BaseModel):
 
 
 class TargetSubtopicSchema(BaseModel):
+    subtopic_id: str
     Name: str
     Description: str
     Difficulty: str
