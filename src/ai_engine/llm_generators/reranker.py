@@ -7,10 +7,12 @@ from src.ai_engine.llm_generators.reranker_parser import (
     parse_reranker_response,
     enrich_with_raw_content,
 )
+from src.core.config import get_settings
 
 logger = logging.getLogger(__name__)
 
-_client = genai.Client()
+_settings = get_settings()
+_client = genai.Client(api_key=_settings.GEMINI_API_KEY)
 
 
 async def rerank_sources(
@@ -41,7 +43,7 @@ async def rerank_sources(
     )
 
     response = await _client.aio.models.generate_content(  # type: ignore
-        model="gemini-3.0-pro-preview",
+        model="gemini-3-flash-preview",
         contents=prompt,
     )
 
