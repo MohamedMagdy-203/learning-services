@@ -25,7 +25,7 @@ GET http://localhost:3000/api/internal/roadmap-context/{user_id}/{subtopic_id}
     "Name": "Database Fundamentals",
     "Description": "...",
     "Difficulty": "Beginner"
-}
+},
   "weakness_schema": {
     "Topics": {
       "Concurrency": "Struggles with threading and async"
