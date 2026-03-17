@@ -1,4 +1,4 @@
-import pytest
+import pytest  # type: ignore
 from unittest.mock import patch, AsyncMock
 from httpx import AsyncClient, ASGITransport
 from src.main import app
@@ -14,7 +14,7 @@ from src.core.exceptions import FetchRoadmapContextError, TavilyCallingError
 mock_request_data = RoadmapGenerationRequest(**MOCK_VALID_RESPONSE)
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio  # type: ignore
 @patch("src.routers.data.fetch_roadmap_context", new_callable=AsyncMock)
 @patch("src.routers.data.fetch_and_clean_subtopic_content", new_callable=AsyncMock)
 @patch("src.routers.data.rerank_sources", new_callable=AsyncMock)
@@ -36,18 +36,22 @@ async def test_get_roadmap_content_success(
     data = response.json()
     assert data["user_id"] == "user_123"
     assert data["subtopic_id"] == "sub_456"
-    assert data["best_course"]["title"] == "SQL for Beginners - Coursera"
+    assert data["best_course"]["title"] == "The Complete SQL Bootcamp — Udemy"
     assert (
-        data["best_course"]["url"] == "https://www.coursera.org/learn/sql-for-beginners"
+        data["best_course"]["url"]
+        == "https://www.udemy.com/course/the-complete-sql-bootcamp/"
     )
-    assert data["best_video"]["title"] == "Database Fundamentals - YouTube"
-    assert data["best_blog"]["title"] == "The Beginner Guide to Databases"
+
+    assert (
+        data["best_video"]["title"] == "Database Fundamentals for Beginners — YouTube"
+    )
+    assert data["best_blog"]["title"] == "SQL vs NoSQL — When to Use Which"
     assert "raw_content" not in data["best_course"]
     assert "raw_content" not in data["best_video"]
     assert "raw_content" not in data["best_blog"]
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio  # type: ignore
 @patch("src.routers.data.fetch_roadmap_context", new_callable=AsyncMock)
 async def test_get_roadmap_content_context_error(mock_context: AsyncMock):
     mock_context.side_effect = FetchRoadmapContextError("error")
@@ -60,7 +64,7 @@ async def test_get_roadmap_content_context_error(mock_context: AsyncMock):
     assert response.status_code == 502
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio  # type: ignore
 @patch("src.routers.data.fetch_roadmap_context", new_callable=AsyncMock)
 @patch("src.routers.data.fetch_and_clean_subtopic_content", new_callable=AsyncMock)
 async def test_get_roadmap_content_tavily_error(
@@ -78,7 +82,7 @@ async def test_get_roadmap_content_tavily_error(
     assert response.status_code == 503
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio  # type: ignore
 @patch("src.routers.data.fetch_roadmap_context", new_callable=AsyncMock)
 @patch("src.routers.data.fetch_and_clean_subtopic_content", new_callable=AsyncMock)
 @patch("src.routers.data.rerank_sources", new_callable=AsyncMock)
