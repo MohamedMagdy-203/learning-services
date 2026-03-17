@@ -5,9 +5,10 @@ from src.services.main_backend_client import fetch_roadmap_context
 from src.ai_engine.data_fetchers.cleaned_tavily_data import (
     fetch_and_clean_subtopic_content,
 )
+from src.ai_engine.llm_generators.reranker import rerank_sources
 from src.core.exceptions import FetchRoadmapContextError, TavilyCallingError
 from src.core.messages import FETCH_ROADMAP_CONTEXT_ERROR
-from typing import Any
+from src.models.schemas import RankedSourceSchema, RoadmapRankedResultSchema
 
 logger = logging.getLogger(__name__)
 
@@ -16,22 +17,21 @@ data_router = APIRouter(prefix="/api/v1/data", tags=["data"])
 
 @data_router.get(
     "/roadmap-content/{user_id}/{subtopic_id}",
-    summary="Fetch and process roadmap content for a subtopic",
-    response_description="A list of cleaned and relevant sources for the given subtopic",
+    summary="Fetch, clean, and rank learning content for a subtopic",
+    response_model=RoadmapRankedResultSchema,
 )
 async def get_roadmap_content(
     user_id: str,
     subtopic_id: str,
     app_settings: Settings = Depends(get_settings),
-) -> dict[str, Any]:
+) -> RoadmapRankedResultSchema:
     """
-    Orchestrates the full data pipeline for a given user and subtopic:
-
-    1. Fetches the roadmap context (user profile + subtopic details) from the main backend.
-    2. Builds a targeted search query based on the user's profile.
-    3. Fetches relevant content from the web via Tavily.
-    4. Cleans and filters the raw content.
-    5. Returns a structured list of sources ready for LLM processing.
+    Full pipeline:
+    1. Fetch roadmap context (user profile + subtopic) from main backend.
+    2. Build a targeted search query and fetch content via Tavily.
+    3. Clean and filter raw content.
+    4. Send sources + user profile to LLM reranker.
+    5. Return the best course, video, and blog for this learner.
     """
     logger.info(
         "Roadmap content request received | user: %s | subtopic: %s",
@@ -74,17 +74,44 @@ async def get_roadmap_content(
             detail="Failed to fetch learning content. Please try again later.",
         )
 
+    try:
+        ranked_results = await rerank_sources(
+            requested_data=requested_data,
+            cleaned_sources=cleaned_sources,
+        )
+    except ValueError:
+        logger.error(
+            "LLM reranker failed | user: %s | subtopic: %s",
+            user_id,
+            subtopic_id,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to rank learning content. Please try again later.",
+        )
+
     logger.info(
-        "Roadmap content ready | user: %s | subtopic: %s | sources: %d",
+        "Roadmap content pipeline complete | user: %s | subtopic: %s",
         user_id,
         subtopic_id,
-        len(cleaned_sources),
     )
 
-    return {
-        "user_id": user_id,
-        "subtopic_id": subtopic_id,
-        "subtopic_name": requested_data.target_subtopic_schema.Name,
-        "total_sources": len(cleaned_sources),
-        "sources": cleaned_sources,
-    }
+    return RoadmapRankedResultSchema(
+        user_id=user_id,
+        subtopic_id=subtopic_id,
+        best_course=(
+            RankedSourceSchema(**ranked_results["best_course"])
+            if ranked_results.get("best_course")
+            else None
+        ),
+        best_video=(
+            RankedSourceSchema(**ranked_results["best_video"])
+            if ranked_results.get("best_video")
+            else None
+        ),
+        best_blog=(
+            RankedSourceSchema(**ranked_results["best_blog"])
+            if ranked_results.get("best_blog")
+            else None
+        ),
+    )
