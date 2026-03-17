@@ -28,3 +28,16 @@ class RoadmapGenerationRequest(BaseModel):
     user_profile_schema: UserProfileSchema
     target_subtopic_schema: TargetSubtopicSchema
     weakness_schema: WeaknessSchema
+
+
+class RankedSourceSchema(BaseModel):
+    title: str
+    url: str
+
+
+class RoadmapRankedResultSchema(BaseModel):
+    user_id: str
+    subtopic_id: str
+    best_course: RankedSourceSchema | None
+    best_video: RankedSourceSchema | None
+    best_blog: RankedSourceSchema | None
