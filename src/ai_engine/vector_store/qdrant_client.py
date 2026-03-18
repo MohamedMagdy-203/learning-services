@@ -3,6 +3,9 @@ from qdrant_client.models import Distance, VectorParams  # type: ignore
 
 from src.core.config import get_settings
 
+# Must match the embedding model dimension in embedder.py
+# Current model: paraphrase-multilingual-mpnet-base-v2 → 768 dims
+# If you change the model, delete the Qdrant collection and recreate it
 VECTOR_SIZE: int = 768
 
 
