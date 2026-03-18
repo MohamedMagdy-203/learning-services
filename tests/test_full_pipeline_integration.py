@@ -62,7 +62,7 @@ async def test_full_pipeline_with_real_data():
         "subtopic_id": subtopic_id,
         **ranked_results,
     }
-    ingest_reranker_results(data_to_ingest)  # type: ignore
+    await ingest_reranker_results(data_to_ingest)  # type: ignore
     print("Ingestion done")
 
     # Step 4: Verify stored
@@ -91,7 +91,7 @@ async def test_full_pipeline_with_real_data():
 
     # Step 6: Deduplication
     print("\n--- [ Step 6: Deduplication Check ] ---")
-    ingest_reranker_results(data_to_ingest)  # type: ignore
+    await ingest_reranker_results(data_to_ingest)  # type: ignore
     print("Second ingest done — checking no duplicates added")
     for key in ("best_course", "best_video", "best_blog"):
         item = ranked_results.get(key)
