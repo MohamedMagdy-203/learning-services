@@ -1,5 +1,6 @@
 import logging
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
+
 from src.core.config import Settings, get_settings
 from src.services.main_backend_client import fetch_roadmap_context
 from src.ai_engine.data_fetchers.cleaned_tavily_data import (
@@ -9,6 +10,7 @@ from src.ai_engine.llm_generators.reranker import rerank_sources
 from src.core.exceptions import FetchRoadmapContextError, TavilyCallingError
 from src.core.messages import FETCH_ROADMAP_CONTEXT_ERROR
 from src.models.schemas import RankedSourceSchema, RoadmapRankedResultSchema
+from src.ai_engine.vector_store.store import ingest_reranker_results
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +25,7 @@ data_router = APIRouter(prefix="/api/v1/data", tags=["data"])
 async def get_roadmap_content(
     user_id: str,
     subtopic_id: str,
+    background_tasks: BackgroundTasks,
     app_settings: Settings = Depends(get_settings),
 ) -> RoadmapRankedResultSchema:
     """
@@ -31,7 +34,8 @@ async def get_roadmap_content(
     2. Build a targeted search query and fetch content via Tavily.
     3. Clean and filter raw content.
     4. Send sources + user profile to LLM reranker.
-    5. Return the best course, video, and blog for this learner.
+    5. Save the ranked content to Qdrant (in background).
+    6. Return the best course, video, and blog for this learner.
     """
     logger.info(
         "Roadmap content request received | user: %s | subtopic: %s",
@@ -95,6 +99,16 @@ async def get_roadmap_content(
         user_id,
         subtopic_id,
     )
+
+    data_to_ingest = {  # type: ignore
+        "user_id": user_id,
+        "subtopic_id": subtopic_id,
+        "best_course": ranked_results.get("best_course"),
+        "best_video": ranked_results.get("best_video"),
+        "best_blog": ranked_results.get("best_blog"),
+    }
+
+    background_tasks.add_task(ingest_reranker_results, data_to_ingest)  # type: ignore
 
     return RoadmapRankedResultSchema(
         user_id=user_id,
