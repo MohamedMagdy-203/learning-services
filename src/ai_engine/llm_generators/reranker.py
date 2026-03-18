@@ -20,7 +20,7 @@ def _get_client() -> genai.Client:  # type: ignore
     if _client is None:
         _client = genai.Client(  # type: ignore
             api_key=get_settings().GEMINI_API_KEY,
-            http_options=types.HttpOptions(timeout=180000),  # type: ignore
+            http_options=types.HttpOptions(timeout=400000),  # type: ignore
         )
     return _client  # type: ignore
 
