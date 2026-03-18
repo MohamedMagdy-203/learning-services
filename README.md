@@ -38,7 +38,7 @@ quizzes, mindmaps, and summaries.
 
 Below is the high-level data flow of the Learning Services AI Engine:
 
-![System Architecture Flowchart](![alt text](Project_Flow_Diagram.png))
+![System Architecture](Project_Flow_Diagram.png)
 
 ### Step-by-Step Flow Explanation
 
@@ -78,12 +78,22 @@ learning-services/
 │   │   │   ├── data_cleaner.py      # Regex-based text sanitization (removes HTML, boilerplate, URLs)
 │   │   │   ├── query_builder.py     # Logic to construct targeted search queries based on user profile
 │   │   │   └── tavily_client.py     # Async client wrapper for Tavily web search API
-│   │   ├── llm_generators/          # Handlers for prompt building and Large Language Model calls
-│   │   │   └── __init__.py
-│   │   ├── text_processing/         # Logic for splitting text into manageable chunks and embeddings
-│   │   │   └── __init__.py
-│   │   └── vector_store/            # Database operations for storing and querying vector embeddings
-│   │       └── __init__.py
+│   │   ├── llm_generators/
+│   │   │   ├── __init__.py
+│   │   │   ├── reranker.py          # LLM reranking pipeline orchestrator
+│   │   │   ├── reranker_parser.py   # JSON response parser and raw_content enricher
+│   │   │   ├── reranker_prompt.py   # Prompt builder for the reranker LLM
+│   │   │   └── source_classifier.py # URL-based source type classifier (course/video/blog)
+│   │   ├── text_processing/
+│   │   │   ├── __init__.py
+│   │   │   └── chunker.py           # Semantic text chunker with multilingual support
+│   │   └── vector_store/
+│   │       ├── __init__.py
+│   │       ├── embedder.py              # HuggingFace embedding model loader
+│   │       ├── filters.py               # Qdrant deduplication filter by URL
+│   │       ├── prepare_store_document.py # Document preparation and chunking pipeline
+│   │       ├── qdrant_client.py         # Qdrant client and collection management
+│   │       └── store.py                 # Vector store ingestion entry point
 │   ├── core/                        # Application-wide settings, utilities, and constants
 │   │   ├── __init__.py
 │   │   ├── config.py                # Pydantic BaseSettings for environment variables validation
