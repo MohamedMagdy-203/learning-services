@@ -14,11 +14,12 @@ def sample_reranker_input():
     return data
 
 
-@patch("src.ai_engine.vector_store.prepare_document.is_url_already_stored")
-def test_prepare_documents_with_mock_data(mock_is_stored, sample_reranker_input):  # type: ignore
+@pytest.mark.asyncio  # type: ignore
+@patch("src.ai_engine.vector_store.prepare_store_document.is_url_already_stored")
+async def test_prepare_documents_with_mock_data(mock_is_stored, sample_reranker_input):  # type: ignore
     mock_is_stored.side_effect = lambda url: "udemy.com" in url  # type: ignore
 
-    documents = prepare_documents(sample_reranker_input)  # type: ignore
+    documents = await prepare_documents(sample_reranker_input)  # type: ignore
 
     assert len(documents) > 0  # type: ignore
 
@@ -31,17 +32,18 @@ def test_prepare_documents_with_mock_data(mock_is_stored, sample_reranker_input)
     assert "youtube.com" in str(logger_urls)  # type: ignore
 
 
+@pytest.mark.asyncio  # type: ignore
 @patch("src.ai_engine.vector_store.store.get_vector_store")
 @patch("src.ai_engine.vector_store.store.prepare_documents")
-def test_ingest_calls_qdrant_correctly(
+async def test_ingest_calls_qdrant_correctly(
     mock_prepare,  # type: ignore
     mock_get_store,  # type: ignore
     sample_reranker_input,  # type: ignore
-):  # type: ignore
+):
     mock_vector_store = MagicMock()
     mock_get_store.return_value = mock_vector_store
-    mock_prepare.return_value = [MagicMock(spec=Document)]  # type: ignore
+    mock_prepare.return_value = [MagicMock(spec=Document)]
 
-    ingest_reranker_results(sample_reranker_input)  # type: ignore
+    await ingest_reranker_results(sample_reranker_input)  # type: ignore
 
     assert mock_vector_store.add_documents.called
