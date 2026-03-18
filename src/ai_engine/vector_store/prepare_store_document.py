@@ -10,9 +10,6 @@ logger = logging.getLogger(__name__)
 
 
 async def prepare_documents(reranker_data: Dict[str, Any]) -> List[Document]:  # type: ignore
-    user_id: str = reranker_data.get("user_id", "unknown_user")
-    subtopic_id: str = reranker_data.get("subtopic_id", "unknown_subtopic")
-
     all_documents: List[Document] = []  # type: ignore
     sources: List[str] = ["best_course", "best_video", "best_blog"]
 
@@ -39,8 +36,6 @@ async def prepare_documents(reranker_data: Dict[str, Any]) -> List[Document]:  #
                 Document(
                     page_content=chunk,
                     metadata={
-                        "user_id": user_id,
-                        "subtopic_id": subtopic_id,
                         "source_type": source_type,
                         "title": title,
                         "url": url,
