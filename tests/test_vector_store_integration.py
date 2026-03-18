@@ -13,9 +13,10 @@ SAMPLE_INPUT = {  # type: ignore
 }
 
 
+@pytest.mark.asyncio  # type: ignore
 @pytest.mark.integration  # type: ignore
-def test_ingest_and_verify_stored():
-    ingest_reranker_results(SAMPLE_INPUT)  # type: ignore
+async def test_ingest_and_verify_stored():
+    await ingest_reranker_results(SAMPLE_INPUT)  # type: ignore
 
     print("\n\n" + "=" * 60)
     print("VECTOR STORE INTEGRATION TEST")
@@ -59,12 +60,13 @@ def test_similarity_search():
     print("\n" + "=" * 60 + "\n")
 
 
+@pytest.mark.asyncio  # type: ignore
 @pytest.mark.integration  # type: ignore
-def test_url_deduplication():
+async def test_url_deduplication():
     url = MOCK_RANKED_RESULT["best_blog"]["url"]
 
     before = is_url_already_stored(url)
-    ingest_reranker_results(SAMPLE_INPUT)  # type: ignore
+    await ingest_reranker_results(SAMPLE_INPUT)  # type: ignore
     after = is_url_already_stored(url)
 
     print("\n\n" + "=" * 60)
