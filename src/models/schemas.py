@@ -32,6 +32,7 @@ class RoadmapGenerationRequest(BaseModel):
 
 
 class RankedSourceSchema(BaseModel):
+    model_config = ConfigDict(extra="ignore")
     title: str
     url: str
 
