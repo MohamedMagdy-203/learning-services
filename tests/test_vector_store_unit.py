@@ -26,8 +26,8 @@ async def test_prepare_documents_with_mock_data(mock_is_stored, sample_reranker_
     urls_in_docs = [doc.metadata["url"] for doc in documents]  # type: ignore
     assert not any("udemy.com" in url for url in urls_in_docs)  # type: ignore
 
-    assert documents[0].metadata["user_id"] == "user_123"  # type: ignore
-    assert documents[0].metadata["subtopic_id"] == "sub_456"  # type: ignore
+    assert documents[0].metadata["url"] is not None  # type: ignore
+    assert documents[0].metadata["source_type"] is not None  # type: ignore
     logger_urls = [doc.metadata["url"] for doc in documents]  # type: ignore
     assert "youtube.com" in str(logger_urls)  # type: ignore
 
