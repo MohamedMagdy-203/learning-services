@@ -3,7 +3,7 @@ _COURSE_DOMAINS = {
     "udemy.com",
     "edx.org",
     "pluralsight.com",
-    "linkedin.com",
+    "linkedin.com/learning",
     "app.datacamp.com/learn/courses/",
 }
 _VIDEO_DOMAINS = {"youtube.com", "youtu.be"}
