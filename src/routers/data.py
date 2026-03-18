@@ -17,6 +17,17 @@ logger = logging.getLogger(__name__)
 data_router = APIRouter(prefix="/api/v1/data", tags=["data"])
 
 
+async def _ingest_with_logging(data: dict) -> None:  # type: ignore
+    try:
+        await ingest_reranker_results(data)  # type: ignore
+    except Exception:
+        logger.exception(
+            "Background ingestion failed | user: %s | subtopic: %s",
+            data.get("user_id"),  # type: ignore
+            data.get("subtopic_id"),  # type: ignore
+        )
+
+
 @data_router.get(
     "/roadmap-content/{user_id}/{subtopic_id}",
     summary="Fetch, clean, and rank learning content for a subtopic",
@@ -108,7 +119,7 @@ async def get_roadmap_content(
         "best_blog": ranked_results.get("best_blog"),
     }
 
-    background_tasks.add_task(ingest_reranker_results, data_to_ingest)  # type: ignore
+    background_tasks.add_task(_ingest_with_logging, data_to_ingest)  # type: ignore
 
     return RoadmapRankedResultSchema(
         user_id=user_id,
