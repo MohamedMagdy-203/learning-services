@@ -17,7 +17,10 @@ _client: genai.Client | None = None  # type: ignore
 def _get_client() -> genai.Client:  # type: ignore
     global _client
     if _client is None:
-        _client = genai.Client(api_key=get_settings().GEMINI_API_KEY)  # type: ignore
+        _client = genai.Client(  # type: ignore
+            api_key=get_settings().GEMINI_API_KEY,
+            http_options={"timeout": 30},
+        )
     return _client  # type: ignore
 
 
@@ -55,7 +58,7 @@ async def rerank_sources(
 
     try:
         result = parse_reranker_response(response.text)  # type: ignore
-    except (ValueError, KeyError) as exc:
+    except Exception as exc:
         logger.exception("Failed to parse LLM reranker response")
         raise ValueError("LLM returned an invalid response format") from exc
 
