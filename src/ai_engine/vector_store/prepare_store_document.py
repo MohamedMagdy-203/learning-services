@@ -4,12 +4,12 @@ from langchain_core.documents import Document  # type: ignore
 
 from src.ai_engine.vector_store.filters import is_url_already_stored
 from src.ai_engine.text_processing.chunker import chunk_text
+import asyncio
 
 logger = logging.getLogger(__name__)
 
 
-def prepare_documents(reranker_data: Dict[str, Any]) -> List[Document]:  # type: ignore
-    """Parse, filter, and chunk content into Documents."""
+async def prepare_documents(reranker_data: Dict[str, Any]) -> List[Document]:  # type: ignore
     user_id: str = reranker_data.get("user_id", "unknown_user")
     subtopic_id: str = reranker_data.get("subtopic_id", "unknown_subtopic")
 
@@ -17,7 +17,7 @@ def prepare_documents(reranker_data: Dict[str, Any]) -> List[Document]:  # type:
     sources: List[str] = ["best_course", "best_video", "best_blog"]
 
     for source_type in sources:
-        source_data: Dict[str, Any] | None = reranker_data.get(source_type)
+        source_data = reranker_data.get(source_type)
         if not source_data or not source_data.get("raw_content"):
             continue
 
@@ -32,10 +32,11 @@ def prepare_documents(reranker_data: Dict[str, Any]) -> List[Document]:  # type:
 
         logger.info("Processing new content %s: '%s'", source_type, title)
 
-        chunks: List[str] = chunk_text(raw_content)
+        chunks: List[str] = await asyncio.to_thread(chunk_text, raw_content)
+
         for chunk in chunks:
             all_documents.append(  # type: ignore
-                Document(  # type: ignore
+                Document(
                     page_content=chunk,
                     metadata={
                         "user_id": user_id,
@@ -44,6 +45,6 @@ def prepare_documents(reranker_data: Dict[str, Any]) -> List[Document]:  # type:
                         "title": title,
                         "url": url,
                     },
-                )
+                )  # type: ignore
             )
     return all_documents  # type: ignore
