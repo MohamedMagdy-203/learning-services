@@ -1,5 +1,6 @@
 import logging
 from typing import Any
+from google.genai import types  # type: ignore
 from google import genai  # type: ignore
 from src.models.schemas import RoadmapGenerationRequest
 from src.ai_engine.llm_generators.reranker_prompt import build_reranker_prompt
@@ -19,7 +20,7 @@ def _get_client() -> genai.Client:  # type: ignore
     if _client is None:
         _client = genai.Client(  # type: ignore
             api_key=get_settings().GEMINI_API_KEY,
-            http_options={"timeout": 30},
+            http_options=types.HttpOptions(timeout=180000),  # type: ignore
         )
     return _client  # type: ignore
 
