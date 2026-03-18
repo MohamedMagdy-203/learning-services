@@ -1,6 +1,6 @@
 import pytest  # type: ignore
 from unittest.mock import patch, MagicMock
-from src.ai_engine.vector_store.prepare_document import prepare_documents  # type: ignore
+from src.ai_engine.vector_store.prepare_store_document import prepare_documents  # type: ignore
 from src.ai_engine.vector_store.store import ingest_reranker_results
 from src.core.mock_data import MOCK_RANKED_RESULT
 from langchain_core.documents import Document  # type: ignore
