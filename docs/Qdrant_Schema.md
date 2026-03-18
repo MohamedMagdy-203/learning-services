@@ -65,3 +65,15 @@ Before storing, the system checks if `metadata.url` already exists in Qdrant.
 If found — content is skipped, no re-embedding.
 
 > ⚠️ Deduplication is exact URL match. URLs with different query params are treated as different sources.
+
+## How to Query
+
+for example:
+
+```python
+results = vector_store.similarity_search(
+    query="explain normalization",
+    k=5,
+    filter={"must": [{"key": "metadata.url", "match": {"value": url}}]}
+)
+```
