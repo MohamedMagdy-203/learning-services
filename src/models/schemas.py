@@ -43,3 +43,22 @@ class RoadmapRankedResultSchema(BaseModel):
     best_course: RankedSourceSchema | None
     best_video: RankedSourceSchema | None
     best_blog: RankedSourceSchema | None
+
+class MindmapGenerationRequest(BaseModel):
+    user_id: str
+    subtopic_id: str
+    source_type: str 
+
+
+class MindmapNodeSchema(BaseModel):
+    topic: str
+    children: list["MindmapNodeSchema"] = []
+
+MindmapNodeSchema.model_rebuild()
+
+class MindmapResponseSchema(BaseModel):
+    user_id: str
+    subtopic_id: str
+    source_type: str
+    mindmap: MindmapNodeSchema
+    
