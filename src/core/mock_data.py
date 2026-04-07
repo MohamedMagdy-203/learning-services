@@ -114,3 +114,13 @@ arabic_content = (
     """
     * 10
 )
+
+MOCK_Qdrant_Schema ={
+  "page_content": "Database normalization is the process of organizing a relational database...",
+  "metadata": {
+    "source_type": "best_video",
+    "title": "Database Fundamentals Tutorial for Beginners - YouTube",
+    "url": "https://www.youtube.com/watch?v=RPkzMR59x50"
+  }
+}
+
