@@ -7,8 +7,8 @@
   - [Overview](#overview)
   - [System Architecture \& Workflow](#system-architecture--workflow)
     - [Step-by-Step Flow Explanation](#step-by-step-flow-explanation)
-  - [Feature: Quiz Generation](#feature-quiz-generation)
   - [Project Structure](#project-structure)
+  - [Feature: Quiz Generation](#feature-quiz-generation)
   - [Tech Stack](#tech-stack)
   - [Setup \& Installation](#setup--installation)
     - [1. Prerequisites](#1-prerequisites)
@@ -69,8 +69,7 @@ Below is the high-level data flow of the Learning Services AI Engine:
    An AI-powered learning feature that transforms the learner’s selected **content source** (best course, best video, or best blog) into a personalized study experience and instant feedback.
     It uses the selected source as the primary knowledge base, supplements it with supporting ranked sources when needed, and adapts question difficulty dynamically based on some factors that will be explained later.After each answer, the learner receives immediate corrective feedback,At the end of the session the system produces weakness summary, key concepts to review, and optional AI-generated visual or audio learning aids.
 
-### Quiz Generation workflow
-![Quiz Generation](image.png)
+
 
 ## Project Structure
 
@@ -84,18 +83,23 @@ learning-services/
 │   │   │   ├── __init__.py
 │   │   │   ├── cleaned_tavily_data.py # Pipeline orchestrator to fetch and clean subtopic content
 │   │   │   ├── data_cleaner.py      # Regex-based text sanitization (removes HTML, boilerplate, URLs)
+│   │   │   ├── distillation_retrieval.py #Chunks retrieval by URL
 │   │   │   ├── query_builder.py     # Logic to construct targeted search queries based on user profile
 │   │   │   └── tavily_client.py     # Async client wrapper for Tavily web search API
-│   │   ├── llm_generators/
+│   │   ├── distiller_engine/        # Distillation pipeline core logic
 │   │   │   ├── __init__.py
+│   │   │   └── distiller.py         # Main orchestration for content distillation
+│   │   ├── llm_generators/          # LLM-based ranking, parsing, and prompt generation
+│   │   │   ├── __init__.py
+│   │   │   ├── distillation_prompts.py # Prompt builder for distillation tasks
 │   │   │   ├── reranker.py          # LLM reranking pipeline orchestrator
 │   │   │   ├── reranker_parser.py   # JSON response parser and raw_content enricher
 │   │   │   ├── reranker_prompt.py   # Prompt builder for the reranker LLM
 │   │   │   └── source_classifier.py # URL-based source type classifier (course/video/blog)
-│   │   ├── text_processing/
+│   │   ├── text_processing/         # Text preprocessing and chunking utilities
 │   │   │   ├── __init__.py
 │   │   │   └── chunker.py           # Semantic text chunker with multilingual support
-│   │   └── vector_store/
+│   │   └── vector_store/            # Embedding and vector database interaction layer
 │   │       ├── __init__.py
 │   │       ├── embedder.py              # HuggingFace embedding model loader
 │   │       ├── filters.py               # Qdrant deduplication filter by URL
@@ -111,11 +115,13 @@ learning-services/
 │   │   └── mock_data.py             # Static sample data used for testing and development fallback
 │   ├── models/                      # Data structures and validation models
 │   │   ├── __init__.py
+│   │   ├── distillation_schemas.py  # Schemas for distillation pipeline inputs/outputs
 │   │   └── schemas.py               # Pydantic schemas (UserProfileSchema, TargetSubtopicSchema)
 │   ├── routers/                     # FastAPI route definitions and controllers
 │   │   ├── __init__.py
 │   │   ├── base.py                  # Base router including the root/welcome API endpoint
-│   │   └── data.py                  # Endpoints for data retrieval and processing requests
+│   │   ├── data.py                  # Endpoints for data retrieval and processing requests
+│   │   └── distillation_router.py   # Endpoints for triggering distillation workflows
 │   ├── services/                    # Clients for communicating with internal/external microservices
 │   │   ├── __init__.py
 │   │   └── main_backend_client.py   # HTTPX client to fetch roadmap context from the main backend
@@ -124,17 +130,29 @@ learning-services/
 ├── tests/                           # Automated testing suite (Unit & Integration tests)
 │   ├── __init__.py
 │   ├── conftest.py                  # Pytest configuration and custom CLI options (e.g., --integration)
+│   ├── test_chunker.py              # Unit tests for text chunking logic
+│   ├── test_chunker_integration.py  # Integration tests for chunking within pipeline
 │   ├── test_cleaned_tavily_data.py  # Tests for the data fetching and cleaning pipeline
 │   ├── test_config.py               # Unit tests verifying application configuration loading
+│   ├── test_data_router.py          # Tests for API endpoints in data router
+│   ├── test_distillation.py         # Tests for the distillation pipeline
+│   ├── test_full_pipeline_integration.py # End-to-end pipeline integration tests
 │   ├── test_main_backend_client.py  # Mocked tests verifying the main backend HTTP client
+│   ├── test_reranker.py             # Unit tests for reranking logic
+│   ├── test_reranker_integration.py # Integration tests for reranker with LLM
 │   ├── test_tavily_client.py        # Unit tests for Tavily API interactions (with mocked responses)
-│   └── test_tavily_integration.py   # Real API integration tests verifying live Tavily web searches
+│   ├── test_tavily_integration.py   # Real API integration tests verifying live Tavily web searches
+│   ├── test_vector_store_integration.py # Integration tests for vector database operations
+│   └── test_vector_store_unit.py    # Unit tests for vector store logic
 ├── .env.example                     # Template showing required environment variables
 ├── .gitignore                       # List of files and folders to be ignored by Git version control
 ├── .pre-commit-config.yaml          # Configuration for code formatting and linting hooks (Black, Ruff)
 ├── README.md                        # Main project documentation and contribution guidelines
 └── requirements.txt                 # List of project Python dependencies and versions
 ```
+### Quiz Generation workflow
+![Quiz Generation](image-1.png)
+
 
 ## Tech Stack
 
