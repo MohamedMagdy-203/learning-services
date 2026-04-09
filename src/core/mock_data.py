@@ -124,11 +124,6 @@ MOCK_MINDMAP_REQUEST: Dict[str, Any] = {
     "best_video_url": "https://www.youtube.com/watch?v=wR0jg0eQsZA",
     "best_blog_url": "https://www.mongodb.com/nosql-explained/nosql-vs-sql",
     "subtopic_name": "Database Fundamentals",
-    "subtopic_description": (
-        "This module focuses on the persistence layer of software architecture, "
-        "where the backend engineer is responsible for storing, retrieving, and "
-        "managing data reliably."
-    ),
     "subtopic_difficulty": "Beginner",
     "weaknesses": {
         "Data Modeling": "Struggles with designing efficient database schemas",
