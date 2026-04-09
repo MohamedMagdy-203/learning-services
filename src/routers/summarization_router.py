@@ -1,16 +1,9 @@
 from fastapi import APIRouter
-from pydantic import BaseModel
-from summarizer import summarize_text
+from src.services.summarizer import summarize_text
 
 router = APIRouter()
 
-# Request model
-class SummarizationRequest(BaseModel):
-    page_content: str
-    title: str
-    max_length: int = 350
-    min_length: int = 50
-
+from src.models.schemas import SummarizationRequest
 @router.post("/summarize/")
 def summarize_endpoint(request: SummarizationRequest):
     """
