@@ -1,11 +1,16 @@
+
 import logging
 from fastapi import APIRouter, Depends, HTTPException, status
+from src.services.main_backend_client import fetch_roadmap_context
 
 from src.core.config import Settings, get_settings
 from src.core.exceptions import FetchRoadmapContextError
 from src.core.messages import FETCH_ROADMAP_CONTEXT_ERROR
-from src.models.schemas import MindmapGenerationRequest, MindmapResponseSchema
-from src.services.main_backend_client import fetch_roadmap_context
+from src.models.schemas import (
+    MindmapGenerationRequest,
+    MindmapResponseSchema,
+    RoadmapGenerationRequest,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -14,17 +19,17 @@ mindmap_router = APIRouter(prefix="/api/v1/mindmap", tags=["mindmap"])
 
 @mindmap_router.post(
     "/",
-    summary="Generate a mind map for a specific content source",
+    summary="Generate a mindmap for a specific content source",
     response_model=MindmapResponseSchema,
 )
-async def generate_mindmap(
+async def generate_mindmap_endpoint(
     request: MindmapGenerationRequest,
     app_settings: Settings = Depends(get_settings),
-) -> MindmapResponseSchema:
+) -> MindmapResponseSchema: # type:ignore
     """
     Full pipeline:
     1. Fetch roadmap context (user profile + subtopic) from main backend.
-    2. Search Qdrant for top-K chunks filtered by source URL.
+    2. Retrieve ALL chunks from Qdrant filtered by source URL.
     3. Build prompt from chunks + user profile.
     4. Call Gemini to generate the mind map.
     5. Parse and validate the LLM output.
@@ -54,7 +59,7 @@ async def generate_mindmap(
             detail=FETCH_ROADMAP_CONTEXT_ERROR,
         )
 
-    _requested_data = context["roadmap_context"]
+    _requested_data: RoadmapGenerationRequest = context["roadmap_context"]
 
     logger.info(
         "Roadmap context fetched successfully | user: %s | subtopic: %s",
@@ -62,7 +67,4 @@ async def generate_mindmap(
         request.subtopic_id,
     )
 
-    raise HTTPException(
-        status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail="Mindmap generation not fully implemented yet.",
-    )
+    
