@@ -1,10 +1,13 @@
+from functools import lru_cache
 from transformers import pipeline
 
-# Initialize the FLAN-T5 summarizer
-summarizer = pipeline(
-    "text2text-generation",
-    model="google/flan-t5-base"
-)
+
+@lru_cache(maxsize=1)
+def get_summarizer():
+    return pipeline(
+        "text2text-generation",
+        model="google/flan-t5-base"
+    )
 
 # Prompt template with detailed instructions for learning content
 prompt_template = """
@@ -20,10 +23,11 @@ Content:
 {}
 """
 
-def summarize_text(page_content: str, title: str, max_length: int = 150, min_length: int = 50) -> str:
+def summarize_text(page_content: str, title: str, max_length: int = 350, min_length: int = 50) -> str:
     """
     Summarize the page content with context from the title.
     """
+    summarizer = get_summarizer()
     prompt = prompt_template.format(page_content, title=title)
     summary = summarizer(prompt, max_length=max_length, min_length=min_length)
     return summary[0]["generated_text"]

@@ -1,8 +1,9 @@
 from fastapi import APIRouter
 from src.services.summarizer import summarize_text
 from src.models.schemas import SummarizationRequest
+import asyncio
 
-router = APIRouter()
+summarization_router = APIRouter()
 
 
 @summarization_router.post("/summarize/")
