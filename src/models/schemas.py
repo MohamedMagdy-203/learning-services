@@ -59,3 +59,17 @@ class MindmapGenerationRequest(BaseModel):
 
     # Learner weaknesses — used to personalise the mindmap
      weaknesses: Dict[str, str]
+
+class MindmapNodeSchema(BaseModel):
+    topic: str
+    children: list["MindmapNodeSchema"] = []
+
+
+MindmapNodeSchema.model_rebuild()
+
+
+class MindmapResponseSchema(BaseModel):
+    user_id: str
+    subtopic_id: str
+    mindmap: MindmapNodeSchema
+     
