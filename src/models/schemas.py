@@ -48,17 +48,7 @@ class MindmapGenerationRequest(BaseModel):
     user_id: str
     subtopic_id: str
     source_type: str 
+    source_url: str 
 
 
-class MindmapNodeSchema(BaseModel):
-    topic: str
-    children: list["MindmapNodeSchema"] = []
-
-MindmapNodeSchema.model_rebuild()
-
-class MindmapResponseSchema(BaseModel):
-    user_id: str
-    subtopic_id: str
-    source_type: str
-    mindmap: MindmapNodeSchema
     
