@@ -1,17 +1,17 @@
-from fastapi import FastAPI
+from fastapi import APIRouter
 from pydantic import BaseModel
-from summarizer import summarize_text  # import the summarization function
+from summarizer import summarize_text
 
-app = FastAPI(title="Learning Content Summarizer API", version="1.0")
+router = APIRouter()
 
 # Request model
 class SummarizationRequest(BaseModel):
     page_content: str
     title: str
-    max_length: int = 150
+    max_length: int = 350
     min_length: int = 50
 
-@app.post("/summarize/")
+@router.post("/summarize/")
 def summarize_endpoint(request: SummarizationRequest):
     """
     Summarize technical content from a learning resource.
