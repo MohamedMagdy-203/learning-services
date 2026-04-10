@@ -162,5 +162,3 @@ async def retrieve_all_chunks_for_mindmap(
     )
 
     return all_chunks
-
-
