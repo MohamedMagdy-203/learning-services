@@ -1,12 +1,20 @@
 import logging
 from typing import Dict, Any, List
 from langchain_core.documents import Document  # type: ignore
-
+import re
 from src.ai_engine.vector_store.filters import is_url_already_stored
 from src.ai_engine.text_processing.chunker import chunk_text
 import asyncio
 
 logger = logging.getLogger(__name__)
+
+
+def _clean_video_transcript(raw_content: str) -> str:
+    raw_content = raw_content.replace("\n", " ")
+    raw_content = re.sub(
+        r"(?<!\w)(um|uh|ah|you know|like)(?!\w)", "", raw_content, flags=re.IGNORECASE
+    )
+    return re.sub(r"[ \t]+", " ", raw_content).strip()
 
 
 async def prepare_documents(reranker_data: Dict[str, Any]) -> List[Document]:  # type: ignore
@@ -28,11 +36,13 @@ async def prepare_documents(reranker_data: Dict[str, Any]) -> List[Document]:  #
         raw_content: str = source_data["raw_content"]
 
         logger.info("Processing new content %s: '%s'", source_type, title)
+        if source_type == "best_video":
+            raw_content = _clean_video_transcript(raw_content)
 
         chunks: List[str] = await asyncio.to_thread(chunk_text, raw_content)
 
         for chunk in chunks:
-            all_documents.append(  # type: ignore
+            all_documents.append(
                 Document(
                     page_content=chunk,
                     metadata={
@@ -40,6 +50,6 @@ async def prepare_documents(reranker_data: Dict[str, Any]) -> List[Document]:  #
                         "title": title,
                         "url": url,
                     },
-                )  # type: ignore
+                )
             )
-    return all_documents  # type: ignore
+    return all_documents
