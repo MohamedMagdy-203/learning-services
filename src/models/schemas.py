@@ -45,20 +45,20 @@ class RoadmapRankedResultSchema(BaseModel):
     best_blog: RankedSourceSchema | None
 
 class MindmapGenerationRequest(BaseModel):
-     user_id: str
-     subtopic_id: str
+    user_id: str
+    subtopic_id: str
 
     # Source URLs — any can be None if not available
-     best_course_url: Optional[str] = None
-     best_video_url: Optional[str] = None
-     best_blog_url: Optional[str] = None
+    best_course_url: Optional[str] = None
+    best_video_url: Optional[str] = None
+    best_blog_url: Optional[str] = None
 
     # Subtopic context needed for the prompt 
-     subtopic_name: str
-     subtopic_difficulty: str
+    subtopic_name: str
+    subtopic_difficulty: str
 
     # Learner weaknesses — used to personalise the mindmap
-     weaknesses: Dict[str, str]
+    weaknesses: Dict[str, str]
 
 class MindmapNodeSchema(BaseModel):
     topic: str
