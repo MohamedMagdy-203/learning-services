@@ -49,8 +49,17 @@ def _scroll_chunks_by_url(url: str, limit: int) -> List[str]:
         chunks: List[str] = []
 
         for point in results:
-            if point.payload and "page_content" in point.payload:
-                chunks.append(point.payload["page_content"])
+            if not point.payload:
+                continue
+            content = point.payload.get("page_content")
+            if isinstance(content, str):
+                chunks.append(content)
+            elif content is not None:
+                logger.warning(
+                    "Skipping non-string page_content | url=%s | type=%s",
+                    url,
+                    type(content).__name__,
+                )
 
         logger.info(
             "Scroll complete | url=%s | chunks_found=%d",
