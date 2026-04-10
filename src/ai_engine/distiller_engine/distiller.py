@@ -2,8 +2,10 @@ import logging
 import json
 import asyncio
 from typing import List, Optional
+
 from openai import AsyncOpenAI
 from pydantic import HttpUrl
+
 from src.core.config import get_settings
 from src.ai_engine.data_fetchers.distillation_retrieval import retrieve_chunks_by_url
 from src.ai_engine.llm_generators.distillation_prompts import get_distillation_prompt
@@ -29,11 +31,13 @@ class ContentDistiller:
         """
         truncated_chunks = []
         current_length = 0
+
         for chunk in chunks:
             if current_length + len(chunk) > self.MAX_CHARS:
                 break
             truncated_chunks.append(chunk)
             current_length += len(chunk)
+
         return truncated_chunks
 
     async def _distill_single_url(
@@ -48,6 +52,7 @@ class ContentDistiller:
 
             safe_chunks = self._truncate_chunks(chunks)
             prompt = get_distillation_prompt(safe_chunks)
+
             response = await self.client.chat.completions.create(
                 model="gemini-2.0-flash",
                 messages=[
@@ -70,7 +75,6 @@ class ContentDistiller:
 
         except Exception as e:
             logger.error(f"Distillation failed for {url}: {str(e)}")
-            # Re-raise as a custom DistillationError for consistent error handling
             raise DistillationError(f"Failed to distill {url}: {e}")
 
     async def distill_multiple_urls(
@@ -78,13 +82,11 @@ class ContentDistiller:
     ) -> List[SingleDistilledItem]:
         """
         Orchestrates the distillation of multiple URLs concurrently.
-        Identifies the primary source by comparing each URL with the provided primary_url.
         """
         tasks = []
+
         for url in urls:
             is_primary = (str(url) == str(primary_url)) if primary_url else False
-
             tasks.append(self._distill_single_url(url, is_primary=is_primary))
 
-        # Execute all tasks in parallel. return_exceptions=True ensures one failure doesn't stop others.
         return await asyncio.gather(*tasks, return_exceptions=True)
