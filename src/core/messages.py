@@ -6,3 +6,4 @@ MINDMAP_CONTENT_NOT_FOUND_ERROR = (
     "Please ensure the sources are ingested first."
 )
 
+MINDMAP_RETRIEVAL_ERROR = "Failed to retrieve content. Please try again later."
