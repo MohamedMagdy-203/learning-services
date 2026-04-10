@@ -16,11 +16,12 @@ _client: genai.Client | None = None  # type: ignore
 
 
 def _get_client() -> genai.Client:  # type: ignore
+    timeout_ms = getattr(get_settings(), "GEMINI_RERANKER_TIMEOUT_MS", 60000)
     global _client
     if _client is None:
         _client = genai.Client(  # type: ignore
             api_key=get_settings().GEMINI_API_KEY,
-            http_options=types.HttpOptions(timeout=300000),  # type: ignore
+            http_options=types.HttpOptions(timeout=timeout_ms),  # type: ignore
         )
     return _client  # type: ignore
 
