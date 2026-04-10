@@ -6,12 +6,29 @@ from src.core.exceptions import NoContentFoundError
 
 
 def get_qdrant_client() -> AsyncQdrantClient:
+    """
+    Create an AsyncQdrantClient configured to the application's Qdrant endpoint.
+    
+    Returns:
+        AsyncQdrantClient: Client instance connected to the configured Qdrant URL.
+    """
     return AsyncQdrantClient(url=get_settings().QDRANT_URL)
 
 
 async def retrieve_chunks_by_url(url: str) -> List[str]:
     """
-    Retrieves ALL text chunks from Qdrant based on a given URL using pagination (Asynchronously).
+    Fetches all stored text chunks whose Qdrant point payload has `metadata.url` equal to the given URL.
+    
+    The function paginates through the Qdrant collection, extracts the `page_content` field from each matching point's payload, and returns the accumulated list.
+    
+    Parameters:
+        url (str): URL used to match points where `metadata.url` equals this value.
+    
+    Returns:
+        List[str]: A list of `page_content` strings extracted from matching points.
+    
+    Raises:
+        NoContentFoundError: If no matching chunks are found for the provided URL.
     """
     client = get_qdrant_client()
     settings = get_settings()

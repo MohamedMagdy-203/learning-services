@@ -8,6 +8,15 @@ from src.models.distillation_schemas import SingleDistilledItem
 
 
 def build_openai_response(data: dict):
+    """
+    Create a MagicMock that mimics an OpenAI chat completion response with the provided data serialized as JSON.
+    
+    Parameters:
+        data (dict): The payload to embed; will be serialized with json.dumps and placed into the mock's message content.
+    
+    Returns:
+        MagicMock: A mock object where `.choices` is a list and `.choices[0].message.content` is the JSON string of `data`.
+    """
     return MagicMock(choices=[MagicMock(message=MagicMock(content=json.dumps(data)))])
 
 
@@ -31,6 +40,15 @@ async def test_primary_source_identification(monkeypatch):
     primary_url = HttpUrl("https://primary-source.com")
 
     async def fake_retrieve(url):
+        """
+        Return a single-item list containing a sample content string built from the given URL.
+        
+        Parameters:
+            url: The URL or identifier used to construct the sample content.
+        
+        Returns:
+            list[str]: A one-element list with the string "Sample content for <url>" where `<url>` is the provided value.
+        """
         return ["Sample content for " + str(url)]
 
     monkeypatch.setattr(
@@ -87,6 +105,18 @@ async def test_distillation_with_partial_failure(monkeypatch):
     ]
 
     async def fake_retrieve(url):
+        """
+        Simulate retrieving content for a URL, returning a fixed chunk list or raising a retrieval error.
+        
+        Parameters:
+            url (str): The URL to retrieve. If the string "fail" appears in `url`, the function simulates a retrieval failure.
+        
+        Returns:
+            list[str]: A single-item list containing "Success content" on success.
+        
+        Raises:
+            Exception: Always raised with message "Database connection error" when "fail" is in `url`.
+        """
         if "fail" in str(url):
             raise Exception("Database connection error")
         return ["Success content"]
@@ -124,6 +154,17 @@ async def test_parallel_execution_speed(monkeypatch):
     start_times = []
 
     async def slow_retrieve(url):
+        """
+        Simulates a slow retrieval of content chunks and records when retrieval began.
+        
+        Appends the current event-loop time to the module-level `start_times` list to record when retrieval started, waits 0.5 seconds to simulate network latency, and returns a single-item list representing retrieved content.
+        
+        Parameters:
+            url (str): The URL to retrieve (used only for test identification; not fetched).
+        
+        Returns:
+            list: A list containing a single string chunk: "Content".
+        """
         start_times.append(asyncio.get_event_loop().time())
         await asyncio.sleep(0.5)  # Simulate network delay
         return ["Content"]
