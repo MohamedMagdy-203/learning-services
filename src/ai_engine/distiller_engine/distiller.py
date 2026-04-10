@@ -1,6 +1,7 @@
 import logging
 import json
 import asyncio
+
 from typing import List, Optional
 
 from openai import AsyncOpenAI
@@ -87,6 +88,8 @@ class ContentDistiller:
 
         for url in urls:
             is_primary = (str(url) == str(primary_url)) if primary_url else False
+
             tasks.append(self._distill_single_url(url, is_primary=is_primary))
 
+        # Execute all tasks in parallel. return_exceptions=True ensures one failure doesn't stop others.
         return await asyncio.gather(*tasks, return_exceptions=True)
