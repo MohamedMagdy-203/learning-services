@@ -1,11 +1,10 @@
 import logging
 from fastapi import APIRouter, HTTPException, status
 
-from src.core.exceptions import MindmapContentNotFoundError
-from src.core.messages import MINDMAP_CONTENT_NOT_FOUND_ERROR
-from src.models.schemas import MindmapGenerationRequest,MindmapResponseSchema
-from src.mindmap_feature.retriever import retrieve_all_chunks_for_mindmap
-
+from src.core.exceptions import MindmapContentNotFoundError, MindmapRetrievalError
+from src.core.messages import MINDMAP_CONTENT_NOT_FOUND_ERROR, MINDMAP_RETRIEVAL_ERROR
+from src.models.schemas import MindmapGenerationRequest, MindmapResponseSchema
+from src.ai_engine.mindmap_feature.retriever import retrieve_all_chunks_for_mindmap
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +18,7 @@ mindmap_router = APIRouter(prefix="/api/v1/mindmap", tags=["mindmap"])
 )
 async def generate_mindmap_endpoint(
     request: MindmapGenerationRequest,
-) -> MindmapResponseSchema:   # type: ignore
+) -> MindmapResponseSchema: # type: ignore
     """
     Full pipeline:
     1. Fetch all stored chunks from Qdrant for the 3 source URLs.
@@ -29,7 +28,7 @@ async def generate_mindmap_endpoint(
     5. Return the structured mind map.
 
     The Main Backend sends all required context (subtopic info, weaknesses,
-    and the 3 source URLs) directly in the request body 
+    and the 3 source URLs) directly in the request body.
     """
     logger.info(
         "Mindmap request received | user: %s | subtopic: %s",
@@ -48,6 +47,16 @@ async def generate_mindmap_endpoint(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=MINDMAP_CONTENT_NOT_FOUND_ERROR,
+        )
+    except MindmapRetrievalError:
+        logger.error(
+            "Qdrant retrieval failed | user: %s | subtopic: %s",
+            request.user_id,
+            request.subtopic_id,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=MINDMAP_RETRIEVAL_ERROR,
         )
 
     logger.info(
