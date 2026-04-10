@@ -11,6 +11,7 @@ class Settings(BaseSettings):  # type: ignore
     GEMINI_API_KEY: str
     QDRANT_URL: str = "http://localhost:6333"
     QDRANT_COLLECTION_NAME: str = "learning_materials"
+    GEMINI_RERANKER_TIMEOUT_MS: int = 60000
 
 
 @lru_cache
