@@ -1,5 +1,5 @@
-
 from typing import List
+
 
 def get_distillation_prompt(text_chunks: List[str]) -> str:
     """
@@ -8,7 +8,7 @@ def get_distillation_prompt(text_chunks: List[str]) -> str:
     """
     combined_text = "\n\n".join(text_chunks)
 
-    return f"""Given the following text, identify the most important key terms, main points, and examples. 
+    return f"""Given the following text, identify the most important key terms, main points, and examples.
 
 The goal is to extract structured information that can later be used to generate quiz questions.
 
@@ -17,6 +17,7 @@ Present the output in a structured JSON format with three keys:
 - 'main_points': a list of clear and concise important points
 - 'examples': a list of illustrative or practical examples
 
+IMPORTANT: Maintain the language of the source text for all values in the JSON output. Do not translate the content.
 Return ONLY valid JSON (no extra text).
 
 Text:
