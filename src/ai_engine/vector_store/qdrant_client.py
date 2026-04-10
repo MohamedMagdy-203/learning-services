@@ -1,7 +1,7 @@
 
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, VectorParams  # type: ignore
-
+import threading
 from src.core.config import get_settings
 
 # Must match the embedding model dimension in embedder.py
@@ -11,6 +11,7 @@ VECTOR_SIZE: int = 768
 
 # Cached singleton client
 _client: QdrantClient | None = None
+_client_lock = threading.Lock()
 
 def get_qdrant_client() -> QdrantClient:  # type: ignore
     """
@@ -23,9 +24,10 @@ def get_qdrant_client() -> QdrantClient:  # type: ignore
     global _client
 
     if _client is None:
-        settings = get_settings()
-        _client = QdrantClient(url=settings.QDRANT_URL)  # type: ignore
-
+        with _client_lock:                 
+            if _client is None:            
+                settings = get_settings()
+                _client = QdrantClient(url=settings.QDRANT_URL)
     return _client
 
 
