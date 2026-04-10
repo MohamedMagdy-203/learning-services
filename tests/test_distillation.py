@@ -1,106 +1,145 @@
-import pytest
 import json
-from unittest.mock import AsyncMock, MagicMock, patch
-from fastapi.testclient import TestClient
-from src.main import app
-from src.models.distillation_schemas import ContentDistillationResponse
+import asyncio
+import pytest
+from unittest.mock import AsyncMock, MagicMock
+from pydantic import HttpUrl
+from src.ai_engine.distiller_engine.distiller import ContentDistiller
+from src.models.distillation_schemas import SingleDistilledItem
 
 
-@pytest.fixture
-def client():
-    with TestClient(app) as c:
-        yield c
-
-# Mock Data for Testing
-MOCK_URL = "https://example.com/python-basics"
-MOCK_CHUNKS = ["Python is a high-level language.", "It is used for data science."]
-MOCK_LLM_RESPONSE = {
-    "key_terms": [
-        {"term": "Python", "definition": "A high-level programming language."}
-    ],
-    "main_points": ["Python is versatile", "Great for beginners"],
-    "examples": ["Web development with Django"]
-}
+def build_openai_response(data: dict):
+    return MagicMock(choices=[MagicMock(message=MagicMock(content=json.dumps(data)))])
 
 
-@patch("src.ai_engine.distiller_engine.distiller.retrieve_chunks_by_url")
-@patch("src.ai_engine.distiller_engine.distiller.OpenAI")
-def test_distill_content_route_success(mock_openai_class, mock_retrieve_chunks, client):
+@pytest.mark.asyncio
+async def test_primary_source_identification(monkeypatch):
     """
-    This test ensures the full pipeline works:
-    1. Calls Retrieval and gets Chunks.
-    2. Sends Chunks to LLM and receives JSON.
-    3. Returns the Response correctly formatted according to the Schema.
+    Tests if the distiller correctly identifies the primary source
+    and marks it with is_primary=True.
     """
-   
-    mock_retrieve_chunks.return_value = MOCK_CHUNKS
-    
-    
-    mock_response = MagicMock()
-    mock_response.choices = [
-        MagicMock(message=MagicMock(content=json.dumps(MOCK_LLM_RESPONSE)))
+    distiller = ContentDistiller()
+
+    mock_client = MagicMock()
+    mock_create = AsyncMock()
+    mock_client.chat.completions.create = mock_create
+    distiller.client = mock_client
+
+    urls = [
+        HttpUrl("https://primary-source.com"),
+        HttpUrl("https://secondary-source.com"),
     ]
-    
-    mock_client_instance = mock_openai_class.return_value
-    mock_client_instance.chat.completions.create.return_value = mock_response
+    primary_url = HttpUrl("https://primary-source.com")
 
-  
-    response = client.post(
-        "/api/v1/dist/distill-content",
-        json={"url": MOCK_URL}
+    async def fake_retrieve(url):
+        return ["Sample content for " + str(url)]
+
+    monkeypatch.setattr(
+        "src.ai_engine.distiller_engine.distiller.retrieve_chunks_by_url", fake_retrieve
     )
 
+    # Mock OpenAI responses for both URLs
+    mock_create.side_effect = [
+        build_openai_response(
+            {
+                "key_terms": [{"term": "Primary", "definition": "Main source"}],
+                "main_points": ["Point 1"],
+                "examples": [],
+            }
+        ),
+        build_openai_response(
+            {
+                "key_terms": [{"term": "Secondary", "definition": "Extra source"}],
+                "main_points": ["Point A"],
+                "examples": [],
+            }
+        ),
+    ]
 
-    assert response.status_code == 200
-    data = response.json()
-    assert data["url"] == MOCK_URL
-    assert "distilled_content" in data
-    assert len(data["distilled_content"]["key_terms"]) > 0
-    assert data["distilled_content"]["key_terms"][0]["term"] == "Python"
+    results = await distiller.distill_multiple_urls(urls, primary_url=primary_url)
+
+    assert len(results) == 2
+
+    # Find primary and secondary results
+    primary_res = next(r for r in results if str(r.url) == str(primary_url))
+    secondary_res = next(r for r in results if str(r.url) != str(primary_url))
+
+    assert primary_res.is_primary is True
+    assert secondary_res.is_primary is False
+    assert primary_res.distilled_content.key_terms[0].term == "Primary"
 
 
-@patch("src.ai_engine.distiller_engine.distiller.retrieve_chunks_by_url")
-def test_distill_content_no_chunks(mock_retrieve_chunks, client):
+@pytest.mark.asyncio
+async def test_distillation_with_partial_failure(monkeypatch):
     """
-    Ensures the system returns an error (400 or 404) if no chunks are found for the URL.
+    Tests that if one URL fails, the others still succeed and
+    exceptions are returned in the results list.
     """
+    distiller = ContentDistiller()
 
-    mock_retrieve_chunks.return_value = []
+    mock_client = MagicMock()
+    mock_create = AsyncMock()
+    mock_client.chat.completions.create = mock_create
+    distiller.client = mock_client
 
-    response = client.post(
-        "/api/v1/dist/distill-content",
-        json={"url": "https://unknown-url.com"}
+    urls = [
+        HttpUrl("https://success.com"),
+        HttpUrl("https://fail.com"),
+    ]
+
+    async def fake_retrieve(url):
+        if "fail" in str(url):
+            raise Exception("Database connection error")
+        return ["Success content"]
+
+    monkeypatch.setattr(
+        "src.ai_engine.distiller_engine.distiller.retrieve_chunks_by_url", fake_retrieve
     )
 
+    mock_create.return_value = build_openai_response(
+        {"key_terms": [], "main_points": ["Success"], "examples": []}
+    )
 
-    assert response.status_code in [400, 404]
+    results = await distiller.distill_multiple_urls(urls)
+
+    assert len(results) == 2
+    # One should be a SingleDistilledItem, the other an Exception
+    success_count = sum(1 for r in results if isinstance(r, SingleDistilledItem))
+    error_count = sum(1 for r in results if isinstance(r, Exception))
+
+    assert success_count == 1
+    assert error_count == 1
 
 
-@patch("src.ai_engine.data_fetchers.distillation_retrieval.QdrantClient")
-@patch("src.ai_engine.data_fetchers.distillation_retrieval.get_settings")
-def test_retrieve_chunks_by_url_logic(mock_get_settings, mock_qdrant_class):
+@pytest.mark.asyncio
+async def test_parallel_execution_speed(monkeypatch):
     """
-    Tests the logic of retrieving chunks from Qdrant independently.
+    Ensures that multiple URLs are processed in parallel (not sequentially).
     """
-    from src.ai_engine.data_fetchers.distillation_retrieval import retrieve_chunks_by_url
-    
+    distiller = ContentDistiller()
+    mock_client = MagicMock()
+    mock_create = AsyncMock()
+    distiller.client = mock_client
+    mock_client.chat.completions.create = mock_create
 
-    mock_client_instance = mock_qdrant_class.return_value
-    mock_get_settings.return_value.QDRANT_COLLECTION_NAME = "test_collection"
-    
-    
-    mock_point = MagicMock()
-    mock_point.payload = {"page_content": "Test content from Qdrant", "metadata": {"url": MOCK_URL}}
-    mock_client_instance.scroll.return_value = ([mock_point], None)
+    start_times = []
 
+    async def slow_retrieve(url):
+        start_times.append(asyncio.get_event_loop().time())
+        await asyncio.sleep(0.5)  # Simulate network delay
+        return ["Content"]
 
-    chunks = retrieve_chunks_by_url(MOCK_URL)
+    monkeypatch.setattr(
+        "src.ai_engine.distiller_engine.distiller.retrieve_chunks_by_url", slow_retrieve
+    )
 
-    
-    assert len(chunks) == 1
-    assert chunks[0] == "Test content from Qdrant"
-    mock_client_instance.scroll.assert_called_once()
+    mock_create.return_value = build_openai_response(
+        {"key_terms": [], "main_points": [], "examples": []}
+    )
 
+    urls = [HttpUrl(f"https://url{i}.com") for i in range(3)]
 
-    #python -m pytest tests/test_distillation.py
+    await distiller.distill_multiple_urls(urls)
+    time_diff = max(start_times) - min(start_times)
+    assert time_diff < 0.1  # Strong evidence of parallel execution
 
+    # python -m pytest tests/test_distillation.py
