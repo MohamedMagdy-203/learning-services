@@ -31,7 +31,7 @@ async def test_fetch_subtopic_content_success(mock_tavily_class: MagicMock):
     first_result = result["results"][0]
     assert first_result["url"] == "https://www.youtube.com/watch?v=HXV3zeQKqGY"
     assert "SQL for Beginners" in first_result["title"]
-    assert "full course covers SQL" in first_result["raw_content"]
+    assert "full SQL course for beginners" in first_result["raw_content"]
 
 
 @pytest.mark.asyncio  # type: ignore
