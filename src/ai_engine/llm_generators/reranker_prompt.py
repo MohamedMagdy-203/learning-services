@@ -14,11 +14,12 @@ def build_reranker_prompt(
     sources_text = ""
     for i, source in enumerate(sources, 1):
         source_type = classify_source(source["url"])
+        content_preview = source["raw_content"][:1500]
         sources_text += (
             f"[Source {i}] ({source_type.upper()})\n"
             f"Title: {source['title']}\n"
             f"URL: {source['url']}\n"
-            f"Content:\n{source['raw_content']}\n"
+            f"Content:\n{content_preview}\n"
             f"{'---' * 20}\n"
         )
 
