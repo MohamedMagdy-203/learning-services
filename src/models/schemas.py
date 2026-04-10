@@ -72,4 +72,6 @@ class MindmapResponseSchema(BaseModel):
     user_id: str
     subtopic_id: str
     mindmap: MindmapNodeSchema
+
+    
      
