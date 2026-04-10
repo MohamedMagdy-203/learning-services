@@ -1,69 +1,90 @@
-
 import logging
 import json
-from typing import Dict, Any, List
-from openai import OpenAI
+import asyncio
+from typing import List, Optional
+from openai import AsyncOpenAI
+from pydantic import HttpUrl
 from src.core.config import get_settings
-from fastapi import HTTPException, status 
 from src.ai_engine.data_fetchers.distillation_retrieval import retrieve_chunks_by_url
 from src.ai_engine.llm_generators.distillation_prompts import get_distillation_prompt
-from src.core.messages import NO_CONTENT_FOUND, DISTILLATION_JSON_ERROR, DISTILLATION_GENERAL_ERROR
-from src.core.exceptions import NoContentFoundError, DistillationError
+from src.core.exceptions import DistillationError
+from src.models.distillation_schemas import SingleDistilledItem, DistilledContent
 
 logger = logging.getLogger(__name__)
+
 
 class ContentDistiller:
     def __init__(self):
         settings = get_settings()
-       
-        self.client = OpenAI(
-            api_key=settings.GEMINI_API_KEY, 
-            base_url="https://generativelanguage.googleapis.com/v1beta/openai/"
-         )
-    async def distill_content(self, url: str) -> Dict[str, Any]:
-        logger.info("Starting content distillation for URL: %s", url)
+        self.client = AsyncOpenAI(
+            api_key=settings.GEMINI_API_KEY,
+            base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
+        )
+        # Maximum character limit for the LLM prompt to avoid token overflow
+        self.MAX_CHARS = 100000
 
+    def _truncate_chunks(self, chunks: List[str]) -> List[str]:
+        """
+        Truncates the list of text chunks to ensure the total length stays within MAX_CHARS.
+        """
+        truncated_chunks = []
+        current_length = 0
+        for chunk in chunks:
+            if current_length + len(chunk) > self.MAX_CHARS:
+                break
+            truncated_chunks.append(chunk)
+            current_length += len(chunk)
+        return truncated_chunks
 
-
-        chunks = retrieve_chunks_by_url(url)
-        if not chunks:
-           logger.warning("No chunks found for URL: %s", url)
-           raise HTTPException(
-           status_code=status.HTTP_404_NOT_FOUND,
-           detail=NO_CONTENT_FOUND
-         )
-
-       
-        distillation_prompt = get_distillation_prompt(chunks)
+    async def _distill_single_url(
+        self, url: HttpUrl, is_primary: bool = False
+    ) -> SingleDistilledItem:
+        """
+        Processes a single URL: retrieves chunks, distills content via LLM,
+        and marks it as primary if specified.
+        """
         try:
-            distillation_response = self.client.chat.completions.create(
-                model="gemini-2.0-flash", 
+            chunks = await retrieve_chunks_by_url(str(url))
+
+            safe_chunks = self._truncate_chunks(chunks)
+            prompt = get_distillation_prompt(safe_chunks)
+            response = await self.client.chat.completions.create(
+                model="gemini-2.0-flash",
                 messages=[
                     {
                         "role": "system",
-                        "content": "You are a helpful assistant that distills content into key terms, main points, and examples in JSON format."
+                        "content": "You are a helpful assistant that distills content into JSON.",
                     },
-                    {"role": "user", "content": distillation_prompt}
+                    {"role": "user", "content": prompt},
                 ],
-                response_format={"type": "json_object"}
+                response_format={"type": "json_object"},
             )
 
-            distilled_content_str = distillation_response.choices[0].message.content
-            distilled_content = json.loads(distilled_content_str)
-            logger.info("Content distilled successfully for URL: %s", url)
+            distilled_dict = json.loads(response.choices[0].message.content)
 
-        except json.JSONDecodeError as e:
-            logger.error(
-                "Error decoding JSON from LLM response for URL %s: %s\nResponse: %s",
-                url, e, distilled_content_str
+            return SingleDistilledItem(
+                url=url,
+                distilled_content=DistilledContent(**distilled_dict),
+                is_primary=is_primary,
             )
-            raise DistillationError(f"{DISTILLATION_JSON_ERROR}: {e}")
 
         except Exception as e:
-            logger.error("Error during content distillation for URL %s: %s", url, e)
-            raise DistillationError(f"{DISTILLATION_GENERAL_ERROR}: {e}")
+            logger.error(f"Distillation failed for {url}: {str(e)}")
+            # Re-raise as a custom DistillationError for consistent error handling
+            raise DistillationError(f"Failed to distill {url}: {e}")
 
-        return {
-            "url": url,
-            "distilled_content": distilled_content
-        }
+    async def distill_multiple_urls(
+        self, urls: List[HttpUrl], primary_url: Optional[HttpUrl] = None
+    ) -> List[SingleDistilledItem]:
+        """
+        Orchestrates the distillation of multiple URLs concurrently.
+        Identifies the primary source by comparing each URL with the provided primary_url.
+        """
+        tasks = []
+        for url in urls:
+            is_primary = (str(url) == str(primary_url)) if primary_url else False
+
+            tasks.append(self._distill_single_url(url, is_primary=is_primary))
+
+        # Execute all tasks in parallel. return_exceptions=True ensures one failure doesn't stop others.
+        return await asyncio.gather(*tasks, return_exceptions=True)
