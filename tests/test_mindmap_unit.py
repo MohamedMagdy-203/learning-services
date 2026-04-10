@@ -1,6 +1,7 @@
 import json
 import pytest
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock, AsyncMock
+
 from src.core.mock_data import (
     MOCK_MINDMAP_REQUEST,
     MOCK_MINDMAP_REQUEST_ONE_SOURCE,
@@ -27,6 +28,7 @@ def request_one_source() -> MindmapGenerationRequest:
 @pytest.fixture
 def request_no_sources() -> MindmapGenerationRequest:
     return MindmapGenerationRequest(**MOCK_MINDMAP_REQUEST_NO_SOURCES)
+
 
 class TestMindmapParser:
     def test_parses_valid_json(self) -> None:
@@ -70,6 +72,7 @@ class TestMindmapParser:
 
         with pytest.raises(ValueError):
             parse_mindmap_response("")
+
 
 class TestMindmapPrompt:
     def test_prompt_contains_subtopic_name(
@@ -129,6 +132,7 @@ class TestMindmapPrompt:
         assert "JSON" in prompt
         assert "children" in prompt
 
+
 class TestMindmapRetriever:
     @pytest.mark.asyncio
     async def test_skips_none_urls(
@@ -181,3 +185,80 @@ class TestMindmapRetriever:
             chunks = await retrieve_all_chunks_for_mindmap(request_all_sources)
 
         assert len(chunks) == len(MOCK_MINDMAP_CHUNKS) * 3
+
+
+class TestMindmapGenerator:
+    @pytest.mark.asyncio
+    async def test_generate_mindmap_success(
+        self, request_all_sources: MindmapGenerationRequest
+    ) -> None:
+        from src.ai_engine.mindmap_feature.mindmap_generator import generate_mindmap
+
+        mock_response = MagicMock()
+        mock_response.text = MOCK_MINDMAP_JSON
+
+        with patch(
+            "src.ai_engine.mindmap_feature.mindmap_generator._get_client"
+        ) as mock_get_client:
+            mock_client = MagicMock()
+            mock_client.aio.models.generate_content = AsyncMock(
+                return_value=mock_response
+            )
+            mock_get_client.return_value = mock_client
+
+            result = await generate_mindmap(
+                request=request_all_sources,
+                chunks=MOCK_MINDMAP_CHUNKS,
+            )
+
+        assert isinstance(result, MindmapNodeSchema)
+        assert result.topic == "Database Fundamentals"
+        assert len(result.children) == 5
+
+    @pytest.mark.asyncio
+    async def test_generate_mindmap_raises_on_empty_response(
+        self, request_all_sources: MindmapGenerationRequest
+    ) -> None:
+        from src.ai_engine.mindmap_feature.mindmap_generator import generate_mindmap
+
+        mock_response = MagicMock()
+        mock_response.text = None
+
+        with patch(
+            "src.ai_engine.mindmap_feature.mindmap_generator._get_client"
+        ) as mock_get_client:
+            mock_client = MagicMock()
+            mock_client.aio.models.generate_content = AsyncMock(
+                return_value=mock_response
+            )
+            mock_get_client.return_value = mock_client
+
+            with pytest.raises(ValueError, match="empty response"):
+                await generate_mindmap(
+                    request=request_all_sources,
+                    chunks=MOCK_MINDMAP_CHUNKS,
+                )
+
+    @pytest.mark.asyncio
+    async def test_generate_mindmap_raises_on_invalid_json(
+        self, request_all_sources: MindmapGenerationRequest
+    ) -> None:
+        from src.ai_engine.mindmap_feature.mindmap_generator import generate_mindmap
+
+        mock_response = MagicMock()
+        mock_response.text = "not valid json {{{"
+
+        with patch(
+            "src.ai_engine.mindmap_feature.mindmap_generator._get_client"
+        ) as mock_get_client:
+            mock_client = MagicMock()
+            mock_client.aio.models.generate_content = AsyncMock(
+                return_value=mock_response
+            )
+            mock_get_client.return_value = mock_client
+
+            with pytest.raises(ValueError):
+                await generate_mindmap(
+                    request=request_all_sources,
+                    chunks=MOCK_MINDMAP_CHUNKS,
+                )
