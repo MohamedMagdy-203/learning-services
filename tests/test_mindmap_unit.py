@@ -8,7 +8,8 @@ from src.core.mock_data import (
     MOCK_MINDMAP_CHUNKS,
     MOCK_MINDMAP_RESPONSE,
 )
-from src.models.schemas import MindmapGenerationRequest
+from src.models.schemas import MindmapGenerationRequest, MindmapNodeSchema
+
 
 MOCK_MINDMAP_JSON = json.dumps(MOCK_MINDMAP_RESPONSE)
 
@@ -27,6 +28,48 @@ def request_one_source() -> MindmapGenerationRequest:
 def request_no_sources() -> MindmapGenerationRequest:
     return MindmapGenerationRequest(**MOCK_MINDMAP_REQUEST_NO_SOURCES)
 
+class TestMindmapParser:
+    def test_parses_valid_json(self) -> None:
+        from src.ai_engine.mindmap_feature.mindmap_parser import parse_mindmap_response
+
+        result = parse_mindmap_response(MOCK_MINDMAP_JSON)
+        assert isinstance(result, MindmapNodeSchema)
+        assert result.topic == "Database Fundamentals"
+        assert len(result.children) == 5
+
+    def test_parses_json_with_markdown_fences(self) -> None:
+        from src.ai_engine.mindmap_feature.mindmap_parser import parse_mindmap_response
+
+        fenced = f"```json\n{MOCK_MINDMAP_JSON}\n```"
+        result = parse_mindmap_response(fenced)
+        assert isinstance(result, MindmapNodeSchema)
+        assert result.topic == "Database Fundamentals"
+
+    def test_parses_nested_children(self) -> None:
+        from src.ai_engine.mindmap_feature.mindmap_parser import parse_mindmap_response
+
+        result = parse_mindmap_response(MOCK_MINDMAP_JSON)
+        first_branch = result.children[0]
+        assert first_branch.topic == "SQL Databases"
+        assert len(first_branch.children) == 3
+
+    def test_raises_on_invalid_json(self) -> None:
+        from src.ai_engine.mindmap_feature.mindmap_parser import parse_mindmap_response
+
+        with pytest.raises(ValueError, match="not valid JSON"):
+            parse_mindmap_response("this is not json at all")
+
+    def test_raises_on_missing_topic_field(self) -> None:
+        from src.ai_engine.mindmap_feature.mindmap_parser import parse_mindmap_response
+
+        with pytest.raises(ValueError):
+            parse_mindmap_response('{"children": []}')
+
+    def test_raises_on_empty_response(self) -> None:
+        from src.ai_engine.mindmap_feature.mindmap_parser import parse_mindmap_response
+
+        with pytest.raises(ValueError):
+            parse_mindmap_response("")
 
 class TestMindmapPrompt:
     def test_prompt_contains_subtopic_name(
