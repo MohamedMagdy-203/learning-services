@@ -7,6 +7,7 @@
   - [Overview](#overview)
   - [System Architecture \& Workflow](#system-architecture--workflow)
     - [Step-by-Step Flow Explanation](#step-by-step-flow-explanation)
+  - [Feature: Quiz Generation](#feature-quiz-generation)
   - [Project Structure](#project-structure)
   - [Tech Stack](#tech-stack)
   - [Setup \& Installation](#setup--installation)
@@ -77,6 +78,13 @@ The router receives the request and calls the Main Backend to fetch the full roa
 A search query is built from the subtopic and user profile, then reformulated by Gemini for better semantic accuracy. If Gemini fails, a manual fallback query is used. The query runs a similarity_search against Qdrant filtered strictly by metadata.url
 #### Phase 3 — Generation & Response
 The retrieved chunks are combined with the learner's profile and weaknesses into a structured prompt sent to Gemini. The LLM response is parsed and validated into a MindmapNodeSchema
+## Feature: Quiz Generation
+   An AI-powered learning feature that transforms the learner’s selected **content source** (best course, best video, or best blog) into a personalized study experience and instant feedback.
+    It uses the selected source as the primary knowledge base, supplements it with supporting ranked sources when needed, and adapts question difficulty dynamically based on some factors that will be explained later.After each answer, the learner receives immediate corrective feedback,At the end of the session the system produces weakness summary, key concepts to review, and optional AI-generated visual or audio learning aids.
+
+### Quiz Generation workflow
+![Quiz Generation](image.png)
+
 ## Project Structure
 
 The codebase is organized modularly to separate API routing, core configurations, data models, and the AI engine logic:
