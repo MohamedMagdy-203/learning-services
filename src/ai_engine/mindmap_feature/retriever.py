@@ -129,7 +129,14 @@ async def retrieve_all_chunks_for_mindmap(
             )
     if not all_chunks:
         if errors:
-            raise errors[0]
+            logger.error(
+              "All source retrievals failed | subtopic=%s | first_error=%s",
+                request.subtopic_name,
+                str(errors[0]),
+            )
+            raise MindmapContentNotFoundError(
+                MindmapContentNotFoundError.DEFAULT_MESSAGE
+            ) from errors[0]
         logger.error(
             "No chunks found across all sources | subtopic=%s",
             request.subtopic_name,
