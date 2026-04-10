@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 def _clean_video_transcript(raw_content: str) -> str:
     raw_content = raw_content.replace("\n", " ")
     raw_content = re.sub(
-        r"(?<!\w)(um|uh|ah|you know|like)(?!\w)", "", raw_content, flags=re.IGNORECASE
+        r"(?<!\w)(um|uh|ah|you know)(?!\w)", "", raw_content, flags=re.IGNORECASE
     )
     return re.sub(r"[ \t]+", " ", raw_content).strip()
 
