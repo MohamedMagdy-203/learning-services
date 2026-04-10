@@ -1,7 +1,6 @@
 import json
 import pytest
 from unittest.mock import patch
-
 from src.core.mock_data import (
     MOCK_MINDMAP_REQUEST,
     MOCK_MINDMAP_REQUEST_ONE_SOURCE,
@@ -29,15 +28,73 @@ def request_no_sources() -> MindmapGenerationRequest:
     return MindmapGenerationRequest(**MOCK_MINDMAP_REQUEST_NO_SOURCES)
 
 
+class TestMindmapPrompt:
+    def test_prompt_contains_subtopic_name(
+        self, request_all_sources: MindmapGenerationRequest
+    ) -> None:
+        from src.ai_engine.mindmap_feature.mindmap_prompt import build_mindmap_prompt
+
+        prompt = build_mindmap_prompt(
+            request=request_all_sources,
+            chunks=MOCK_MINDMAP_CHUNKS,
+        )
+        assert request_all_sources.subtopic_name in prompt
+
+    def test_prompt_contains_difficulty(
+        self, request_all_sources: MindmapGenerationRequest
+    ) -> None:
+        from src.ai_engine.mindmap_feature.mindmap_prompt import build_mindmap_prompt
+
+        prompt = build_mindmap_prompt(
+            request=request_all_sources,
+            chunks=MOCK_MINDMAP_CHUNKS,
+        )
+        assert request_all_sources.subtopic_difficulty in prompt
+
+    def test_prompt_contains_weaknesses(
+        self, request_all_sources: MindmapGenerationRequest
+    ) -> None:
+        from src.ai_engine.mindmap_feature.mindmap_prompt import build_mindmap_prompt
+
+        prompt = build_mindmap_prompt(
+            request=request_all_sources,
+            chunks=MOCK_MINDMAP_CHUNKS,
+        )
+        for weakness in request_all_sources.weaknesses:
+            assert weakness in prompt
+
+    def test_prompt_contains_chunks(
+        self, request_all_sources: MindmapGenerationRequest
+    ) -> None:
+        from src.ai_engine.mindmap_feature.mindmap_prompt import build_mindmap_prompt
+
+        prompt = build_mindmap_prompt(
+            request=request_all_sources,
+            chunks=MOCK_MINDMAP_CHUNKS,
+        )
+        assert MOCK_MINDMAP_CHUNKS[0][:50] in prompt
+
+    def test_prompt_contains_json_instruction(
+        self, request_all_sources: MindmapGenerationRequest
+    ) -> None:
+        from src.ai_engine.mindmap_feature.mindmap_prompt import build_mindmap_prompt
+
+        prompt = build_mindmap_prompt(
+            request=request_all_sources,
+            chunks=MOCK_MINDMAP_CHUNKS,
+        )
+        assert "JSON" in prompt
+        assert "children" in prompt
+
 class TestMindmapRetriever:
     @pytest.mark.asyncio
     async def test_skips_none_urls(
         self, request_one_source: MindmapGenerationRequest
     ) -> None:
-        from src.mindmap_feature.retriever import retrieve_all_chunks_for_mindmap
+        from src.ai_engine.mindmap_feature.retriever import retrieve_all_chunks_for_mindmap
 
         with patch(
-            "src.mindmap_feature.retriever._scroll_chunks_by_url",
+            "src.ai_engine.mindmap_feature.retriever._scroll_chunks_by_url",
             return_value=MOCK_MINDMAP_CHUNKS,
         ):
             chunks = await retrieve_all_chunks_for_mindmap(request_one_source)
@@ -48,7 +105,7 @@ class TestMindmapRetriever:
     async def test_raises_when_no_sources(
         self, request_no_sources: MindmapGenerationRequest
     ) -> None:
-        from src.mindmap_feature.retriever import retrieve_all_chunks_for_mindmap
+        from src.ai_engine.mindmap_feature.retriever import retrieve_all_chunks_for_mindmap
         from src.core.exceptions import MindmapContentNotFoundError
 
         with pytest.raises(MindmapContentNotFoundError):
@@ -58,11 +115,11 @@ class TestMindmapRetriever:
     async def test_raises_when_all_urls_return_empty(
         self, request_all_sources: MindmapGenerationRequest
     ) -> None:
-        from src.mindmap_feature.retriever import retrieve_all_chunks_for_mindmap
+        from src.ai_engine.mindmap_feature.retriever import retrieve_all_chunks_for_mindmap
         from src.core.exceptions import MindmapContentNotFoundError
 
         with patch(
-            "src.mindmap_feature.retriever._scroll_chunks_by_url",
+            "src.ai_engine.mindmap_feature.retriever._scroll_chunks_by_url",
             return_value=[],
         ):
             with pytest.raises(MindmapContentNotFoundError):
@@ -72,10 +129,10 @@ class TestMindmapRetriever:
     async def test_combines_chunks_from_all_sources(
         self, request_all_sources: MindmapGenerationRequest
     ) -> None:
-        from src.mindmap_feature.retriever import retrieve_all_chunks_for_mindmap
+        from src.ai_engine.mindmap_feature.retriever import retrieve_all_chunks_for_mindmap
 
         with patch(
-            "src.mindmap_feature.retriever._scroll_chunks_by_url",
+            "src.ai_engine.mindmap_feature.retriever._scroll_chunks_by_url",
             return_value=MOCK_MINDMAP_CHUNKS,
         ):
             chunks = await retrieve_all_chunks_for_mindmap(request_all_sources)
