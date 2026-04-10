@@ -8,3 +8,6 @@ class TavilyCallingError(Exception):
 
 class MindmapContentNotFoundError(Exception):
     DEFAULT_MESSAGE = "No content found in vector store for the requested subtopic"
+
+class MindmapRetrievalError(Exception):
+    DEFAULT_MESSAGE = "Failed to retrieve content from vector store"    
