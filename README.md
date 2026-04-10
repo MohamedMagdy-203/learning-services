@@ -8,6 +8,9 @@
   - [System Architecture \& Workflow](#system-architecture--workflow)
     - [Step-by-Step Flow Explanation](#step-by-step-flow-explanation)
   - [Feature: Quiz Generation](#feature-quiz-generation)
+    - [Quiz Generation workflow](#quiz-generation-workflow)
+  - [Feature: Summarization](#feature-summarization)
+  - [Summarization workflow](#summarization-workflow)
   - [Project Structure](#project-structure)
   - [Tech Stack](#tech-stack)
   - [Setup \& Installation](#setup--installation)
@@ -39,7 +42,7 @@ quizzes, mindmaps, and summaries.
 
 Below is the high-level data flow of the Learning Services AI Engine:
 
-![System Architecture](Project_Flow_Diagram.png)
+![System Architecture](assets/Project_Flow_Diagram.png)
 
 ### Step-by-Step Flow Explanation
 
@@ -66,17 +69,21 @@ Below is the high-level data flow of the Learning Services AI Engine:
     material, which is then stored in the database.
 
 ## Feature: Quiz Generation
+
    An AI-powered learning feature that transforms the learner’s selected **content source** (best course, best video, or best blog) into a personalized study experience and instant feedback.
     It uses the selected source as the primary knowledge base, supplements it with supporting ranked sources when needed, and adapts question difficulty dynamically based on some factors that will be explained later.After each answer, the learner receives immediate corrective feedback,At the end of the session the system produces weakness summary, key concepts to review, and optional AI-generated visual or audio learning aids.
 
 ### Quiz Generation workflow
-![Quiz Generation](image.png)
+
+![Quiz Generation](assets/image.png)
 
 ## Feature: Summarization
+
 The Summarization feature provides structured learning by distilling content stored in a Qdrant vector database. The service retrieves the top relevant sections for a specific topic using vector similarity search, then uses the configured LLM pipeline to generate a concise, beginner-friendly summary grounded in the retrieved context.
 
 ## Summarization workflow
-![Summarization](summarization-image.jpeg)
+
+![Summarization](assets/summarization-image.jpeg)
 
 ## Project Structure
 
