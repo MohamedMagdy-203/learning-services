@@ -1,3 +1,4 @@
+
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, VectorParams  # type: ignore
 
@@ -8,9 +9,24 @@ from src.core.config import get_settings
 # If you change the model, delete the Qdrant collection and recreate it
 VECTOR_SIZE: int = 768
 
+# Cached singleton client
+_client: QdrantClient | None = None
 
 def get_qdrant_client() -> QdrantClient:  # type: ignore
-    return QdrantClient(url=get_settings().QDRANT_URL)  # type: ignore
+    """
+    Returns a shared Qdrant client instance.
+
+    Creating a new client for every call can lead to many open
+    connections under concurrency. This function caches a single
+    client instance and reuses it across the application.
+    """
+    global _client
+
+    if _client is None:
+        settings = get_settings()
+        _client = QdrantClient(url=settings.QDRANT_URL)  # type: ignore
+
+    return _client
 
 
 def ensure_collection_exists() -> None:
