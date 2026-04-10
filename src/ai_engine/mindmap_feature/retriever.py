@@ -28,10 +28,10 @@ def _scroll_chunks_by_url(url: str, limit: int) -> List[str]:
     """
 
     client = get_qdrant_client()
-
+    settings = get_settings()
     try:
         results, _ = client.scroll(
-            collection_name=get_settings().QDRANT_COLLECTION_NAME,
+            collection_name=settings.QDRANT_COLLECTION_NAME,
             scroll_filter=Filter(
                 must=[
                     FieldCondition(
@@ -43,6 +43,7 @@ def _scroll_chunks_by_url(url: str, limit: int) -> List[str]:
             limit=limit,
             with_payload=True,
             with_vectors=False,
+            timeout=getattr(settings, "QDRANT_TIMEOUT_SECONDS", 10)
         )
 
         chunks: List[str] = []
@@ -104,11 +105,15 @@ async def retrieve_all_chunks_for_mindmap(
         labels,
     )
 
-    results = await asyncio.gather(*tasks)
-
+    results = await asyncio.gather(*tasks, return_exceptions=True)
     all_chunks: List[str] = []
-
-    for label, chunks in zip(labels, results):
+    errors: List[Exception] = []
+    for label, result in zip(labels, results, strict=True):
+        if isinstance(result, Exception):
+            logger.error("Source '%s' failed | error=%s", label, str(result))
+            errors.append(result)
+            continue
+        chunks: List[str] = result  # type: ignore  
         if chunks:
             logger.info(
                 "Source '%s' returned %d chunks",
@@ -116,23 +121,23 @@ async def retrieve_all_chunks_for_mindmap(
                 len(chunks),
             )
             all_chunks.extend(chunks)
-
         else:
             logger.warning(
                 "Source '%s' returned no chunks | subtopic=%s",
                 label,
                 request.subtopic_name,
             )
-
     if not all_chunks:
+        if errors:
+            raise errors[0]
         logger.error(
             "No chunks found across all sources | subtopic=%s",
             request.subtopic_name,
         )
-
         raise MindmapContentNotFoundError(
             MindmapContentNotFoundError.DEFAULT_MESSAGE
         )
+
 
     logger.info(
         "Total chunks collected | count=%d | subtopic=%s",
@@ -141,4 +146,5 @@ async def retrieve_all_chunks_for_mindmap(
     )
 
     return all_chunks
+
 
