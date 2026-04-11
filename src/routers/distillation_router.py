@@ -15,6 +15,12 @@ _distiller = ContentDistiller()
 
 
 def get_distiller() -> ContentDistiller:
+    """
+    Provide the shared ContentDistiller instance used by route handlers.
+    
+    Returns:
+        content_distiller (ContentDistiller): The module-level shared ContentDistiller instance.
+    """
     return _distiller
 
 
@@ -23,6 +29,21 @@ async def distill_content(
     request: ContentDistillationRequest,
     distiller: ContentDistiller = Depends(get_distiller),
 ):
+    """
+    Distill content from the provided URLs and return the successfully distilled results.
+    
+    Filters out failed distillation tasks, logs failures, and ensures that when a `primary_url` is provided it appears among the successful results.
+    
+    Parameters:
+        request (ContentDistillationRequest): Request containing `urls` to distill and optional `primary_url` that must be present among successful results when specified.
+    
+    Returns:
+        ContentDistillationResponse: Response containing the list of successfully distilled results.
+    
+    Raises:
+        HTTPException: 422 Unprocessable Entity when `primary_url` is provided but no successful result matches it.
+        HTTPException: 400 Bad Request when no content could be distilled successfully.
+    """
     results = await distiller.distill_multiple_urls(
         urls=request.urls, primary_url=request.primary_url
     )

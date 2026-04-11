@@ -18,6 +18,11 @@ logger = logging.getLogger(__name__)
 
 class ContentDistiller:
     def __init__(self):
+        """
+        Initialize the ContentDistiller.
+        
+        Creates and configures an AsyncOpenAI client using the GEMINI API key from application settings and sets a maximum prompt character limit of 100000 to reduce the risk of token overflow.
+        """
         settings = get_settings()
         self.client = AsyncOpenAI(
             api_key=settings.GEMINI_API_KEY,
@@ -28,7 +33,13 @@ class ContentDistiller:
 
     def _truncate_chunks(self, chunks: List[str]) -> List[str]:
         """
-        Truncates the list of text chunks to ensure the total length stays within MAX_CHARS.
+        Selects a prefix of the provided text chunks whose combined character count does not exceed the instance's MAX_CHARS.
+        
+        Parameters:
+            chunks (List[str]): Ordered text chunks to consider.
+        
+        Returns:
+            List[str]: A list containing the initial chunks whose total length is less than or equal to `self.MAX_CHARS`.
         """
         truncated_chunks = []
         current_length = 0
@@ -45,8 +56,19 @@ class ContentDistiller:
         self, url: HttpUrl, is_primary: bool = False
     ) -> SingleDistilledItem:
         """
-        Processes a single URL: retrieves chunks, distills content via LLM,
-        and marks it as primary if specified.
+        Distills content for a single URL and returns a SingleDistilledItem.
+        
+        Retrieves text chunks for the given URL, produces a distilled representation using the configured LLM, and packages the result with the original URL and primary flag.
+        
+        Parameters:
+            url (HttpUrl): The URL whose content will be distilled.
+            is_primary (bool): When True, marks the returned item as the primary source.
+        
+        Returns:
+            SingleDistilledItem: An object containing `url`, `distilled_content` (parsed into `DistilledContent`), and `is_primary`.
+        
+        Raises:
+            DistillationError: If retrieval, distillation, parsing, or construction of the distilled result fails.
         """
         try:
             chunks = await retrieve_chunks_by_url(str(url))
@@ -82,7 +104,14 @@ class ContentDistiller:
         self, urls: List[HttpUrl], primary_url: Optional[HttpUrl] = None
     ) -> List[SingleDistilledItem]:
         """
-        Orchestrates the distillation of multiple URLs concurrently.
+        Orchestrates concurrent distillation for a collection of URLs.
+        
+        Parameters:
+            urls (List[HttpUrl]): Source URLs to distill.
+            primary_url (Optional[HttpUrl]): If provided, the result whose URL string equals this value is marked as primary.
+        
+        Returns:
+            List[Union[SingleDistilledItem, Exception]]: A list where successful entries are `SingleDistilledItem` objects and failed tasks are represented by the corresponding `Exception` instances.
         """
         tasks = []
 

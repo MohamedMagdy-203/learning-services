@@ -3,8 +3,15 @@ from typing import List
 
 def get_distillation_prompt(text_chunks: List[str]) -> str:
     """
-    Generates a prompt for content distillation to extract key terms and main points.
-    The output should be structured and easy to parse.
+    Builds a prompt that instructs a language model to distill input text into structured JSON containing key terms, main points, and examples.
+    
+    The prompt embeds the provided text (joined with two newlines between segments) and requires the model to return only valid JSON with three top-level keys: `key_terms` (list of objects with `term` and `definition`), `main_points` (list of concise strings), and `examples` (list of strings). The prompt also requires preserving the source text language for all JSON values and forbids any surrounding explanatory text.
+    
+    Parameters:
+        text_chunks (List[str]): Segments of the source text to include in the prompt; segments will be joined with two newlines.
+    
+    Returns:
+        str: The assembled prompt string ready to be sent to a language model.
     """
     combined_text = "\n\n".join(text_chunks)
 
