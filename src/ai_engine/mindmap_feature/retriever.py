@@ -4,7 +4,7 @@ from typing import List, Coroutine, Any
 from qdrant_client.models import Filter, FieldCondition, MatchValue
 from src.ai_engine.vector_store.qdrant_client import get_qdrant_client
 from src.core.config import get_settings
-from src.core.exceptions import MindmapContentNotFoundError
+from src.core.exceptions import MindmapContentNotFoundError, MindmapRetrievalError
 from src.models.schemas import MindmapGenerationRequest
 
 logger = logging.getLogger(__name__)
@@ -13,6 +13,9 @@ logger = logging.getLogger(__name__)
 CHUNKS_PER_COURSE: int = 10
 CHUNKS_PER_VIDEO: int = 8
 CHUNKS_PER_BLOG: int = 8
+
+# Explicit hardcoded timeout — not implied to be configurable via settings
+QDRANT_SCROLL_TIMEOUT_SECONDS: int = 10
 
 
 def _scroll_chunks_by_url(url: str, limit: int) -> List[str]:
@@ -26,9 +29,9 @@ def _scroll_chunks_by_url(url: str, limit: int) -> List[str]:
     Returns:
         List[str]: page_content strings belonging to this URL
     """
-
     client = get_qdrant_client()
     settings = get_settings()
+
     try:
         results, _ = client.scroll(
             collection_name=settings.QDRANT_COLLECTION_NAME,
@@ -43,7 +46,7 @@ def _scroll_chunks_by_url(url: str, limit: int) -> List[str]:
             limit=limit,
             with_payload=True,
             with_vectors=False,
-            timeout=getattr(settings, "QDRANT_TIMEOUT_SECONDS", 10)
+            timeout=QDRANT_SCROLL_TIMEOUT_SECONDS,
         )
 
         chunks: List[str] = []
@@ -91,9 +94,9 @@ async def retrieve_all_chunks_for_mindmap(
         List[str]: combined chunks from all available sources
 
     Raises:
-        MindmapContentNotFoundError: if no content is found
+        MindmapRetrievalError: if one or more Qdrant fetches fail
+        MindmapContentNotFoundError: if all fetches succeed but return no chunks
     """
-
     sources = [
         ("course", request.best_course_url, CHUNKS_PER_COURSE),
         ("video", request.best_video_url, CHUNKS_PER_VIDEO),
@@ -117,12 +120,13 @@ async def retrieve_all_chunks_for_mindmap(
     results = await asyncio.gather(*tasks, return_exceptions=True)
     all_chunks: List[str] = []
     errors: List[Exception] = []
+
     for label, result in zip(labels, results, strict=True):
         if isinstance(result, Exception):
             logger.error("Source '%s' failed | error=%s", label, str(result))
             errors.append(result)
             continue
-        chunks: List[str] = result  # type: ignore  
+        chunks: List[str] = result  # type: ignore
         if chunks:
             logger.info(
                 "Source '%s' returned %d chunks",
@@ -136,16 +140,20 @@ async def retrieve_all_chunks_for_mindmap(
                 label,
                 request.subtopic_name,
             )
+
+    # Qdrant/network failure — surfaces as service error, not "content not found"
+    if errors and not all_chunks:
+        logger.error(
+            "All source retrievals failed | subtopic=%s | first_error=%s",
+            request.subtopic_name,
+            str(errors[0]),
+        )
+        raise MindmapRetrievalError(
+            MindmapRetrievalError.DEFAULT_MESSAGE
+        ) from errors[0]
+
+    # All fetches succeeded but every source returned zero chunks
     if not all_chunks:
-        if errors:
-            logger.error(
-              "All source retrievals failed | subtopic=%s | first_error=%s",
-                request.subtopic_name,
-                str(errors[0]),
-            )
-            raise MindmapContentNotFoundError(
-                MindmapContentNotFoundError.DEFAULT_MESSAGE
-            ) from errors[0]
         logger.error(
             "No chunks found across all sources | subtopic=%s",
             request.subtopic_name,
@@ -153,7 +161,6 @@ async def retrieve_all_chunks_for_mindmap(
         raise MindmapContentNotFoundError(
             MindmapContentNotFoundError.DEFAULT_MESSAGE
         )
-
 
     logger.info(
         "Total chunks collected | count=%d | subtopic=%s",
