@@ -31,7 +31,7 @@ def request_one_source() -> MindmapGenerationRequest:
 async def test_retrieval_all_sources(
     request_all_sources: MindmapGenerationRequest,
 ) -> None:
-    """التحقق من جلب الـ chunks من الـ 3 مصادر معاً."""
+    """Ensure the number of chunks per source does not exceed the limit."""
     from src.ai_engine.mindmap_feature.retriever import retrieve_all_chunks_for_mindmap
 
     chunks = await retrieve_all_chunks_for_mindmap(request_all_sources)
@@ -57,7 +57,7 @@ async def test_retrieval_all_sources(
 async def test_retrieval_one_source(
     request_one_source: MindmapGenerationRequest,
 ) -> None:
-    """التحقق من إن الـ retriever بيتعامل صح مع مصدر واحد بس."""
+    """Ensure the retriever works correctly when only one source is provided."""
     from src.ai_engine.mindmap_feature.retriever import retrieve_all_chunks_for_mindmap
 
     chunks = await retrieve_all_chunks_for_mindmap(request_one_source)
