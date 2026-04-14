@@ -11,3 +11,19 @@ PRIMARY_SOURCE_REQUIRED_ERROR = "Critical Error: The primary source ({url}) is r
 NO_CONTENT_DISTILLED_ERROR = (
     "Failed to distill any of the provided content URLs. Please check your sources."
 )
+
+
+INVALID_QUESTION_COUNT = "Cannot generate {num_questions} questions. Number of questions must be positive for source {source_url}."
+EMPTY_SOURCE_CONTENT = "Source content for {source_url} is empty."
+INVALID_JSON_FORMAT = "LLM response for {source_url} is not valid JSON."
+NO_QUESTIONS_FOUND = "No questions found in LLM response for {source_url}."
+VALIDATION_FAILED = "Question validation failed for subtopic {subtopic_id}."
+LLM_API_ERROR = "LLM API error for {source_url}: {error}"
+GENERATION_STARTED = "Starting question generation for subtopic {subtopic_id}."
+GENERATION_COMPLETED = "Generated {count} questions for subtopic {subtopic_id}."
+PROMPT_GENERATION_ERROR = "Error generating prompt for source {source_url}: {error}"
+INVALID_JSON = "Invalid JSON returned from LLM"
+SKIP_QUESTION = "Invalid question skipped: {e}"
+FEWER_EXPECTED_QUESTIONS = "Generated fewer questions than expected"
+QUIZ_GENERATED_SUCCESSFULLY = "Quiz generated successfully: {count} questions"
+BANK_GENERATION_FAILED = "Failed to generate quiz bank"
