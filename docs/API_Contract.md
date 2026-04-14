@@ -4,7 +4,7 @@
 
 **Request**
 
-```
+```http
 GET http://localhost:3000/api/internal/roadmap-context/{user_id}/{subtopic_id}
 ```
 
@@ -40,7 +40,7 @@ GET http://localhost:3000/api/internal/roadmap-context/{user_id}/{subtopic_id}
 
 **Request**
 
-```
+```http
 GET http://localhost:8000/api/v1/data/roadmap-content/{user_id}/{subtopic_id}
 ```
 
@@ -60,7 +60,7 @@ GET http://localhost:8000/api/v1/data/roadmap-content/{user_id}/{subtopic_id}
 
 **Request**
 
-```
+```http
 POST http://localhost:8000/api/v1/dist/distill-content
 ```
 
@@ -115,7 +115,7 @@ POST http://localhost:8000/api/v1/dist/distill-content
 ## 4. Main Backend → AI Service (Quiz Bank Generation)
 
 **Request**
-```
+```http
 POST http://localhost:8000/api/v1/quiz-bank/generate
 ```
 
