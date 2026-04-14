@@ -71,7 +71,7 @@ Below is the high-level data flow of the Learning Services AI Engine:
 
 The codebase is organized modularly to separate API routing, core configurations, data models, and the AI engine logic:
 
-```text
+```
 learning-services/
 ├── src/
 │   ├── ai_engine/                   # Core logic for data fetching, processing, and LLMs
@@ -92,6 +92,11 @@ learning-services/
 │   │   │   ├── reranker_parser.py   # JSON response parser and raw_content enricher
 │   │   │   ├── reranker_prompt.py   # Prompt builder for the reranker LLM
 │   │   │   └── source_classifier.py # URL-based source type classifier (course/video/blog)
+
+│   │   ├── BankQuestions_engine/    # Quiz Bank generation logic (NEW)
+│   │   │   ├── __init__.py
+│   │   │   └── BankQuestions_generator.py # Generates quiz questions from distilled content using LLM
+
 │   │   ├── text_processing/         # Text preprocessing and chunking utilities
 │   │   │   ├── __init__.py
 │   │   │   └── chunker.py           # Semantic text chunker with multilingual support
@@ -102,6 +107,7 @@ learning-services/
 │   │       ├── prepare_store_document.py # Document preparation and chunking pipeline
 │   │       ├── qdrant_client.py         # Qdrant client and collection management
 │   │       └── store.py                 # Vector store ingestion entry point
+
 │   ├── core/                        # Application-wide settings, utilities, and constants
 │   │   ├── __init__.py
 │   │   ├── config.py                # Pydantic BaseSettings for environment variables validation
@@ -109,20 +115,27 @@ learning-services/
 │   │   ├── exceptions.py            # Custom exception classes (e.g., TavilyCallingError)
 │   │   ├── messages.py              # Standardized string messages for API responses
 │   │   └── mock_data.py             # Static sample data used for testing and development fallback
+
 │   ├── models/                      # Data structures and validation models
 │   │   ├── __init__.py
 │   │   ├── distillation_schemas.py  # Schemas for distillation pipeline inputs/outputs
+│   │   ├── BankQuestions_schemas.py # Schemas for quiz bank (Question, QuizBank, request validation) (NEW)
 │   │   └── schemas.py               # Pydantic schemas (UserProfileSchema, TargetSubtopicSchema)
+
 │   ├── routers/                     # FastAPI route definitions and controllers
 │   │   ├── __init__.py
 │   │   ├── base.py                  # Base router including the root/welcome API endpoint
 │   │   ├── data.py                  # Endpoints for data retrieval and processing requests
-│   │   └── distillation_router.py   # Endpoints for triggering distillation workflows
+│   │   ├── distillation_router.py   # Endpoints for triggering distillation workflows
+│   │   └── BankQuestions_router.py  # Endpoint for quiz bank generation (NEW)
+
 │   ├── services/                    # Clients for communicating with internal/external microservices
 │   │   ├── __init__.py
 │   │   └── main_backend_client.py   # HTTPX client to fetch roadmap context from the main backend
+
 │   ├── __init__.py
 │   └── main.py                      # FastAPI application instance and entry point
+
 ├── tests/                           # Automated testing suite (Unit & Integration tests)
 │   ├── __init__.py
 │   ├── conftest.py                  # Pytest configuration and custom CLI options (e.g., --integration)
@@ -139,7 +152,9 @@ learning-services/
 │   ├── test_tavily_client.py        # Unit tests for Tavily API interactions (with mocked responses)
 │   ├── test_tavily_integration.py   # Real API integration tests verifying live Tavily web searches
 │   ├── test_vector_store_integration.py # Integration tests for vector database operations
-│   └── test_vector_store_unit.py    # Unit tests for vector store logic
+│   ├── test_vector_store_unit.py    # Unit tests for vector store logic
+│   └── test_bank_questions.py       # Tests for quiz bank generation logic and validation (NEW)
+
 ├── .env.example                     # Template showing required environment variables
 ├── .gitignore                       # List of files and folders to be ignored by Git version control
 ├── .pre-commit-config.yaml          # Configuration for code formatting and linting hooks (Black, Ruff)
@@ -153,7 +168,7 @@ It uses the selected source as the primary knowledge base, supplements it with s
 
 ### Quiz Generation workflow
 
-![Quiz Generation](assets/image.png)
+![Quiz Generation](image.png)
 
 ## Feature: Summarization
 
