@@ -1,4 +1,4 @@
-from typing import List, Literal
+from typing import List, Literal, Dict
 from pydantic import BaseModel, Field, HttpUrl
 
 
@@ -16,7 +16,8 @@ class Question(BaseModel):
     )
     content: str = Field(..., description="The question text.")
     options: List[str] = Field(
-        ..., description="List of possible answers (empty for True/False)."
+        ...,
+        description='List of possible answers (will be ["True", "False"] for True/False questions).',
     )
     correct_answer: str = Field(..., description="The correct answer to the question.")
     explanation: str = Field(..., description="Explanation for the correct answer.")
