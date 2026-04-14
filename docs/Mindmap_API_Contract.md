@@ -63,15 +63,15 @@ Content-Type: application/json
                                                         subtopic
                                                         identifier
 
-  best_course_url       string \| null No               Course URL
+  best_course_url       string \| null No\Yes               Course URL
                                                         stored in
                                                          Qdrant
 
-  best_video_url        string \| null No               Video URL
+  best_video_url        string \| null No\Yes               Video URL
                                                         stored in
                                                          Qdrant
 
-  best_blog_url         string \| null No               Blog URL
+  best_blog_url         string \| null No\Yes               Blog URL
                                                         stored in
                                                         Qdrant
 
