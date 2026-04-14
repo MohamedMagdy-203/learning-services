@@ -156,6 +156,11 @@ class BankQuestionsGenerator:
         primary_item = next((i for i in distilled_results if i.is_primary), None)
 
         if not primary_item:
+            primary_item = next(
+                (i for i in distilled_results if str(i.url) == str(primary_url)), None
+            )
+
+        if not primary_item:
             raise LLMGenerationError(f"Primary source not found: {primary_url}")
 
         tasks.append(
