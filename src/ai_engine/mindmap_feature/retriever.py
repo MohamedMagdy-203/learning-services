@@ -18,7 +18,7 @@ CHUNKS_PER_BLOG: int = 8
 QDRANT_SCROLL_TIMEOUT_SECONDS: int = 10
 
 
-def _scroll_chunks_by_url(url: str, limit: int) -> List[str]:
+def _scroll_chunks_by_url(client, settings, url: str, limit: int) -> List[str]:
     """
     Fetch all stored chunks for a single source URL using Qdrant scroll.
 
@@ -29,8 +29,6 @@ def _scroll_chunks_by_url(url: str, limit: int) -> List[str]:
     Returns:
         List[str]: page_content strings belonging to this URL
     """
-    client = get_qdrant_client()
-    settings = get_settings()
 
     try:
         results, _ = client.scroll(
@@ -97,6 +95,8 @@ async def retrieve_all_chunks_for_mindmap(
         MindmapRetrievalError: if one or more Qdrant fetches fail
         MindmapContentNotFoundError: if all fetches succeed but return no chunks
     """
+    client = get_qdrant_client()
+    settings = get_settings()
     sources = [
         ("course", request.best_course_url, CHUNKS_PER_COURSE),
         ("video", request.best_video_url, CHUNKS_PER_VIDEO),
@@ -108,7 +108,9 @@ async def retrieve_all_chunks_for_mindmap(
 
     for label, url, limit in sources:
         if url:
-            tasks.append(asyncio.to_thread(_scroll_chunks_by_url, url, limit))
+            tasks.append(
+                asyncio.to_thread(_scroll_chunks_by_url, client, settings, url, limit)
+            )
             labels.append(label)
 
     logger.info(
@@ -148,9 +150,9 @@ async def retrieve_all_chunks_for_mindmap(
             request.subtopic_name,
             str(errors[0]),
         )
-        raise MindmapRetrievalError(
-            MindmapRetrievalError.DEFAULT_MESSAGE
-        ) from errors[0]
+        raise MindmapRetrievalError(MindmapRetrievalError.DEFAULT_MESSAGE) from errors[
+            0
+        ]
 
     # All fetches succeeded but every source returned zero chunks
     if not all_chunks:
@@ -158,9 +160,7 @@ async def retrieve_all_chunks_for_mindmap(
             "No chunks found across all sources | subtopic=%s",
             request.subtopic_name,
         )
-        raise MindmapContentNotFoundError(
-            MindmapContentNotFoundError.DEFAULT_MESSAGE
-        )
+        raise MindmapContentNotFoundError(MindmapContentNotFoundError.DEFAULT_MESSAGE)
 
     logger.info(
         "Total chunks collected | count=%d | subtopic=%s",
