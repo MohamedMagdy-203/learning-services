@@ -1,4 +1,3 @@
-
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, VectorParams  # type: ignore
 import threading
@@ -13,6 +12,7 @@ VECTOR_SIZE: int = 768
 _client: QdrantClient | None = None
 _client_lock = threading.Lock()
 
+
 def get_qdrant_client() -> QdrantClient:  # type: ignore
     """
     Returns a shared Qdrant client instance.
@@ -24,8 +24,8 @@ def get_qdrant_client() -> QdrantClient:  # type: ignore
     global _client
 
     if _client is None:
-        with _client_lock:                 
-            if _client is None:            
+        with _client_lock:
+            if _client is None:
                 settings = get_settings()
                 _client = QdrantClient(url=settings.QDRANT_URL)
     return _client
