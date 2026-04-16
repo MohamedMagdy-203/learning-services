@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from typing import List, Dict, Optional
-from pydantic import ConfigDict, HttpUrl
+from pydantic import ConfigDict, HttpUrl, Field
 from pydantic.alias_generators import to_camel
 
 
@@ -53,19 +53,19 @@ class MindmapGenerationRequest(BaseModel):
     best_course_url: Optional[HttpUrl] = None
     best_video_url: Optional[HttpUrl] = None
     best_blog_url: Optional[HttpUrl] = None
-    primary_url: Optional[HttpUrl] = None
+    primary_url: HttpUrl
 
     # Subtopic context needed for the prompt
     subtopic_name: str
     subtopic_difficulty: str
 
     # Learner weaknesses — used to personalize the mindmap
-    weaknesses: Dict[str, str]
+    weaknesses: Optional[Dict[str, str]] = None
 
 
 class MindmapNodeSchema(BaseModel):
     topic: str
-    children: list["MindmapNodeSchema"] = []
+    children: list["MindmapNodeSchema"] = Field(default_factory=list)
 
 
 MindmapNodeSchema.model_rebuild()
