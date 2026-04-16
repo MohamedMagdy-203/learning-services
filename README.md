@@ -93,23 +93,31 @@ learning-services/
 │   │   │   ├── cleaned_tavily_data.py # Pipeline orchestrator to fetch and clean subtopic content
 │   │   │   ├── data_cleaner.py      # Regex-based text sanitization (removes HTML, boilerplate, URLs)
 │   │   │   ├── query_builder.py     # Logic to construct targeted search queries based on user profile
-│   │   │   └── tavily_client.py     # Async client wrapper for Tavily web search API
+│   │   │   ├── tavily_client.py     # Async client wrapper for Tavily web search API
+│   │   │   ├── chunks_retrieval.py  # Handles retrieval of relevant text chunks from vector store (Qdrant)
+│   │   │   └── qdrant_client_dependency.py # Provides Qdrant client instance via dependency injection
 │   │   ├── llm_generators/
 │   │   │   ├── __init__.py
 │   │   │   ├── reranker.py          # LLM reranking pipeline orchestrator
 │   │   │   ├── reranker_parser.py   # JSON response parser and raw_content enricher
 │   │   │   ├── reranker_prompt.py   # Prompt builder for the reranker LLM
-│   │   │   └── source_classifier.py # URL-based source type classifier (course/video/blog)
+│   │   │   ├── source_classifier.py # URL-based source type classifier (course/video/blog)
+│   │   │   └── summarization_prompt.py # Prompt builder for summarization LLM
 │   │   ├── text_processing/
 │   │   │   ├── __init__.py
 │   │   │   └── chunker.py           # Semantic text chunker with multilingual support
-│   │   └── vector_store/
-│   │       ├── __init__.py
-│   │       ├── embedder.py              # HuggingFace embedding model loader
-│   │       ├── filters.py               # Qdrant deduplication filter by URL
-│   │       ├── prepare_store_document.py # Document preparation and chunking pipeline
-│   │       ├── qdrant_client.py         # Qdrant client and collection management
-│   │       └── store.py                 # Vector store ingestion entry point
+│   │   ├── vector_store/
+│   │   │   ├── __init__.py
+│   │   │   ├── embedder.py              # HuggingFace embedding model loader
+│   │   │   ├── filters.py               # Qdrant deduplication filter by URL
+│   │   │   ├── prepare_store_document.py # Document preparation and chunking pipeline
+│   │   │   ├── qdrant_client.py         # Qdrant client and collection management
+│   │   │   └── store.py                 # Vector store ingestion entry point
+│   │   ├── summarization_engine/        # Modules responsible for generating summaries using LLMs
+│   │   │   ├── __init__.py
+│   │   │   ├── summarizer.py            # Core service that orchestrates fetching, processing, and summarizing content
+│   │   │   └── openai_client_dependency.py # Provides OpenAI client instance via FastAPI dependency injection
+│   │
 │   ├── core/                        # Application-wide settings, utilities, and constants
 │   │   ├── __init__.py
 │   │   ├── config.py                # Pydantic BaseSettings for environment variables validation
@@ -117,18 +125,25 @@ learning-services/
 │   │   ├── exceptions.py            # Custom exception classes (e.g., TavilyCallingError)
 │   │   ├── messages.py              # Standardized string messages for API responses
 │   │   └── mock_data.py             # Static sample data used for testing and development fallback
+│   │
 │   ├── models/                      # Data structures and validation models
 │   │   ├── __init__.py
-│   │   └── schemas.py               # Pydantic schemas (UserProfileSchema, TargetSubtopicSchema)
+│   │   ├── schemas.py               # Pydantic schemas (UserProfileSchema, TargetSubtopicSchema)
+│   │   └── summarization_schemas.py # Request and response schemas for summarization endpoints
+│   │
 │   ├── routers/                     # FastAPI route definitions and controllers
 │   │   ├── __init__.py
 │   │   ├── base.py                  # Base router including the root/welcome API endpoint
-│   │   └── data.py                  # Endpoints for data retrieval and processing requests
+│   │   ├── data.py                  # Endpoints for data retrieval and processing requests
+│   │   └── summarization_router.py  # API endpoints for triggering summarization operations
+│   │
 │   ├── services/                    # Clients for communicating with internal/external microservices
 │   │   ├── __init__.py
 │   │   └── main_backend_client.py   # HTTPX client to fetch roadmap context from the main backend
+│   │
 │   ├── __init__.py
 │   └── main.py                      # FastAPI application instance and entry point
+│
 ├── tests/                           # Automated testing suite (Unit & Integration tests)
 │   ├── __init__.py
 │   ├── conftest.py                  # Pytest configuration and custom CLI options (e.g., --integration)
@@ -136,13 +151,16 @@ learning-services/
 │   ├── test_config.py               # Unit tests verifying application configuration loading
 │   ├── test_main_backend_client.py  # Mocked tests verifying the main backend HTTP client
 │   ├── test_tavily_client.py        # Unit tests for Tavily API interactions (with mocked responses)
-│   └── test_tavily_integration.py   # Real API integration tests verifying live Tavily web searches
+│   ├── test_tavily_integration.py   # Real API integration tests verifying live Tavily web searches
+│   └── test_summarization.py        # Tests covering summarization service
+│
 ├── .env.example                     # Template showing required environment variables
 ├── .gitignore                       # List of files and folders to be ignored by Git version control
 ├── .pre-commit-config.yaml          # Configuration for code formatting and linting hooks (Black, Ruff)
 ├── README.md                        # Main project documentation and contribution guidelines
 └── requirements.txt                 # List of project Python dependencies and versions
 ```
+
 
 ## Tech Stack
 
