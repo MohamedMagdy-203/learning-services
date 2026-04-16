@@ -56,7 +56,7 @@ GET http://localhost:8000/api/v1/data/roadmap-content/{user_id}/{subtopic_id}
 }
 ```
 
-## 3.Main Backend → AI Service (Summarization)
+## 3. Main Backend → AI Service (Summarization)
 
 **Request**
 
