@@ -73,7 +73,10 @@ Below is the high-level data flow of the Learning Services AI Engine:
 ![Quiz Generation](image.png)
 
 ## Feature: Summarization
-The Summarization feature provides structured learning by distilling content stored in a Qdrant vector database. The service automatically queries the database to retrieve the top three most relevant sections for a specific topic and processes them through a Flan-T5 NLP pipeline. This workflow ensures that every generated summary is technically accurate and grounded in verified data, transforming dense database records into clear, beginner-friendly insights while maintaining strict data integrity.
+The Summarization feature provides structured learning by summarizing content retrieved from a Qdrant vector database.
+The system queries Qdrant using a primary URL to retrieve the most relevant text chunks associated with a specific topic. These chunks are then passed into a prompt-building layer, which prepares a structured input for an LLM.
+The summarization is performed using an OpenAI-powered pipeline via an injected AsyncOpenAI client. The model processes the retrieved context and generates a concise, beginner-friendly summary.
+This flow ensures that summaries are always based on stored and relevant data, while keeping the output simple and readable for users.
 
 ### Summarization workflow
 ![Summarization](summarization-image.jpeg)
