@@ -86,13 +86,16 @@ The mindmap feature generates a personalized, hierarchical mind map for a learne
 
 #### Phase 1 — Request & Context
 
-The router receives the request and calls the Main Backend to fetch the full roadmap context — user profile, target subtopic, and known weaknesses.
+The router receives the mindmap request and uses the source information provided in that request (for example, the selected content URL / primary URL) as the retrieval context for the workflow. It does not call the Main Backend to fetch additional roadmap context.
+
 #### Phase 2 — Retrieval from Vector Store
 
-A search query is built from the subtopic and user profile, then reformulated by Gemini for better semantic accuracy. If Gemini fails, a manual fallback query is used. The query runs a similarity_search against Qdrant filtered strictly by metadata.url
+The service retrieves the stored content chunks directly from Qdrant by applying a strict `primary_url` metadata filter and using scroll-based retrieval to collect the matching records for that source. This flow does not use Gemini query reformulation or `similarity_search` for mindmap retrieval.
+
 #### Phase 3 — Generation & Response
 
-The retrieved chunks are combined with the learner's profile and weaknesses into a structured prompt sent to Gemini. The LLM response is parsed and validated into a MindmapNodeSchema
+The retrieved chunks are assembled into a structured prompt and sent to Gemini to generate the mindmap. The model output is then parsed and validated into a `MindmapNodeSchema` response before being returned to the caller.response is parsed and validated into a MindmapNodeSchema
+
 ## Feature: Quiz Generation
 
    An AI-powered learning feature that transforms the learner’s selected **content source** (best course, best video, or best blog) into a personalized study experience and instant feedback.
