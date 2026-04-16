@@ -3,22 +3,24 @@ import logging
 from typing import List, Coroutine, Any
 from qdrant_client.models import Filter, FieldCondition, MatchValue
 from src.ai_engine.vector_store.qdrant_client import get_qdrant_client
-from src.core.config import get_settings
+from src.core.config import get_settings, Settings
 from src.core.exceptions import MindmapContentNotFoundError, MindmapRetrievalError
 from src.models.schemas import MindmapGenerationRequest
+from pydantic import HttpUrl
+from qdrant_client import QdrantClient
 
 logger = logging.getLogger(__name__)
 
 # Chunks fetched per source — course gets more because it has richer structure
-CHUNKS_PER_COURSE: int = 10
-CHUNKS_PER_VIDEO: int = 8
-CHUNKS_PER_BLOG: int = 8
+CHUNKS_PER_PRIMARY_URL = 50
 
 # Explicit hardcoded timeout — not implied to be configurable via settings
 QDRANT_SCROLL_TIMEOUT_SECONDS: int = 10
 
 
-def _scroll_chunks_by_url(client, settings, url: str, limit: int) -> List[str]:
+def _scroll_chunks_by_url(
+    client, settings, primary_url: HttpUrl, limit: int
+) -> List[str]:
     """
     Fetch all stored chunks for a single source URL using Qdrant scroll.
 
@@ -37,7 +39,7 @@ def _scroll_chunks_by_url(client, settings, url: str, limit: int) -> List[str]:
                 must=[
                     FieldCondition(
                         key="metadata.url",
-                        match=MatchValue(value=url),
+                        match=MatchValue(value=str(primary_url)),
                     )
                 ]
             ),
@@ -58,13 +60,13 @@ def _scroll_chunks_by_url(client, settings, url: str, limit: int) -> List[str]:
             elif content is not None:
                 logger.warning(
                     "Skipping non-string page_content | url=%s | type=%s",
-                    url,
+                    primary_url,
                     type(content).__name__,
                 )
 
         logger.info(
             "Scroll complete | url=%s | chunks_found=%d",
-            url,
+            primary_url,
             len(chunks),
         )
 
@@ -73,7 +75,7 @@ def _scroll_chunks_by_url(client, settings, url: str, limit: int) -> List[str]:
     except Exception as e:
         logger.error(
             "Qdrant scroll failed | url=%s | error=%s",
-            url,
+            primary_url,
             str(e),
         )
         raise
@@ -81,6 +83,8 @@ def _scroll_chunks_by_url(client, settings, url: str, limit: int) -> List[str]:
 
 async def retrieve_all_chunks_for_mindmap(
     request: MindmapGenerationRequest,
+    client: QdrantClient | None = None,
+    settings: Settings | None = None,
 ) -> List[str]:
     """
     Retrieve content chunks from course/video/blog sources concurrently.
@@ -95,21 +99,22 @@ async def retrieve_all_chunks_for_mindmap(
         MindmapRetrievalError: if one or more Qdrant fetches fail
         MindmapContentNotFoundError: if all fetches succeed but return no chunks
     """
-    client = get_qdrant_client()
-    settings = get_settings()
+    client = client or get_qdrant_client()
+    settings = settings or get_settings()
+
     sources = [
-        ("course", request.best_course_url, CHUNKS_PER_COURSE),
-        ("video", request.best_video_url, CHUNKS_PER_VIDEO),
-        ("blog", request.best_blog_url, CHUNKS_PER_BLOG),
+        ("PRIMARY_URL", request.primary_url, CHUNKS_PER_PRIMARY_URL),
     ]
 
     tasks: List[Coroutine[Any, Any, List[str]]] = []
     labels: List[str] = []
 
-    for label, url, limit in sources:
-        if url:
+    for label, primary_url, limit in sources:
+        if primary_url:
             tasks.append(
-                asyncio.to_thread(_scroll_chunks_by_url, client, settings, url, limit)
+                asyncio.to_thread(
+                    _scroll_chunks_by_url, client, settings, primary_url, limit
+                )
             )
             labels.append(label)
 
