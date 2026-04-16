@@ -222,7 +222,7 @@ MOCK_MINDMAP_REQUEST_NO_SOURCES: Dict[str, Any] = {
     "best_course_url": None,
     "best_video_url": None,
     "best_blog_url": None,
-    "primary_url": None,
+    "primary_url": "https://learn.microsoft.com/en-us/shows/dbfundamentals/",
 }
 
 MOCK_MINDMAP_CHUNKS: list[str] = [
