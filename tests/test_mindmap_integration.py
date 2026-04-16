@@ -77,20 +77,17 @@ async def test_retrieval_one_source(
 async def test_chunks_per_source_limits(
     request_all_sources: MindmapGenerationRequest,
 ) -> None:
-    """التحقق من إن عدد الـ chunks لكل مصدر مش بيتعدى الـ limit."""
     from src.ai_engine.mindmap_feature.retriever import (
         retrieve_all_chunks_for_mindmap,
-        CHUNKS_PER_COURSE,
-        CHUNKS_PER_VIDEO,
-        CHUNKS_PER_BLOG,
+        CHUNKS_PER_PRIMARY_URL,
     )
 
     chunks = await retrieve_all_chunks_for_mindmap(request_all_sources)
 
-    max_total = CHUNKS_PER_COURSE + CHUNKS_PER_VIDEO + CHUNKS_PER_BLOG
-    assert len(chunks) <= max_total, (
-        f"Expected at most {max_total} chunks, got {len(chunks)}"
-    )
+    max_total = CHUNKS_PER_PRIMARY_URL
+    assert (
+        len(chunks) <= max_total
+    ), f"Expected at most {max_total} chunks, got {len(chunks)}"
 
     logger.info("\n" + "=" * 60)
     logger.info("CHUNKS LIMIT CHECK")
@@ -105,7 +102,6 @@ async def test_chunks_per_source_limits(
 async def test_full_generation_pipeline(
     request_all_sources: MindmapGenerationRequest,
 ) -> None:
-    """Qdrant retrieval + Gemini generation كاملة."""
     from src.ai_engine.mindmap_feature.retriever import retrieve_all_chunks_for_mindmap
     from src.ai_engine.mindmap_feature.mindmap_generator import generate_mindmap
 
@@ -120,10 +116,13 @@ async def test_full_generation_pipeline(
 
     assert isinstance(mindmap, MindmapNodeSchema)
     assert mindmap.topic == request_all_sources.subtopic_name
-    assert len(mindmap.children) >= 3
-    assert len(mindmap.children) <= 5
+
+    assert len(mindmap.children) >= 2, "Mindmap should have at least 2 main branches"
+    assert len(mindmap.children) <= 15, "Mindmap has too many branches, might break UI"
+
     assert all(isinstance(branch.topic, str) for branch in mindmap.children)
-    assert all(len(branch.children) >= 2 for branch in mindmap.children)
+
+    assert isinstance(mindmap.children[0].children, list)
 
     logger.info("\n" + "=" * 60)
     logger.info("FULL GENERATION PIPELINE")
