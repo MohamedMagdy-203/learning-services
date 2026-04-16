@@ -55,3 +55,29 @@ GET http://localhost:8000/api/v1/data/roadmap-content/{user_id}/{subtopic_id}
   "best_blog":   { "title": "...", "url": "..." }
 }
 ```
+
+## 3.Main Backend → AI Service (Summarization)
+
+**Request**
+
+```http
+POST http://localhost:8000/api/v1/summarize/generate
+```
+```json
+{
+  "user_id": "user_123",
+  "subtopic_id": "sub_456",
+  "primary_url": "https://example.com/article"
+}
+```
+
+**Response**
+
+```json
+{
+  "user_id": "user_123",
+  "subtopic_id": "sub_456",
+  "primary_url": "https://example.com/article",
+  "summary": "This article explains the basics of database normalization and why it is important..."
+}
+```
