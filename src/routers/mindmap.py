@@ -55,7 +55,10 @@ async def generate_mindmap_endpoint(
         )
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=MINDMAP_CONTENT_NOT_FOUND_ERROR,
+            detail={
+                "code": "CONTENT_NOT_FOUND",
+                "message": MINDMAP_CONTENT_NOT_FOUND_ERROR,
+            },
         )
     except MindmapRetrievalError:
         logger.error(
@@ -65,7 +68,7 @@ async def generate_mindmap_endpoint(
         )
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=MINDMAP_RETRIEVAL_ERROR,
+            detail={"code": "RETRIEVAL_ERROR", "message": MINDMAP_RETRIEVAL_ERROR},
         )
 
     logger.info(
@@ -86,7 +89,10 @@ async def generate_mindmap_endpoint(
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to generate mind map. Please try again later.",
+            detail={
+                "code": "LLM_GENERATION_ERROR",
+                "message": "Failed to generate mind map. Please try again later.",
+            },
         ) from exc
     except Exception as exc:
         logger.exception(
@@ -96,7 +102,10 @@ async def generate_mindmap_endpoint(
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to generate mind map. Please try again later.",
+            detail={
+                "code": "LLM_GENERATION_ERROR",
+                "message": "Failed to generate mind map. Please try again later.",
+            },
         ) from exc
 
     logger.info(
