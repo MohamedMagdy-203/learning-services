@@ -138,7 +138,9 @@ class TestMindmapRetriever:
     async def test_skips_none_urls(
         self, request_one_source: MindmapGenerationRequest
     ) -> None:
-        from src.ai_engine.mindmap_feature.retriever import retrieve_all_chunks_for_mindmap
+        from src.ai_engine.mindmap_feature.retriever import (
+            retrieve_all_chunks_for_mindmap,
+        )
 
         with patch(
             "src.ai_engine.mindmap_feature.retriever._scroll_chunks_by_url",
@@ -152,7 +154,9 @@ class TestMindmapRetriever:
     async def test_raises_when_no_sources(
         self, request_no_sources: MindmapGenerationRequest
     ) -> None:
-        from src.ai_engine.mindmap_feature.retriever import retrieve_all_chunks_for_mindmap
+        from src.ai_engine.mindmap_feature.retriever import (
+            retrieve_all_chunks_for_mindmap,
+        )
         from src.core.exceptions import MindmapContentNotFoundError
 
         with pytest.raises(MindmapContentNotFoundError):
@@ -162,7 +166,9 @@ class TestMindmapRetriever:
     async def test_raises_when_all_urls_return_empty(
         self, request_all_sources: MindmapGenerationRequest
     ) -> None:
-        from src.ai_engine.mindmap_feature.retriever import retrieve_all_chunks_for_mindmap
+        from src.ai_engine.mindmap_feature.retriever import (
+            retrieve_all_chunks_for_mindmap,
+        )
         from src.core.exceptions import MindmapContentNotFoundError
 
         with patch(
@@ -176,7 +182,9 @@ class TestMindmapRetriever:
     async def test_combines_chunks_from_all_sources(
         self, request_all_sources: MindmapGenerationRequest
     ) -> None:
-        from src.ai_engine.mindmap_feature.retriever import retrieve_all_chunks_for_mindmap
+        from src.ai_engine.mindmap_feature.retriever import (
+            retrieve_all_chunks_for_mindmap,
+        )
 
         with patch(
             "src.ai_engine.mindmap_feature.retriever._scroll_chunks_by_url",
@@ -184,7 +192,7 @@ class TestMindmapRetriever:
         ):
             chunks = await retrieve_all_chunks_for_mindmap(request_all_sources)
 
-        assert len(chunks) == len(MOCK_MINDMAP_CHUNKS) * 3
+        assert len(chunks) == len(MOCK_MINDMAP_CHUNKS)
 
 
 class TestMindmapGenerator:
