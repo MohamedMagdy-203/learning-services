@@ -11,11 +11,11 @@ async def init_openai_client():
     """
     global openai_client
     settings = get_settings()
-
-    openai_client = AsyncOpenAI(
-        api_key=settings.GEMINI_API_KEY,
-        base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
-    )
+    if openai_client is None:
+        openai_client = AsyncOpenAI(
+            api_key=settings.GEMINI_API_KEY,
+            base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
+        )
 
 
 async def close_openai_client():
@@ -25,6 +25,7 @@ async def close_openai_client():
     global openai_client
     if openai_client:
         await openai_client.close()
+        openai_client = None
 
 
 def get_openai_client() -> AsyncOpenAI:
