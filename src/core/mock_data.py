@@ -194,9 +194,10 @@ arabic_content = (
 MOCK_MINDMAP_REQUEST: Dict[str, Any] = {
     "user_id": "user_123",
     "subtopic_id": "sub_456",
-    "best_course_url": "https://www.udemy.com/course/the-complete-sql-bootcamp/",
-    "best_video_url": "https://www.youtube.com/watch?v=wR0jg0eQsZA",
-    "best_blog_url": "https://www.mongodb.com/nosql-explained/nosql-vs-sql",
+    "best_course_url": "https://www.coursera.org/learn/introduction-to-databases",
+    "best_video_url": "https://www.classcentral.com/course/youtube-database-fundamentals-for-beginners-database-tutorial-141003",
+    "best_blog_url": "https://learn.microsoft.com/en-us/shows/dbfundamentals/",
+    "primary_url": "https://learn.microsoft.com/en-us/shows/dbfundamentals/",
     "subtopic_name": "Database Fundamentals",
     "subtopic_difficulty": "Beginner",
     "weaknesses": {
@@ -212,7 +213,8 @@ MOCK_MINDMAP_REQUEST_ONE_SOURCE: Dict[str, Any] = {
     **MOCK_MINDMAP_REQUEST,
     "best_course_url": None,
     "best_video_url": None,
-    "best_blog_url": "https://www.mongodb.com/nosql-explained/nosql-vs-sql",
+    "best_blog_url": "https://learn.microsoft.com/en-us/shows/dbfundamentals/",
+    "primary_url": "https://learn.microsoft.com/en-us/shows/dbfundamentals/",
 }
 
 MOCK_MINDMAP_REQUEST_NO_SOURCES: Dict[str, Any] = {
@@ -220,6 +222,7 @@ MOCK_MINDMAP_REQUEST_NO_SOURCES: Dict[str, Any] = {
     "best_course_url": None,
     "best_video_url": None,
     "best_blog_url": None,
+    "primary_url": None,
 }
 
 MOCK_MINDMAP_CHUNKS: list[str] = [
@@ -280,4 +283,3 @@ MOCK_MINDMAP_RESPONSE: Dict[str, Any] = {
         },
     ],
 }
-
