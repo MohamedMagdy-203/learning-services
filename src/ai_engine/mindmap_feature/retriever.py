@@ -96,7 +96,7 @@ async def retrieve_all_chunks_for_mindmap(
         List[str]: combined chunks from all available sources
 
     Raises:
-        MindmapRetrievalError: if one or more Qdrant fetches fail
+        MindmapRetrievalError: if one or more Qdrant fetches fail and no chunks are returned
         MindmapContentNotFoundError: if all fetches succeed but return no chunks
     """
     client = client or get_qdrant_client()
