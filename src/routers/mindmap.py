@@ -1,9 +1,12 @@
 import logging
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends
+from qdrant_client import QdrantClient
 
+from src.core.config import get_settings, Settings
 from src.core.exceptions import MindmapContentNotFoundError, MindmapRetrievalError
 from src.core.messages import MINDMAP_CONTENT_NOT_FOUND_ERROR, MINDMAP_RETRIEVAL_ERROR
 from src.models.schemas import MindmapGenerationRequest, MindmapResponseSchema
+from src.ai_engine.vector_store.qdrant_client import get_qdrant_client
 from src.ai_engine.mindmap_feature.retriever import retrieve_all_chunks_for_mindmap
 from src.ai_engine.mindmap_feature.mindmap_generator import generate_mindmap
 
@@ -13,32 +16,37 @@ mindmap_router = APIRouter(prefix="/api/v1/mindmap", tags=["mindmap"])
 
 
 @mindmap_router.post(
-    "/",
+    "/generate",
     summary="Generate a mind map from stored content for a subtopic",
     response_model=MindmapResponseSchema,
 )
 async def generate_mindmap_endpoint(
     request: MindmapGenerationRequest,
+    client: QdrantClient = Depends(get_qdrant_client),
+    settings: Settings = Depends(get_settings),
 ) -> MindmapResponseSchema:
     """
     Full pipeline:
-    1. Fetch all stored chunks from Qdrant for the 3 source URLs.
+    1. Fetch all stored chunks from Qdrant for the primary source URL.
     2. Build a structured prompt from chunks + subtopic context + weaknesses.
     3. Call Gemini to generate the mind map.
     4. Parse and validate the LLM output.
     5. Return the structured mind map.
 
     The Main Backend sends all required context (subtopic info, weaknesses,
-    and the 3 source URLs) directly in the request body.
+    and the primary URL) directly in the request body.
     """
     logger.info(
-        "Mindmap request received | user: %s | subtopic: %s",
+        "Mindmap request received | user: %s | subtopic: %s | url: %s",
         request.user_id,
         request.subtopic_id,
+        request.primary_url,
     )
 
     try:
-        chunks = await retrieve_all_chunks_for_mindmap(request)
+        chunks = await retrieve_all_chunks_for_mindmap(
+            request=request, client=client, settings=settings
+        )
     except MindmapContentNotFoundError:
         logger.error(
             "No content found in Qdrant | user: %s | subtopic: %s",
@@ -69,11 +77,12 @@ async def generate_mindmap_endpoint(
 
     try:
         mindmap = await generate_mindmap(request=request, chunks=chunks)
-    except ValueError:
+    except ValueError as exc:
         logger.error(
-            "Gemini returned invalid response | user: %s | subtopic: %s",
+            "Gemini returned invalid response | user: %s | subtopic: %s | error: %s",
             request.user_id,
             request.subtopic_id,
+            str(exc),
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -91,4 +100,3 @@ async def generate_mindmap_endpoint(
         subtopic_id=request.subtopic_id,
         mindmap=mindmap,
     )
-
