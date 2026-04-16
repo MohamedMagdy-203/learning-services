@@ -1,49 +1,40 @@
 # API Contract — Mind Map Feature
+
 ## AI Service ↔ Main Backend
 
 ---
 
 ## Overview
 
-The Mind Map feature requires **one call from the Main Backend to the AI Service**.
-The Main Backend is responsible for gathering all required context and sending it
-in a single request. The AI Service does not call the Main Backend for this feature.
+The Mind Map feature requires **one synchronous call from the Main Backend to the AI Service**.
+The Main Backend is responsible for providing the required context, specifically the exact `primary_url` that the user is currently studying. The AI Service relies on this URL to fetch pre-ingested content from the Vector Database (Qdrant).
 
-```
-Main Backend ──── POST /api/v1/mindmap/ ────► AI Service
+```text
+Main Backend ──── POST /api/v1/mindmap/generate ────► AI Service
                                                     │
-                                              Qdrant (scroll by URL)
+                                                    ├──► Qdrant (Retrieve chunks by primary_url)
                                                     │
-                                              Gemini (generate mindmap)
+                                                    ├──► Gemini LLM (Generate JSON mindmap)
                                                     │
-Main Backend ◄─── MindmapResponseSchema ───────────┘
+Main Backend ◄─── MindmapResponseSchema ────────────┘
 ```
 
 ---
 
-## 1. Main Backend → AI Service
+## 1. Request: Main Backend → AI Service
 
-### Request
+**Endpoint:** `POST /api/v1/mindmap/generate`
+**Content-Type:** `application/json`
 
-```
-POST http://localhost:8000/api/v1/mindmap/
-Content-Type: application/json
-```
-
-### Request Body
+### Request Body Example
 
 ```json
 {
   "user_id": "user_123",
   "subtopic_id": "sub_456",
-
-  "best_course_url": "https://www.udemy.com/course/the-complete-sql-bootcamp/",
-  "best_video_url": "https://www.youtube.com/watch?v=wR0jg0eQsZA",
-  "best_blog_url": "https://www.postgresqltutorial.com/",
-
+  "primary_url": "https://www.coursera.org/learn/introduction-to-databases",
   "subtopic_name": "Database Fundamentals",
   "subtopic_difficulty": "Beginner",
-
   "weaknesses": {
     "Normalization": "Struggles with 2NF and 3NF concepts",
     "Joins": "Confuses INNER JOIN with LEFT JOIN"
@@ -53,53 +44,23 @@ Content-Type: application/json
 
 ### Field Reference
 
-  -------------------------------------------------------------------------------------
-  Field                 Type           Required        Description
-  --------------------- -------------- -------------- --------------
-  user_id               string         Yes             Unique user
-                                                       identifier
+| Field                 | Type          | Required | Description                                                                                                   |
+| --------------------- | ------------- | -------- | ------------------------------------------------------------------------------------------------------------- |
+| `user_id`             | string        | **Yes**  | Unique user identifier.                                                                                       |
+| `subtopic_id`         | string        | **Yes**  | Unique subtopic identifier.                                                                                   |
+| `primary_url`         | string (URL)  | **Yes**  | The exact URL of the content the user wants to generate a mind map for (Must match the URL stored in Qdrant). |
+| `subtopic_name`       | string        | **Yes**  | The main title of the subtopic. Used as the Root node of the mind map.                                        |
+| `subtopic_difficulty` | string        | **Yes**  | Controls the depth and complexity of the generated mind map.                                                  |
+| `weaknesses`          | object | null | No       | Key-Value pairs of user weaknesses to prioritize in the mind map.                                             |
 
-  subtopic_id           string         Yes               Unique
-                                                        subtopic
-                                                        identifier
-
-  best_course_url       string \| null No\Yes               Course URL
-                                                        stored in
-                                                         Qdrant
-
-  best_video_url        string \| null No\Yes               Video URL
-                                                        stored in
-                                                         Qdrant
-
-  best_blog_url         string \| null No\Yes               Blog URL
-                                                        stored in
-                                                        Qdrant
-
-  subtopic_name         string         Yes               Root node of
-                                                        the mindmap
-
-  subtopic_difficulty   string         Yes              Controls depth
-                                                       and complexity
-                                                        of the mindmap
-
-  weaknesses            object         Yes               Key: topic
-                                                         name ---
-                                                         Value:
-                                                         weakness
-                                                         description
-  -------------------------------------------------------------------------------------
-> ⚠️ At least one of `best_course_url`, `best_video_url`, `best_blog_url` must be non-null.
-> If all three are null, the AI Service returns HTTP 404.
-
-> ⚠️ The URLs sent here must be the **exact same URLs** returned by
-> `GET /api/v1/data/roadmap-content/{user_id}/{subtopic_id}`.
-> The AI Service uses them to look up chunks in Qdrant — any mismatch returns no content.
+> ⚠️ **CRITICAL:** The `primary_url` sent here MUST exactly match the URL stored in Qdrant.
+> ❗ **IMPORTANT NOTE:** The size of the generated mind map is **NOT fixed**. The number of nodes and branches returned depends dynamically on the content retrieved from the vector database.
 
 ---
 
-## 2. AI Service → Main Backend
+## 2. Response: AI Service → Main Backend
 
-### Success Response — HTTP 200
+### Success Response — HTTP 200 OK
 
 ```json
 {
@@ -109,30 +70,18 @@ Content-Type: application/json
     "topic": "Database Fundamentals",
     "children": [
       {
-        "topic": "Relational Model",
+        "topic": "Relational Database Basics",
         "children": [
-          {
-            "topic": "Tables and Rows",
-            "children": []
-          },
-          {
-            "topic": "Primary Keys",
-            "children": []
-          },
-          {
-            "topic": "Foreign Keys",
-            "children": [
-              { "topic": "Referential Integrity", "children": [] }
-            ]
-          }
+          { "topic": "Terminology and Concepts", "children": [] },
+          { "topic": "Database Components", "children": [] }
         ]
       },
       {
-        "topic": "SQL Basics",
+        "topic": "Database Design",
         "children": [
-          { "topic": "SELECT", "children": [] },
-          { "topic": "INSERT / UPDATE / DELETE", "children": [] },
-          { "topic": "JOIN Types", "children": [] }
+          { "topic": "Schema and Modeling", "children": [] },
+          { "topic": "Data Integrity and Keys", "children": [] },
+          { "topic": "Normalization", "children": [] }
         ]
       }
     ]
@@ -142,85 +91,59 @@ Content-Type: application/json
 
 ### Response Schema
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `user_id` | string | Echoed from the request |
-| `subtopic_id` | string | Echoed from the request |
-| `mindmap` | MindmapNode | Root node of the mind map tree |
+| Field         | Type        | Description                     |
+| ------------- | ----------- | ------------------------------- |
+| `user_id`     | string      | Echoed from the request.        |
+| `subtopic_id` | string      | Echoed from the request.        |
+| `mindmap`     | MindmapNode | Root node of the mind map tree. |
 
-### MindmapNode (recursive)
+### MindmapNode (Recursive Structure)
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `topic` | string | Node label — concise, no full sentences |
-| `children` | MindmapNode[] | Child nodes. Empty array `[]` for leaf nodes |
+| Field      | Type          | Description                                                    |
+| ---------- | ------------- | -------------------------------------------------------------- |
+| `topic`    | string        | Node label — concise, represents a single concept.             |
+| `children` | MindmapNode[] | Child nodes. Returns an empty array `[]` if it is a leaf node. |
 
 ### Mind Map Structure Guarantees
 
-| Property | Value |
-|----------|-------|
-| Root node topic | Exactly equals `subtopic_name` from the request |
-| Main branches | 4 to 6 |
-| Sub-topics per branch | 2 to 4 |
-| Maximum nesting depth | 3 levels (branch → sub-topic → detail) |
+* **Root Node:** Always exactly equals the `subtopic_name` from the request.
+* **Dynamic Branching:** The number of branches is **dynamic and content-driven** — there is no fixed size.
+* **Soft Limits:** Typically ranges between **2 to 15 main branches**, but may vary based on content richness.
+* **Nesting Depth:** Maximum of **3 levels deep** (Root → Main Branch → Sub-topic → Detail).
 
 ---
 
-## 3. Error Responses
+## 3. Error Handling
 
-| HTTP Status | When | Detail message |
-|-------------|------|----------------|
-| `404 Not Found` | All URLs are null, or all sources returned zero chunks from Qdrant | `"No content found in vector store for this subtopic. Please ensure the sources are ingested first."` |
-| `503 Service Unavailable` | Qdrant is unreachable or scroll failed | `"Failed to retrieve content. Please try again later."` |
-| `500 Internal Server Error` | Gemini returned invalid or unparseable response | `"Failed to generate mind map. Please try again later."` |
-
----
-
-## 4. Prerequisite — Content Must Be Ingested First
-
-The Mind Map endpoint reads from Qdrant. Content is ingested automatically
-when `GET /api/v1/data/roadmap-content/{user_id}/{subtopic_id}` is called.
-
-**Correct call order:**
-
-```
-1. GET  /api/v1/data/roadmap-content/{user_id}/{subtopic_id}
-        → returns best_course, best_video, best_blog (title + url)
-        → triggers background ingestion into Qdrant
-
-2. POST /api/v1/mindmap/
-        → send the 3 URLs from step 1 in the request body
-        → AI Service reads chunks from Qdrant and generates the mind map
-```
-
-> ⚠️ If step 2 is called before step 1 completes ingestion, the AI Service
-> will return HTTP 404 because no chunks exist yet in Qdrant for those URLs.
+| HTTP Status                 | Error Code             | Detail Message / Reason                                            |
+| --------------------------- | ---------------------- | ------------------------------------------------------------------ |
+| `422 Unprocessable Entity`  | `VALIDATION_ERROR`     | Missing or invalid fields in the request body.                     |
+| `404 Not Found`             | `CONTENT_NOT_FOUND`    | No content found in vector store for the given `primary_url`.      |
+| `500 Internal Server Error` | `RETRIEVAL_ERROR`      | Failed to retrieve content from vector store (Qdrant unavailable). |
+| `500 Internal Server Error` | `LLM_GENERATION_ERROR` | LLM failed to return valid JSON or timeout occurred.               |
 
 ---
 
-## 5. Data Flow Inside the AI Service (Internal Reference)
+## 4. Architectural Prerequisites
 
-```
-POST /api/v1/mindmap/
-        │
-        ▼
-retrieve_all_chunks_for_mindmap()
-  • Qdrant scroll by metadata.url for each non-null URL
-  • 10 chunks for course, 8 for video, 8 for blog
-  • Runs concurrently via asyncio.gather
-        │
-        ▼
-build_mindmap_prompt()
-  • Combines chunks + subtopic_name + subtopic_difficulty + weaknesses
-        │
-        ▼
-Gemini gemini-2.5-flash-lite
-  • temperature=0.2, max_output_tokens=2048
-        │
-        ▼
-parse_mindmap_response()
-  • Strips markdown fences → json.loads → MindmapNodeSchema validation
-        │
-        ▼
-HTTP 200 — MindmapResponseSchema
-```
+To successfully generate a Mind Map, the content must already exist in the AI Service's Vector Database.
+
+### Expected Flow
+
+1. **Trigger Ingestion:**
+   `POST /api/v1/roadmap/generate` → content is fetched and stored in Qdrant.
+
+2. **User Selection:**
+   User selects a learning resource.
+
+3. **Generate Mind Map:**
+   `POST /api/v1/mindmap/generate` using the selected `primary_url`.
+
+---
+
+## 5. Internal Processing Flow (AI Service)
+
+1. **Retrieve:** Fetch up to 50 chunks filtered by `primary_url`.
+2. **Prompt Construction:** Combine chunks + subtopic context + weaknesses.
+3. **LLM Generation:** Generate structured JSON mind map.
+4. **Validation:** Ensure response matches schema before returning.
