@@ -51,7 +51,7 @@ Main Backend ◄─── MindmapResponseSchema ──────────�
 | `primary_url`         | string (URL)  | **Yes**  | The exact URL of the content the user wants to generate a mind map for (Must match the URL stored in Qdrant). |
 | `subtopic_name`       | string        | **Yes**  | The main title of the subtopic. Used as the Root node of the mind map.                                        |
 | `subtopic_difficulty` | string        | **Yes**  | Controls the depth and complexity of the generated mind map.                                                  |
-| `weaknesses`          | object | null | No       | Key-Value pairs of user weaknesses to prioritize in the mind map.                                             |
+| `weaknesses`          | object \| null | **No**  | Key-Value pairs of user weaknesses to prioritize in the mind map.                                             |
 
 > ⚠️ **CRITICAL:** The `primary_url` sent here MUST exactly match the URL stored in Qdrant.
 > ❗ **IMPORTANT NOTE:** The size of the generated mind map is **NOT fixed**. The number of nodes and branches returned depends dynamically on the content retrieved from the vector database.
@@ -119,7 +119,7 @@ Main Backend ◄─── MindmapResponseSchema ──────────�
 | --------------------------- | ---------------------- | ------------------------------------------------------------------ |
 | `422 Unprocessable Entity`  | `VALIDATION_ERROR`     | Missing or invalid fields in the request body.                     |
 | `404 Not Found`             | `CONTENT_NOT_FOUND`    | No content found in vector store for the given `primary_url`.      |
-| `500 Internal Server Error` | `RETRIEVAL_ERROR`      | Failed to retrieve content from vector store (Qdrant unavailable). |
+| `503 Service Unavailable`   | `RETRIEVAL_ERROR`      | Failed to retrieve content from vector store (Qdrant unavailable). |
 | `500 Internal Server Error` | `LLM_GENERATION_ERROR` | LLM failed to return valid JSON or timeout occurred.               |
 
 ---
