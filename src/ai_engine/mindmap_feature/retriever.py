@@ -11,7 +11,7 @@ from qdrant_client import QdrantClient
 
 logger = logging.getLogger(__name__)
 
-# Chunks fetched per source — course gets more because it has richer structure
+# Maximum number of chunks to fetch for the primary URL
 CHUNKS_PER_PRIMARY_URL = 50
 
 # Explicit hardcoded timeout — not implied to be configurable via settings
@@ -22,14 +22,14 @@ def _scroll_chunks_by_url(
     client, settings, primary_url: HttpUrl, limit: int
 ) -> List[str]:
     """
-    Fetch all stored chunks for a single source URL using Qdrant scroll.
-
+    Fetch up to ``limit`` stored chunks for a single source URL using one
+    Qdrant scroll call.
     Args:
         url: the exact URL stored in metadata.url during ingestion
         limit: maximum number of chunks to retrieve for this source
-
     Returns:
-        List[str]: page_content strings belonging to this URL
+        List[str]: page_content strings belonging to this URL, capped by
+        ``limit``
     """
 
     try:
@@ -87,17 +87,19 @@ async def retrieve_all_chunks_for_mindmap(
     settings: Settings | None = None,
 ) -> List[str]:
     """
-    Retrieve content chunks from course/video/blog sources concurrently.
+    Retrieve content chunks from the vector store for the primary source URL.
 
     Args:
-        request: MindmapGenerationRequest containing source URLs
+        request: MindmapGenerationRequest containing the primary_url.
+        client: Optional QdrantClient instance (injected).
+        settings: Optional Settings instance (injected).
 
     Returns:
-        List[str]: combined chunks from all available sources
+        List[str]: Retrieved chunks for the primary source.
 
     Raises:
-        MindmapRetrievalError: if one or more Qdrant fetches fail and no chunks are returned
-        MindmapContentNotFoundError: if all fetches succeed but return no chunks
+        MindmapRetrievalError: if the Qdrant fetch fails.
+        MindmapContentNotFoundError: if the fetch succeeds but returns no chunks.
     """
     client = client or get_qdrant_client()
     settings = settings or get_settings()
@@ -159,7 +161,7 @@ async def retrieve_all_chunks_for_mindmap(
             0
         ]
 
-    # All fetches succeeded but every source returned zero chunks
+    # The fetch succeeded but the primary source returned zero chunks
     if not all_chunks:
         logger.error(
             "No chunks found across all sources | subtopic=%s",
