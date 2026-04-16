@@ -9,7 +9,9 @@ def build_summarization_prompt(documents: List[Document]) -> str:
     """
 
     context_str = "\n\n".join(doc.page_content for doc in documents)
-
+    max_context_chars = 16000
+    if len(context_str) > max_context_chars:
+        context_str = context_str[:max_context_chars]
     prompt = f"""
 You are an AI assistant specialized in summarization.
 
