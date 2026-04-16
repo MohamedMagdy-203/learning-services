@@ -31,7 +31,7 @@ def build_mindmap_prompt(
         f"[Chunk {i}]\n{chunk}" for i, chunk in enumerate(chunks, 1)
     )
 
-    return f"""You are an expert educational content structure. \
+    return f"""You are an expert in educational content structuring. \
 Your job is to analyse learning content and organize it into a clear, \
 hierarchical mind map.
 
