@@ -53,7 +53,7 @@ class MindmapGenerationRequest(BaseModel):
     best_course_url: Optional[HttpUrl] = None
     best_video_url: Optional[HttpUrl] = None
     best_blog_url: Optional[HttpUrl] = None
-    primary_url: Optional[HttpUrl]
+    primary_url: Optional[HttpUrl] = None
 
     # Subtopic context needed for the prompt
     subtopic_name: str
