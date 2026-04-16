@@ -94,7 +94,7 @@ The service retrieves the stored content chunks directly from Qdrant by applying
 
 #### Phase 3 — Generation & Response
 
-The retrieved chunks are assembled into a structured prompt and sent to Gemini to generate the mindmap. The model output is then parsed and validated into a `MindmapNodeSchema` response before being returned to the caller.response is parsed and validated into a MindmapNodeSchema
+The retrieved chunks are assembled into a structured prompt and sent to Gemini to generate the mindmap. The model output is then parsed and validated into a `MindmapNodeSchema` response before being returned to the caller.
 
 ## Feature: Quiz Generation
 
