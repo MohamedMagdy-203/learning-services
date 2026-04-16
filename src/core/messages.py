@@ -27,7 +27,7 @@ LLM_INVOCATION_ERROR = "Error during LLM invocation: %s"
 # API Responses
 NO_CONTENT_RESPONSE = "No content found to summarize."
 RETRIEVE_FAILED_RESPONSE = "Failed to retrieve content for summarization."
-LLM_FAILED_RESPONSE = " LLM Failed to generate summary"
+LLM_FAILED_RESPONSE = "LLM Failed to generate summary"
 
 AI_INVALID_JSON = "AI failed to return valid JSON: %s"
 AI_MISSING_SUMMARY = "AI response missing 'summary' field or empty: %s"

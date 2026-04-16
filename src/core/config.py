@@ -9,6 +9,8 @@ class Settings(BaseSettings):  # type: ignore
     MAIN_BACKEND_URL: str = "http://localhost:3000"
     TAVILY_API_KEY: str
     GEMINI_API_KEY: str
+    LLM_MODEL_NAME: str = "gemini-3-flash-preview"
+    LLM_TEMPERATURE: float = 0.3
     QDRANT_URL: str = "http://localhost:6333"
     QDRANT_COLLECTION_NAME: str = "learning_materials"
 
