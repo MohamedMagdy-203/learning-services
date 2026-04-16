@@ -12,7 +12,8 @@ async def init_qdrant_client():
     global qdrant_client_dependency
     settings = get_settings()
 
-    qdrant_client_dependency = AsyncQdrantClient(url=settings.QDRANT_URL)
+    if qdrant_client_dependency is None:
+        qdrant_client_dependency = AsyncQdrantClient(url=settings.QDRANT_URL)
 
 
 async def close_qdrant_client():
@@ -23,6 +24,7 @@ async def close_qdrant_client():
 
     if qdrant_client_dependency:
         await qdrant_client_dependency.close()
+        qdrant_client_dependency = None
 
 
 def get_qdrant_client_dependency() -> AsyncQdrantClient:
