@@ -5,7 +5,6 @@ from unittest.mock import patch, MagicMock, AsyncMock
 from src.core.mock_data import (
     MOCK_MINDMAP_REQUEST,
     MOCK_MINDMAP_REQUEST_ONE_SOURCE,
-    MOCK_MINDMAP_REQUEST_NO_SOURCES,
     MOCK_MINDMAP_CHUNKS,
     MOCK_MINDMAP_RESPONSE,
 )
@@ -23,11 +22,6 @@ def request_all_sources() -> MindmapGenerationRequest:
 @pytest.fixture
 def request_one_source() -> MindmapGenerationRequest:
     return MindmapGenerationRequest(**MOCK_MINDMAP_REQUEST_ONE_SOURCE)
-
-
-@pytest.fixture
-def request_no_sources() -> MindmapGenerationRequest:
-    return MindmapGenerationRequest(**MOCK_MINDMAP_REQUEST_NO_SOURCES)
 
 
 class TestMindmapParser:
@@ -151,16 +145,13 @@ class TestMindmapRetriever:
         assert len(chunks) == len(MOCK_MINDMAP_CHUNKS)
 
     @pytest.mark.asyncio
-    async def test_raises_when_no_sources(
-        self, request_no_sources: MindmapGenerationRequest
-    ) -> None:
-        from src.ai_engine.mindmap_feature.retriever import (
-            retrieve_all_chunks_for_mindmap,
-        )
-        from src.core.exceptions import MindmapContentNotFoundError
+    async def test_schema_raises_validation_error_on_missing_primary_url(self) -> None:
+        from pydantic import ValidationError
+        from src.models.schemas import MindmapGenerationRequest
+        from src.core.mock_data import MOCK_MINDMAP_REQUEST_NO_SOURCES
 
-        with pytest.raises(MindmapContentNotFoundError):
-            await retrieve_all_chunks_for_mindmap(request_no_sources)
+        with pytest.raises(ValidationError):
+            MindmapGenerationRequest(**MOCK_MINDMAP_REQUEST_NO_SOURCES)
 
     @pytest.mark.asyncio
     async def test_raises_when_all_urls_return_empty(
