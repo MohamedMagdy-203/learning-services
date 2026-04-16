@@ -48,12 +48,13 @@ async def generate_mindmap(
         len(chunks),
     )
 
-    response = await _get_client().aio.models.generate_content( # type: ignore
-        model="gemini-2.5-flash-lite",
+    response = await _get_client().aio.models.generate_content(  # type: ignore
+        model="gemini-3-flash-preview",
         contents=prompt,
         config=types.GenerateContentConfig(
             temperature=0.2,
-            max_output_tokens=2048,
+            max_output_tokens=8192,
+            response_mime_type="application/json",
         ),
     )
 
