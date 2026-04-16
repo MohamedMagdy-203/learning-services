@@ -51,14 +51,15 @@ Follow these rules strictly:
 
 1. The root node topic must be exactly: "{request.subtopic_name}"
 2. Create main branches organically based on the core concepts found in the content. Do not invent branches if the content is small, and do not overly compress if it is large.
-3. Each main branch should contain sub-topics that naturally flow from it.
-4. If a sub-topic has enough supporting detail in the content, add children \
+3. The root must have between 2 and 15 direct children (main branches).
+4. Each main branch should contain sub-topics that naturally flow from it.
+5. If a sub-topic has enough supporting detail in the content, add children \
 to it. If the sub-topic is simple or atomic, leave its children as [].
-5. Maximum nesting depth is 3 levels: main branch → sub-topic → detail.
-6. Prioritize branches and sub-topics that address the learner's known weaknesses.
-7. Match depth and complexity to the "{request.subtopic_difficulty}" difficulty level.
-8. Use clear, concise topic names — no full sentences.
-9. Base ONLY on the provided content — do not invent topics not covered in the chunks.
+6. Maximum nesting depth is 3 levels: main branch → sub-topic → detail.
+7. Prioritize branches and sub-topics that address the learner's known weaknesses.
+8. Match depth and complexity to the "{request.subtopic_difficulty}" difficulty level.
+9. Use clear, concise topic names — no full sentences.
+10. Base ONLY on the provided content — do not invent topics not covered in the chunks.
 
 Respond ONLY with a valid JSON object. \
 No explanation, no markdown fences, no extra text. Exactly this structure:
