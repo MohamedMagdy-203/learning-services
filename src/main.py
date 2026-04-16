@@ -16,13 +16,19 @@ app = FastAPI()
 @app.on_event("startup")
 async def startup_event():
     await init_openai_client()
-    await init_qdrant_client()
+    try:
+        await init_qdrant_client()
+    except Exception:
+        await close_openai_client()
+        raise
 
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    await close_openai_client()
-    await close_qdrant_client()
+    try:
+        await close_openai_client()
+    finally:
+        await close_qdrant_client()
 
 
 app.include_router(base.base_router)
