@@ -19,10 +19,16 @@ logger = logging.getLogger(__name__)
 
 
 def build_metadata(payload: dict) -> dict:
+    """
+    Extracts and standardizes metadata fields from Qdrant payload
+    to ensure consistent structure for downstream processing.
+    """
+    raw_meta = payload.get("metadata", {})
+
     return {
-        "source_type": payload.get("source_type"),
-        "title": payload.get("title"),
-        "url": payload.get("url"),
+        "source_type": raw_meta.get("source_type", payload.get("source_type")),
+        "title": raw_meta.get("title", payload.get("title")),
+        "url": raw_meta.get("url", payload.get("url")),
     }
 
 
@@ -78,4 +84,4 @@ async def retrieve_chunks_by_url(
 
     except Exception as e:
         logger.error(RETRIEVE_CHUNKS_ERROR, primary_url, e)
-        raise RuntimeError(QDRANT_RETRIEVE_FAILED.format(error=str(e)))
+        raise RuntimeError(QDRANT_RETRIEVE_FAILED.format(error=str(e))) from e
