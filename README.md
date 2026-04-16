@@ -7,7 +7,7 @@
   - [Overview](#overview)
   - [System Architecture \& Workflow](#system-architecture--workflow)
     - [Step-by-Step Flow Explanation](#step-by-step-flow-explanation)
-  - [Feature:Mindmap Generation](#featuremindmap-generation)
+  - [Feature: Mindmap Generation](#feature-mindmap-generation)
   - [Mindmap Generation Workflow](#mindmap-generation-workflow)
     - [step-by-step Flow](#step-by-step-flow)
       - [Phase 1 — Request \& Context](#phase-1--request--context)
@@ -74,18 +74,24 @@ Below is the high-level data flow of the Learning Services AI Engine:
     and feeds them into another LLM to generate the final educational
     material, which is then stored in the database.
 
-## Feature:Mindmap Generation
+## Feature: Mindmap Generation
+
 The mindmap feature generates a personalized, hierarchical mind map for a learner based on a specific content source they've already ingested into the vector store. The mind map is tailored to the learner's profile, learning style, and known weaknesses.
 
 ## Mindmap Generation Workflow
+
 ![Mindmap_Workflow](assets/Mindmap_Generation_Workflow.png)
 
 ### step-by-step Flow
+
 #### Phase 1 — Request & Context
+
 The router receives the request and calls the Main Backend to fetch the full roadmap context — user profile, target subtopic, and known weaknesses.
 #### Phase 2 — Retrieval from Vector Store
+
 A search query is built from the subtopic and user profile, then reformulated by Gemini for better semantic accuracy. If Gemini fails, a manual fallback query is used. The query runs a similarity_search against Qdrant filtered strictly by metadata.url
 #### Phase 3 — Generation & Response
+
 The retrieved chunks are combined with the learner's profile and weaknesses into a structured prompt sent to Gemini. The LLM response is parsed and validated into a MindmapNodeSchema
 ## Feature: Quiz Generation
 
