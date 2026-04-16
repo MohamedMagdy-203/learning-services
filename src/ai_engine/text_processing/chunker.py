@@ -19,8 +19,16 @@ def chunk_text(raw_content: str) -> list[str]:
         breakpoint_threshold_type="percentile",
         breakpoint_threshold_amount=85,
     )
+    MAX_CHAR_LIMIT = 4000
 
-    final_chunks = splitter.split_text(raw_content)  # type: ignore
+    semantic_chunks = splitter.split_text(raw_content)  # type: ignore
+    final_chunks: list[str] = []
+    for chunk in semantic_chunks:
+        if len(chunk) <= MAX_CHAR_LIMIT:
+            final_chunks.append(chunk)
+            continue
+        for i in range(0, len(chunk), MAX_CHAR_LIMIT):
+            final_chunks.append(chunk[i : i + MAX_CHAR_LIMIT])
 
     logger.info("Chunking done | chunks produced: %d", len(final_chunks))  # type: ignore
     return final_chunks  # type: ignore
