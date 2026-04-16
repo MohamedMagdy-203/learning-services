@@ -131,7 +131,7 @@ To successfully generate a Mind Map, the content must already exist in the AI Se
 ### Expected Flow
 
 1. **Trigger Ingestion:**
-   `POST /api/v1/roadmap/generate` → content is fetched and stored in Qdrant.
+   `GET /api/v1/data/roadmap-content/{user_id}/{subtopic_id}` → content is fetched and stored in Qdrant.
 
 2. **User Selection:**
    User selects a learning resource.
