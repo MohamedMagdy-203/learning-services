@@ -8,12 +8,11 @@ from src.core.mock_data import (
 )
 from src.models.schemas import MindmapGenerationRequest, MindmapNodeSchema
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 COURSE_URL = "https://www.udemy.com/course/the-complete-sql-bootcamp/"
 VIDEO_URL = "https://www.youtube.com/watch?v=wR0jg0eQsZA"
-BLOG_URL = " https://www.mongodb.com/nosql-explained/nosql-vs-sql"
+BLOG_URL = "https://www.mongodb.com/nosql-explained/nosql-vs-sql"
 
 
 @pytest.fixture
