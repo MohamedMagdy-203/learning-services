@@ -7,6 +7,12 @@
   - [Overview](#overview)
   - [System Architecture \& Workflow](#system-architecture--workflow)
     - [Step-by-Step Flow Explanation](#step-by-step-flow-explanation)
+  - [Feature:Mindmap Generation](#featuremindmap-generation)
+  - [Mindmap Generation Workflow](#mindmap-generation-workflow)
+    - [step-by-step Flow](#step-by-step-flow)
+      - [Phase 1 — Request \& Context](#phase-1--request--context)
+      - [Phase 2 — Retrieval from Vector Store](#phase-2--retrieval-from-vector-store)
+      - [Phase 3 — Generation \& Response](#phase-3--generation--response)
   - [Feature: Quiz Generation](#feature-quiz-generation)
     - [Quiz Generation workflow](#quiz-generation-workflow)
   - [Feature: Summarization](#feature-summarization)
@@ -72,7 +78,7 @@ Below is the high-level data flow of the Learning Services AI Engine:
 The mindmap feature generates a personalized, hierarchical mind map for a learner based on a specific content source they've already ingested into the vector store. The mind map is tailored to the learner's profile, learning style, and known weaknesses.
 
 ## Mindmap Generation Workflow
-![Mindmap_Workflow](Mindmap_Generation_Workflow.png)
+![Mindmap_Workflow](assets/Mindmap_Generation_Workflow.png)
 
 ### step-by-step Flow
 #### Phase 1 — Request & Context
