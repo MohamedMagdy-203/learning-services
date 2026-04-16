@@ -87,7 +87,17 @@ async def generate_mindmap_endpoint(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to generate mind map. Please try again later.",
+        ) from exc
+    except Exception as exc:
+        logger.exception(
+            "Gemini generation failed unexpectedly | user: %s | subtopic: %s",
+            request.user_id,
+            request.subtopic_id,
         )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to generate mind map. Please try again later.",
+        ) from exc
 
     logger.info(
         "Mindmap generated successfully | user: %s | subtopic: %s",
