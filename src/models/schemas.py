@@ -43,10 +43,3 @@ class RoadmapRankedResultSchema(BaseModel):
     best_course: RankedSourceSchema | None
     best_video: RankedSourceSchema | None
     best_blog: RankedSourceSchema | None
-
-
-class SummarizationRequest(BaseModel):
-    page_content: str
-    title: str
-    max_length: int = 350
-    min_length: int = 50
