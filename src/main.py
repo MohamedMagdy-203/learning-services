@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from .routers import base, data , mindmap
+from .routers import base, data, mindmap
 
 app = FastAPI()
 
