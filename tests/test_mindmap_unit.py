@@ -148,10 +148,14 @@ class TestMindmapRetriever:
     async def test_schema_raises_validation_error_on_missing_primary_url(self) -> None:
         from pydantic import ValidationError
         from src.models.schemas import MindmapGenerationRequest
-        from src.core.mock_data import MOCK_MINDMAP_REQUEST_NO_SOURCES
+        from src.core.mock_data import MOCK_MINDMAP_REQUEST
+
+        invalid_data = MOCK_MINDMAP_REQUEST.copy()
+
+        invalid_data.pop("primary_url", None)
 
         with pytest.raises(ValidationError):
-            MindmapGenerationRequest(**MOCK_MINDMAP_REQUEST_NO_SOURCES)
+            MindmapGenerationRequest(**invalid_data)
 
     @pytest.mark.asyncio
     async def test_raises_when_all_urls_return_empty(
