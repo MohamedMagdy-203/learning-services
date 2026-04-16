@@ -1,6 +1,6 @@
 import logging
 from fastapi import APIRouter, Depends
-
+from fastapi import HTTPException
 from src.ai_engine.summarization_engine.summarizer import SummarizationService
 from src.models.summarization_schemas import (
     SummarizationRequest,
@@ -39,5 +39,9 @@ async def generate_summary(
         primary_url=str(request.primary_url),
         qdrant_client=qdrant_client,
     )
-
+    if "error" in result:
+        raise HTTPException(
+            status_code=502,
+            detail=result["error"],
+        )
     return result
