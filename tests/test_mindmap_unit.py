@@ -174,7 +174,7 @@ class TestMindmapRetriever:
                 await retrieve_all_chunks_for_mindmap(request_all_sources)
 
     @pytest.mark.asyncio
-    async def test_retrieves_only_from_primary_url(
+    async def test_retrieves_from_secondary_if_primary_insufficient(
         self, request_all_sources: MindmapGenerationRequest
     ) -> None:
         from src.ai_engine.mindmap_feature.retriever import (
@@ -187,11 +187,11 @@ class TestMindmapRetriever:
         ) as mock_scroll:
             chunks = await retrieve_all_chunks_for_mindmap(request_all_sources)
 
-        assert len(chunks) == len(MOCK_MINDMAP_CHUNKS)
-        mock_scroll.assert_called_once()
-        args, kwargs = mock_scroll.call_args
-        all_passed_values = list(args) + list(kwargs.values())
-        assert str(request_all_sources.primary_url) in all_passed_values
+        # Should fetch from primary (1) + secondary (2) = 3 total calls
+        assert mock_scroll.call_count == len(request_all_sources.urls)
+
+        # 3 calls * 6 chunks each = 18 chunks total
+        assert len(chunks) == len(MOCK_MINDMAP_CHUNKS) * len(request_all_sources.urls)
 
 
 class TestMindmapGenerator:
