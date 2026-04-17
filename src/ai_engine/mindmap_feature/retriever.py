@@ -72,59 +72,77 @@ async def retrieve_all_chunks_for_mindmap(
     client = client or get_qdrant_client()
     settings = settings or get_settings()
 
-    # Retrieve only from the selected primary source URL
-    sources = [
-        (
-            str(request.primary_url),
-            PRIMARY_URL_CHUNKS_LIMIT,
-        )
-    ]
-
-    tasks: List[Coroutine[Any, Any, List[str]]] = [
-        asyncio.to_thread(_scroll_chunks_by_url, client, settings, url, limit)
-        for url, limit in sources
-    ]
-
+    url_str = str(request.primary_url)
     logger.info(
-        "Retrieving chunks | subtopic=%s | urls=%d",
+        "Retrieving chunks | subtopic=%s | primary_url=%s",
         request.subtopic_name,
-        len(sources),
+        url_str,
     )
 
-    results = await asyncio.gather(*tasks, return_exceptions=True)
     all_chunks: List[str] = []
     errors: List[Exception] = []
 
-    for (url, _), result in zip(sources, results, strict=True):
-        if isinstance(result, Exception):
-            logger.error("URL '%s' failed | error=%s", url, str(result))
-            errors.append(result)
-            continue
-        chunks: List[str] = result  # type: ignore
-        if chunks:
-            logger.info("URL '%s' returned %d chunks", url, len(chunks))
-            all_chunks.extend(chunks)
-        else:
-            logger.warning(
-                "URL '%s' returned no chunks | subtopic=%s",
-                url,
-                request.subtopic_name,
+    try:
+        # Step 1: Try to fetch strictly from primary URL
+        primary_chunks = await asyncio.to_thread(
+            _scroll_chunks_by_url,
+            client,
+            settings,
+            request.primary_url,
+            PRIMARY_URL_CHUNKS_LIMIT,
+        )
+        all_chunks.extend(primary_chunks)
+    except Exception as exc:
+        logger.error("Primary URL retrieval failed | error=%s", str(exc))
+        errors.append(exc)
+
+    # Step 2: Fallback logic - If primary is not enough, fetch from secondary URLs
+    if len(all_chunks) < PRIMARY_URL_CHUNKS_LIMIT:
+        secondary_urls = [url for url in request.urls if url != request.primary_url]
+
+        if secondary_urls:
+            logger.info(
+                "Primary URL yielded %d chunks. Fetching from %d secondary URLs as fallback...",
+                len(all_chunks),
+                len(secondary_urls),
             )
 
-    if errors and not all_chunks:
-        logger.error(
-            "All URL retrievals failed | subtopic=%s | first_error=%s",
-            request.subtopic_name,
-            str(errors[0]),
-        )
-        raise MindmapRetrievalError(MindmapRetrievalError.DEFAULT_MESSAGE) from errors[
-            0
-        ]
+            tasks: List[Coroutine[Any, Any, List[str]]] = [
+                asyncio.to_thread(
+                    _scroll_chunks_by_url,
+                    client,
+                    settings,
+                    url,
+                    SECONDARY_URL_CHUNKS_LIMIT,
+                )
+                for url in secondary_urls
+            ]
 
+            results = await asyncio.gather(*tasks, return_exceptions=True)
+
+            for url, res in zip(secondary_urls, results, strict=True):
+                if isinstance(res, Exception):
+                    logger.error("Secondary URL '%s' failed | error=%s", url, str(res))
+                    continue
+
+                chunks: List[str] = res  # type: ignore
+                if chunks:
+                    logger.info(
+                        "Secondary URL '%s' returned %d chunks", url, len(chunks)
+                    )
+                    all_chunks.extend(chunks)
+
+            # Cap total chunks to avoid exceeding LLM context window
+            all_chunks = all_chunks[:PRIMARY_URL_CHUNKS_LIMIT]
+
+    # Step 3: Handle complete failure
     if not all_chunks:
+        if errors:
+            raise MindmapRetrievalError(
+                MindmapRetrievalError.DEFAULT_MESSAGE
+            ) from errors[0]
         logger.error(
-            "No chunks found across all URLs | subtopic=%s",
-            request.subtopic_name,
+            "No chunks found across all URLs | subtopic=%s", request.subtopic_name
         )
         raise MindmapContentNotFoundError(MindmapContentNotFoundError.DEFAULT_MESSAGE)
 
