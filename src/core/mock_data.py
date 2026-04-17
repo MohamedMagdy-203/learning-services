@@ -188,3 +188,92 @@ arabic_content = (
     """
     * 10
 )
+
+# ── Mindmap Mock Data ──
+
+MOCK_MINDMAP_REQUEST: Dict[str, Any] = {
+    "user_id": "user_123",
+    "subtopic_id": "sub_456",
+    "urls": [
+        "https://www.coursera.org/learn/introduction-to-databases",
+        "https://www.classcentral.com/course/youtube-database-fundamentals-for-beginners-database-tutorial-141003",
+        "https://learn.microsoft.com/en-us/shows/dbfundamentals/",
+    ],
+    "primary_url": "https://learn.microsoft.com/en-us/shows/dbfundamentals/",
+    "subtopic_name": "Database Fundamentals",
+    "subtopic_difficulty": "Beginner",
+    "weaknesses": {
+        "Data Modeling": "Struggles with designing efficient database schemas",
+        "SQL vs NoSQL": "Confused about when to use relational vs non-relational databases",
+        "Normalization": "Has difficulty understanding normalization",
+        "Query Writing": "Needs practice writing efficient SQL queries",
+        "Data Integrity": "Limited understanding of constraints like primary keys",
+    },
+}
+
+MOCK_MINDMAP_REQUEST_ONE_SOURCE: Dict[str, Any] = {
+    **MOCK_MINDMAP_REQUEST,
+    "urls": [
+        "https://learn.microsoft.com/en-us/shows/dbfundamentals/",
+    ],
+    "primary_url": "https://learn.microsoft.com/en-us/shows/dbfundamentals/",
+}
+
+MOCK_MINDMAP_CHUNKS: list[str] = [
+    "Database normalization is the process of organizing a relational database "
+    "to reduce data redundancy and improve data integrity. Normal forms: 1NF, 2NF, 3NF.",
+    "SQL databases use structured query language for defining and manipulating data. "
+    "They enforce a rigid schema with tables, rows, and columns.",
+    "NoSQL databases provide flexible schemas for unstructured data. "
+    "Types include document, key-value, column-family, and graph databases.",
+    "Primary keys uniquely identify each record in a table. "
+    "Foreign keys create relationships between tables.",
+    "JOINs allow querying data across multiple related tables. "
+    "Types: INNER JOIN, LEFT JOIN, RIGHT JOIN, FULL OUTER JOIN.",
+    "Transactions ensure ACID properties: Atomicity, Consistency, Isolation, Durability.",
+]
+
+MOCK_MINDMAP_RESPONSE: Dict[str, Any] = {
+    "topic": "Database Fundamentals",
+    "children": [
+        {
+            "topic": "SQL Databases",
+            "children": [
+                {"topic": "Tables and Schemas", "children": []},
+                {"topic": "SQL Queries", "children": []},
+                {"topic": "JOINs", "children": []},
+            ],
+        },
+        {
+            "topic": "NoSQL Databases",
+            "children": [
+                {"topic": "Document Stores", "children": []},
+                {"topic": "Key-Value Stores", "children": []},
+                {"topic": "When to use NoSQL", "children": []},
+            ],
+        },
+        {
+            "topic": "Data Modeling",
+            "children": [
+                {"topic": "Primary Keys", "children": []},
+                {"topic": "Foreign Keys", "children": []},
+                {"topic": "Relationships", "children": []},
+            ],
+        },
+        {
+            "topic": "Normalization",
+            "children": [
+                {"topic": "1NF", "children": []},
+                {"topic": "2NF", "children": []},
+                {"topic": "3NF", "children": []},
+            ],
+        },
+        {
+            "topic": "Data Integrity",
+            "children": [
+                {"topic": "Constraints", "children": []},
+                {"topic": "Transactions and ACID", "children": []},
+            ],
+        },
+    ],
+}

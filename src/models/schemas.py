@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from typing import List, Dict, Optional
-from pydantic import ConfigDict
+from pydantic import ConfigDict, HttpUrl, Field, model_validator
 from pydantic.alias_generators import to_camel
 
 
@@ -43,3 +43,35 @@ class RoadmapRankedResultSchema(BaseModel):
     best_course: RankedSourceSchema | None
     best_video: RankedSourceSchema | None
     best_blog: RankedSourceSchema | None
+
+
+class MindmapGenerationRequest(BaseModel):
+    user_id: str
+    subtopic_id: str
+    urls: List[HttpUrl] = Field(min_length=1)
+    primary_url: HttpUrl
+    subtopic_name: str
+    subtopic_difficulty: str
+    weaknesses: Optional[Dict[str, str]] = None
+
+    @model_validator(mode="after")
+    def validate_primary_url_membership(self) -> "MindmapGenerationRequest":
+        if self.primary_url not in self.urls:
+            raise ValueError(
+                f"primary_url '{self.primary_url}' must be one of the provided urls"
+            )
+        return self
+
+
+class MindmapNodeSchema(BaseModel):
+    topic: str
+    children: list["MindmapNodeSchema"] = Field(default_factory=list)
+
+
+MindmapNodeSchema.model_rebuild()
+
+
+class MindmapResponseSchema(BaseModel):
+    user_id: str
+    subtopic_id: str
+    mindmap: MindmapNodeSchema
