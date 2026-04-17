@@ -15,7 +15,7 @@ from src.core.messages import (
     SUMMARIZATION_INVOKE_LLM,
     SUMMARIZATION_SUCCESS,
     RETRIEVE_ERROR,
-    NO_CONTENT_WARNING,
+    NO_CONTENT_FOUND,
     LLM_INVOCATION_ERROR,
     NO_CONTENT_RESPONSE,
     RETRIEVE_FAILED_RESPONSE,
@@ -86,7 +86,7 @@ class SummarizationService:
             )
 
         except NoContentFoundError:
-            logger.warning(NO_CONTENT_WARNING, primary_url)
+            logger.warning(NO_CONTENT_FOUND, primary_url)
             return {
                 "user_id": user_id,
                 "subtopic_id": subtopic_id,
