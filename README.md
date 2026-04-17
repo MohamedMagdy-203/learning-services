@@ -9,7 +9,7 @@
     - [Step-by-Step Flow Explanation](#step-by-step-flow-explanation)
   - [Feature: Mindmap Generation](#feature-mindmap-generation)
   - [Mindmap Generation Workflow](#mindmap-generation-workflow)
-    - [step-by-step Flow](#step-by-step-flow)
+    - [Step-by-Step Flow](#step-by-step-flow)
       - [Phase 1 — Request \& Context](#phase-1--request--context)
       - [Phase 2 — Retrieval from Vector Store](#phase-2--retrieval-from-vector-store)
       - [Phase 3 — Generation \& Response](#phase-3--generation--response)
@@ -82,7 +82,7 @@ The mindmap feature generates a personalized, hierarchical mind map for a learne
 
 ![Mindmap_Workflow](assets/Mindmap_Generation_Workflow.png)
 
-### step-by-step Flow
+### Step-by-Step Flow
 
 #### Phase 1 — Request & Context
 
