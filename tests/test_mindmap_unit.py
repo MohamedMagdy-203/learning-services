@@ -174,7 +174,7 @@ class TestMindmapRetriever:
                 await retrieve_all_chunks_for_mindmap(request_all_sources)
 
     @pytest.mark.asyncio
-    async def test_combines_chunks_from_all_sources(
+    async def test_retrieves_only_from_primary_url(
         self, request_all_sources: MindmapGenerationRequest
     ) -> None:
         from src.ai_engine.mindmap_feature.retriever import (
@@ -184,11 +184,14 @@ class TestMindmapRetriever:
         with patch(
             "src.ai_engine.mindmap_feature.retriever._scroll_chunks_by_url",
             return_value=MOCK_MINDMAP_CHUNKS,
-        ):
+        ) as mock_scroll:
             chunks = await retrieve_all_chunks_for_mindmap(request_all_sources)
 
-        # 3 URLs × 6 chunks each
-        assert len(chunks) == len(MOCK_MINDMAP_CHUNKS) * len(request_all_sources.urls)
+        assert len(chunks) == len(MOCK_MINDMAP_CHUNKS)
+        mock_scroll.assert_called_once()
+        args, kwargs = mock_scroll.call_args
+        all_passed_values = list(args) + list(kwargs.values())
+        assert str(request_all_sources.primary_url) in all_passed_values
 
 
 class TestMindmapGenerator:
