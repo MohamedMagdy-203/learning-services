@@ -5,21 +5,24 @@ from src.core.config import get_settings
 from src.models.schemas import MindmapGenerationRequest, MindmapNodeSchema
 from src.ai_engine.mindmap_feature.mindmap_prompt import build_mindmap_prompt
 from src.ai_engine.mindmap_feature.mindmap_parser import parse_mindmap_response
+from threading import Lock
 
-# from src.ai_engine.mindmap.mindmap_generator import generate_mindmap as run_mindmap_generation
 
 logger = logging.getLogger(__name__)
 
 _client: genai.Client | None = None
+_client_lock = Lock()
 
 
 def _get_client() -> genai.Client:
     global _client
     if _client is None:
-        _client = genai.Client(
-            api_key=get_settings().GEMINI_API_KEY,
-            http_options=types.HttpOptions(timeout=60000),
-        )
+        with _client_lock:
+            if _client is None:
+                _client = genai.Client(
+                    api_key=get_settings().GEMINI_API_KEY,
+                    http_options=types.HttpOptions(timeout=60000),
+                )
     return _client
 
 
