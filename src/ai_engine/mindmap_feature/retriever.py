@@ -72,7 +72,7 @@ async def retrieve_all_chunks_for_mindmap(
     client = client or get_qdrant_client()
     settings = settings or get_settings()
 
-    # primary_url gets higher limit, secondary URLs get lower limit
+    # Retrieve only from the selected primary source URL
     sources = [
         (
             str(request.primary_url),
@@ -95,7 +95,7 @@ async def retrieve_all_chunks_for_mindmap(
     all_chunks: List[str] = []
     errors: List[Exception] = []
 
-    for (url, _), result in zip(sources, results):
+    for (url, _), result in zip(sources, results, strict=True):
         if isinstance(result, Exception):
             logger.error("URL '%s' failed | error=%s", url, str(result))
             errors.append(result)
