@@ -32,12 +32,16 @@ Main Backend ◄─── MindmapResponseSchema ──────────�
 {
   "user_id": "user_123",
   "subtopic_id": "sub_456",
-  "primary_url": "https://www.coursera.org/learn/introduction-to-databases",
+  "urls": [
+    "https://www.coursera.org/learn/introduction-to-databases",
+    "https://www.youtube.com/watch?v=xxx",
+    "https://www.mongodb.com/nosql-explained"
+  ],
+  "primary_url": "https://www.youtube.com/watch?v=xxx",
   "subtopic_name": "Database Fundamentals",
   "subtopic_difficulty": "Beginner",
   "weaknesses": {
-    "Normalization": "Struggles with 2NF and 3NF concepts",
-    "Joins": "Confuses INNER JOIN with LEFT JOIN"
+    "Normalization": "Struggles with 2NF and 3NF concepts"
   }
 }
 ```
