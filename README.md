@@ -257,6 +257,10 @@ To run all standard unit tests:
 
 ``` bash
 pytest
+
+or
+
+pytest -v -s --log-cli-level=INFO
 ```
 
 To run integration tests (which make actual calls to external APIs like
@@ -264,6 +268,10 @@ Tavily), use the custom integration flag:
 
 ``` bash
 pytest --integration
+
+or
+
+pytest --integration -v -s --log-cli-level=INFO
 ```
 
 ## Contribution Guidelines & Git Workflow
