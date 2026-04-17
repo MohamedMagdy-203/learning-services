@@ -74,22 +74,17 @@ async def test_chunks_per_source_limits(
 ) -> None:
     from src.ai_engine.mindmap_feature.retriever import (
         retrieve_all_chunks_for_mindmap,
-        CHUNKS_PER_PRIMARY_URL,
+        PRIMARY_URL_CHUNKS_LIMIT,
+        SECONDARY_URL_CHUNKS_LIMIT,
     )
 
     chunks = await retrieve_all_chunks_for_mindmap(request_all_sources)
 
-    max_total = CHUNKS_PER_PRIMARY_URL
-    assert (
-        len(chunks) <= max_total
-    ), f"Expected at most {max_total} chunks, got {len(chunks)}"
-
-    logger.info("\n" + "=" * 60)
-    logger.info("CHUNKS LIMIT CHECK")
-    logger.info("=" * 60)
-    logger.info("Max allowed : %d", max_total)
-    logger.info("Chunks got  : %d", len(chunks))
-    logger.info("=" * 60)
+    secondary_count = len(request_all_sources.urls) - 1
+    max_total = PRIMARY_URL_CHUNKS_LIMIT + (
+        secondary_count * SECONDARY_URL_CHUNKS_LIMIT
+    )
+    assert len(chunks) <= max_total
 
 
 @pytest.mark.integration
