@@ -7,6 +7,8 @@ def build_summarization_prompt(documents: List[Document]) -> str:
     Builds a simple summarization prompt that:
     Returns structured JSON output
     """
+    if not documents:
+        raise ValueError("Cannot build prompt: no documents provided")
 
     context_str = "\n\n".join(doc.page_content for doc in documents)
     max_context_chars = 16000
