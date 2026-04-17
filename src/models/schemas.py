@@ -57,7 +57,9 @@ class MindmapGenerationRequest(BaseModel):
     @model_validator(mode="after")
     def validate_primary_url_membership(self) -> "MindmapGenerationRequest":
         if self.primary_url not in self.urls:
-            raise ValueError("primary_url must be one of urls")
+            raise ValueError(
+                f"primary_url '{self.primary_url}' must be one of the provided urls"
+            )
         return self
 
 
