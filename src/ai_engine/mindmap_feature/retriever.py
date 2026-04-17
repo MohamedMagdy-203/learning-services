@@ -75,14 +75,9 @@ async def retrieve_all_chunks_for_mindmap(
     # primary_url gets higher limit, secondary URLs get lower limit
     sources = [
         (
-            str(url),
-            (
-                PRIMARY_URL_CHUNKS_LIMIT
-                if url == request.primary_url
-                else SECONDARY_URL_CHUNKS_LIMIT
-            ),
+            str(request.primary_url),
+            PRIMARY_URL_CHUNKS_LIMIT,
         )
-        for url in request.urls
     ]
 
     tasks: List[Coroutine[Any, Any, List[str]]] = [
