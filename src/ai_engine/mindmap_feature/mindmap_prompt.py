@@ -1,4 +1,5 @@
 from src.models.schemas import MindmapGenerationRequest
+import json
 
 
 def build_mindmap_prompt(
@@ -30,6 +31,8 @@ def build_mindmap_prompt(
     chunks_text = "\n\n".join(
         f"[Chunk {i}]\n{chunk}" for i, chunk in enumerate(chunks, 1)
     )
+    subtopic_name_json = json.dumps(request.subtopic_name)
+    difficulty_json = json.dumps(request.subtopic_difficulty)
 
     return f"""You are an expert in educational content structuring. \
 Your job is to analyse learning content and organize it into a clear, \
@@ -49,7 +52,7 @@ hierarchical mind map.
 Analyze the learning content above and organize it into a hierarchical mind map. \
 Follow these rules strictly:
 
-1. The root node topic must be exactly: "{request.subtopic_name}"
+1. The root node topic must be exactly: {subtopic_name_json}
 2. Create main branches organically based on the core concepts found in the content. Do not invent branches if the content is small, and do not overly compress if it is large.
 3. The root must have between 2 and 15 direct children (main branches).
 4. Each main branch should contain sub-topics that naturally flow from it.
@@ -57,14 +60,14 @@ Follow these rules strictly:
 to it. If the sub-topic is simple or atomic, leave its children as [].
 6. Maximum nesting depth is 3 levels: main branch → sub-topic → detail.
 7. Prioritize branches and sub-topics that address the learner's known weaknesses.
-8. Match depth and complexity to the "{request.subtopic_difficulty}" difficulty level.
+8. Match depth and complexity to the {difficulty_json} difficulty level.
 9. Use clear, concise topic names — no full sentences.
 10. Base ONLY on the provided content — do not invent topics not covered in the chunks.
 
 Respond ONLY with a valid JSON object. \
 No explanation, no markdown fences, no extra text. Exactly this structure:
 {{
-  "topic": "{request.subtopic_name}",
+  "topic": {subtopic_name_json},
   "children": [
     {{
       "topic": "Main concept 1",
