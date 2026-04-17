@@ -22,7 +22,7 @@ def parse_mindmap_response(raw_text: str) -> MindmapNodeSchema:
                     the expected mindmap structure.
     """
     text = raw_text.strip()
-    text = re.sub(r"^```(?:json)?\s*", "", text)
+    text = re.sub(r"^```(?:json)?\s*", "", text, flags=re.IGNORECASE)
     text = re.sub(r"\s*```$", "", text)
     text = text.strip()
 
@@ -30,10 +30,9 @@ def parse_mindmap_response(raw_text: str) -> MindmapNodeSchema:
         data = json.loads(text)
     except json.JSONDecodeError as exc:
         logger.error(
-            "Failed to decode JSON from LLM response | error: %s | raw: %.200s",
+            "Failed to decode JSON from LLM response | error: %s | text_len: %d",
             str(exc),
-            raw_text,
-            exc_info=True,
+            len(raw_text),
         )
 
         raise ValueError("LLM response is not valid JSON") from exc
