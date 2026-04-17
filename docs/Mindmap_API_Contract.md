@@ -146,7 +146,9 @@ To successfully generate a Mind Map, the content must already exist in the AI Se
 
 ## 5. Internal Processing Flow (AI Service)
 
-1. **Retrieve:** Fetch up to 50 chunks filtered by `primary_url`.
+1. **Retrieve (Smart Fallback):** - Fetch chunks strictly from the `primary_url` first (up to 50 chunks).
+   - If the primary content is insufficient (< 50 chunks), fetch from the remaining secondary `urls` concurrently as a fallback.
+   - Cap the total retrieved chunks at 50 to optimize the LLM context window.
 2. **Prompt Construction:** Combine chunks + subtopic context + weaknesses.
 3. **LLM Generation:** Generate structured JSON mind map.
 4. **Validation:** Ensure response matches schema before returning.
