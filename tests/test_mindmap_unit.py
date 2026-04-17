@@ -187,7 +187,8 @@ class TestMindmapRetriever:
         ):
             chunks = await retrieve_all_chunks_for_mindmap(request_all_sources)
 
-        assert len(chunks) == len(MOCK_MINDMAP_CHUNKS)
+        # 3 URLs × 6 chunks each
+        assert len(chunks) == len(MOCK_MINDMAP_CHUNKS) * len(request_all_sources.urls)
 
 
 class TestMindmapGenerator:
