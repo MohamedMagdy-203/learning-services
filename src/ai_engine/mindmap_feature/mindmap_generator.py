@@ -52,7 +52,7 @@ async def generate_mindmap(
     )
 
     response = await _get_client().aio.models.generate_content(  # type: ignore
-        model="gemini-3-flash-preview",
+        model="gemini-2.5-flash",
         contents=prompt,
         config=types.GenerateContentConfig(
             temperature=0.2,
