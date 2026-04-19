@@ -1,4 +1,5 @@
 import pytest
+from sentence_transformers import SentenceTransformer
 
 
 def pytest_addoption(parser: pytest.Parser) -> None:
@@ -17,3 +18,10 @@ def pytest_collection_modifyitems(
 
 def pytest_configure(config: pytest.Config) -> None:
     config.addinivalue_line("markers", "integration: mark test as integration test")
+
+
+@pytest.fixture(scope="session")
+def shared_embedding_model():
+    model_name = "paraphrase-multilingual-mpnet-base-v2"
+    model = SentenceTransformer(model_name)
+    return model
