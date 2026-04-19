@@ -65,6 +65,7 @@ class MindmapGenerationRequest(BaseModel):
 
 class MindmapNodeSchema(BaseModel):
     topic: str
+    description: str
     children: list["MindmapNodeSchema"] = Field(default_factory=list)
 
 
