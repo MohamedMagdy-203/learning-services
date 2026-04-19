@@ -54,7 +54,7 @@ async def rerank_sources(
     )
 
     response = await _get_client().aio.models.generate_content(  # type: ignore
-        model="gemini-3-flash-preview",
+        model="gemini-2.5-flash-lite",
         contents=prompt,
     )
 
