@@ -22,11 +22,11 @@ The Main Backend sends the request containing the subtopic details and the relev
   "user_id": "user_123",
   "subtopic_id": "sub_456",
   "urls": [
-    "[https://www.coursera.org/learn/introduction-to-databases](https://www.coursera.org/learn/introduction-to-databases)",
-    "[https://www.youtube.com/watch?v=xxx](https://www.youtube.com/watch?v=xxx)",
-    "[https://www.mongodb.com/nosql-explained](https://www.mongodb.com/nosql-explained)"
+    "https://www.coursera.org/learn/introduction-to-databases",
+    "https://www.youtube.com/watch?v=xxx",
+    "https://www.mongodb.com/nosql-explained"
   ],
-  "primary_url": "[https://www.youtube.com/watch?v=xxx](https://www.youtube.com/watch?v=xxx)",
+  "primary_url": "https://www.coursera.org/learn/introduction-to-databases",
   "subtopic_name": "Database Fundamentals",
   "subtopic_difficulty": "Beginner",
   "weaknesses": {
