@@ -1,14 +1,17 @@
-# API Contract — AI Service ↔ Main Backend
+# API Contract - AI Service and Main Backend Integration
 
-## 1. AI Service → Main Backend
+## 1. Roadmap Content Generation
 
-**Request**
+**Service Flow:**
+The Main Backend requests roadmap content generation by sending user preferences and subtopic details. The AI Service receives this data, processes the search and ranking, and returns the curated learning resources.
 
-```
-GET http://localhost:3000/api/internal/roadmap-context/{user_id}/{subtopic_id}
-```
+**Request Details:**
 
-**Response**
+- **Method:** POST
+- **Endpoint:** http://localhost:8000/api/v1/roadmap/generate
+- **Content-Type:** application/json
+
+**JSON Body (Sent by Main Backend):**
 
 ```json
 {
@@ -23,9 +26,9 @@ GET http://localhost:3000/api/internal/roadmap-context/{user_id}/{subtopic_id}
   "target_subtopic_schema": {
     "Subtopic_id": "sub_456",
     "Name": "Database Fundamentals",
-    "Description": "...",
+    "Description": "Basic concepts of relational and non-relational databases.",
     "Difficulty": "Beginner"
-},
+  },
   "weakness_schema": {
     "Topics": {
       "Concurrency": "Struggles with threading and async"
@@ -34,24 +37,81 @@ GET http://localhost:3000/api/internal/roadmap-context/{user_id}/{subtopic_id}
 }
 ```
 
----
+**Response Details (Returned by AI Service):**
 
-## 2. Main Backend → AI Service
-
-**Request**
-
-```
-GET http://localhost:8000/api/v1/data/roadmap-content/{user_id}/{subtopic_id}
-```
-
-**Response**
+- **Status:** 200 OK
 
 ```json
 {
   "user_id": "user_123",
   "subtopic_id": "sub_456",
-  "best_course": { "title": "...", "url": "..." },
-  "best_video":  { "title": "...", "url": "..." },
-  "best_blog":   { "title": "...", "url": "..." }
+  "best_course": {
+    "title": "Introduction to Databases | Coursera",
+    "url": "[https://www.coursera.org/learn/introduction-to-databases](https://www.coursera.org/learn/introduction-to-databases)"
+  },
+  "best_video": {
+    "title": "Database Fundamentals for Beginners - YouTube",
+    "url": "[https://www.youtube.com/watch?v=example](https://www.youtube.com/watch?v=example)"
+  },
+  "best_blog": {
+    "title": "Database Fundamentals | Microsoft Learn",
+    "url": "[https://learn.microsoft.com/en-us/shows/dbfundamentals/](https://learn.microsoft.com/en-us/shows/dbfundamentals/)"
+  }
+}
+```
+
+---
+
+## 2. Mindmap Generation
+
+**Service Flow:**
+The Main Backend requests a structured mind map based on previously stored content. The AI Service receives the request, retrieves content chunks from the vector database, and returns the generated mind map structure.
+
+**Request Details:**
+
+- **Method:** POST
+- **Endpoint:** http://localhost:8000/api/v1/mindmap/generate
+- **Content-Type:** application/json
+
+**JSON Body (Sent by Main Backend):**
+
+```json
+{
+  "user_id": "user_123",
+  "subtopic_id": "sub_456",
+  "primary_url": "[https://www.coursera.org/learn/introduction-to-databases](https://www.coursera.org/learn/introduction-to-databases)",
+  "target_subtopic_schema": {
+      "Name": "Database Fundamentals",
+      "Difficulty": "Beginner"
+  },
+  "weakness_schema": {
+      "Topics": { "SQL": "Basic syntax" }
+  }
+}
+```
+
+**Response Details (Returned by AI Service):**
+
+- **Status:** 200 OK
+
+```json
+{
+  "user_id": "user_123",
+  "subtopic_id": "sub_456",
+  "mindmap": {
+    "root": "Database Fundamentals",
+    "nodes": [
+      {
+        "id": "1",
+        "topic": "Relational Databases",
+        "details": "Explanation of tables, keys, and schemas."
+      },
+      {
+        "id": "2",
+        "topic": "SQL Basics",
+        "details": "Focus on SELECT, INSERT, and JOIN operations."
+      }
+    ]
+  }
 }
 ```
