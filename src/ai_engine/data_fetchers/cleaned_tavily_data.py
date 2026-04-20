@@ -15,14 +15,19 @@ async def fetch_and_clean_subtopic_content(
     )
 
     cleaned_results = []
-    for result in raw_results["results"]:
-        cleaned_content = clean_content(result["raw_content"])
-        cleaned_results.append(  # type: ignore
-            {  # type: ignore
-                "title": result["title"],
-                "url": result["url"],
+    for result in raw_results.get("results", []):
+        raw_text = result.get("raw_content", "")
+
+        if not raw_text or len(raw_text.strip()) < 50:
+            continue
+
+        cleaned_content = clean_content(raw_text)
+        cleaned_results.append(
+            {
+                "title": result.get("title", ""),
+                "url": result.get("url", ""),
                 "raw_content": cleaned_content,
             }
         )
 
-    return cleaned_results  # type: ignore
+    return cleaned_results
