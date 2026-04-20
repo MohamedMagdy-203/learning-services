@@ -1,5 +1,7 @@
 import pytest
-from sentence_transformers import SentenceTransformer
+from src.core.config import get_settings
+
+settings = get_settings()
 
 
 def pytest_addoption(parser: pytest.Parser) -> None:
@@ -22,6 +24,10 @@ def pytest_configure(config: pytest.Config) -> None:
 
 @pytest.fixture(scope="session")
 def shared_embedding_model():
-    model_name = "paraphrase-multilingual-mpnet-base-v2"
-    model = SentenceTransformer(model_name)
+    sentence_transformers = pytest.importorskip(
+        "sentence_transformers",
+        reason="Install sentence-transformers to run integration tests",
+    )
+    model_name = settings.EMBEDDING_MODEL
+    model = sentence_transformers.SentenceTransformer(model_name)
     return model
