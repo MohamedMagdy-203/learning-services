@@ -33,17 +33,21 @@ def enrich_with_raw_content(
         if original:
             item["raw_content"] = original["raw_content"]
         else:
-            # URL might have minor differences — try partial match as fallback
             matched = next(
                 (
                     src
                     for src in sources_by_url.values()
-                    if url in src["url"] or src["url"] in url
+                    if src.get("url")
+                    and url
+                    and (url in src["url"] or src["url"] in url)
                 ),
                 None,
             )
-            item["raw_content"] = matched["raw_content"] if matched else None
-            if not matched:
+
+            if matched and matched.get("raw_content"):
+                item["raw_content"] = matched["raw_content"]
+            else:
                 logger.warning("raw_content not found for %s | url: %s", key, url)
+                ranked_result[key] = None
 
     return ranked_result
