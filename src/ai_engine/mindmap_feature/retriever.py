@@ -11,8 +11,10 @@ from qdrant_client import QdrantClient
 
 logger = logging.getLogger(__name__)
 
-PRIMARY_URL_CHUNKS_LIMIT = 15
-SECONDARY_URL_CHUNKS_LIMIT = 5
+settings = get_settings()
+
+PRIMARY_URL_CHUNKS_LIMIT = settings.PRIMARY_URL_CHUNKS_LIMIT
+SECONDARY_URL_CHUNKS_LIMIT = settings.SECONDARY_URL_CHUNKS_LIMIT
 QDRANT_SCROLL_TIMEOUT_SECONDS: int = 10
 
 
