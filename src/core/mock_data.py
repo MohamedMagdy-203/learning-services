@@ -235,44 +235,50 @@ MOCK_MINDMAP_CHUNKS: list[str] = [
 
 MOCK_MINDMAP_RESPONSE: Dict[str, Any] = {
     "topic": "Database Fundamentals",
+    "description": "Core concepts of databases.",
     "children": [
         {
             "topic": "SQL Databases",
+            "description": "Relational systems.",
             "children": [
-                {"topic": "Tables and Schemas", "children": []},
-                {"topic": "SQL Queries", "children": []},
-                {"topic": "JOINs", "children": []},
+                {"topic": "Tables and Schemas", "description": "", "children": []},
+                {"topic": "SQL Queries", "description": "", "children": []},
+                {"topic": "JOINs", "description": "", "children": []},
             ],
         },
         {
             "topic": "NoSQL Databases",
+            "description": "Non-relational systems.",
             "children": [
-                {"topic": "Document Stores", "children": []},
-                {"topic": "Key-Value Stores", "children": []},
-                {"topic": "When to use NoSQL", "children": []},
+                {"topic": "Document Stores", "description": "", "children": []},
+                {"topic": "Key-Value Stores", "description": "", "children": []},
+                {"topic": "When to use NoSQL", "description": "", "children": []},
             ],
         },
         {
             "topic": "Data Modeling",
+            "description": "Designing data structures.",
             "children": [
-                {"topic": "Primary Keys", "children": []},
-                {"topic": "Foreign Keys", "children": []},
-                {"topic": "Relationships", "children": []},
+                {"topic": "Primary Keys", "description": "", "children": []},
+                {"topic": "Foreign Keys", "description": "", "children": []},
+                {"topic": "Relationships", "description": "", "children": []},
             ],
         },
         {
             "topic": "Normalization",
+            "description": "Reducing data redundancy.",
             "children": [
-                {"topic": "1NF", "children": []},
-                {"topic": "2NF", "children": []},
-                {"topic": "3NF", "children": []},
+                {"topic": "1NF", "description": "", "children": []},
+                {"topic": "2NF", "description": "", "children": []},
+                {"topic": "3NF", "description": "", "children": []},
             ],
         },
         {
             "topic": "Data Integrity",
+            "description": "Ensuring data accuracy and consistency.",
             "children": [
-                {"topic": "Constraints", "children": []},
-                {"topic": "Transactions and ACID", "children": []},
+                {"topic": "Constraints", "description": "", "children": []},
+                {"topic": "Transactions and ACID", "description": "", "children": []},
             ],
         },
     ],
