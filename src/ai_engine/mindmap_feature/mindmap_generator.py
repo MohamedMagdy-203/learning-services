@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 
 _client: genai.Client | None = None
 _client_lock = Lock()
+settings = get_settings()
 
 
 def _get_client() -> genai.Client:
@@ -20,7 +21,7 @@ def _get_client() -> genai.Client:
         with _client_lock:
             if _client is None:
                 _client = genai.Client(
-                    api_key=get_settings().GEMINI_API_KEY,
+                    api_key=settings.GEMINI_API_KEY,
                     http_options=types.HttpOptions(timeout=60000),
                 )
     return _client
@@ -52,7 +53,7 @@ async def generate_mindmap(
     )
 
     response = await _get_client().aio.models.generate_content(  # type: ignore
-        model="gemini-2.5-flash",
+        model=settings.MINDMAP_MODEL,
         contents=prompt,
         config=types.GenerateContentConfig(
             temperature=0.2,
