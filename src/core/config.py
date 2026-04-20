@@ -12,7 +12,12 @@ class Settings(BaseSettings):  # type: ignore
     QDRANT_URL: str = "http://localhost:6333"
     QDRANT_COLLECTION_NAME: str = "learning_materials"
     GEMINI_RERANKER_TIMEOUT_MS: int = 60000
-    hf_token: str | None = None
+    HF_TOKEN: str
+    RERANKER_MODEL: str = "gemini-2.5-flash-lite"
+    MINDMAP_MODEL: str = "gemini-2.5-flash-lite"
+    PRIMARY_URL_CHUNKS_LIMIT: int = 15
+    SECONDARY_URL_CHUNKS_LIMIT: int = 5
+    EMBEDDING_MODEL: str = "paraphrase-multilingual-mpnet-base-v2"
 
 
 @lru_cache
