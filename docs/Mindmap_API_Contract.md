@@ -1,32 +1,21 @@
-# API Contract — Mind Map Feature
-
-## AI Service ↔ Main Backend
-
----
+# API Contract - Mind Map Generation
 
 ## Overview
 
-The Mind Map feature requires **one synchronous call from the Main Backend to the AI Service**.
-The Main Backend is responsible for providing the required context, specifically the exact `primary_url` that the user is currently studying. The AI Service relies on this URL to fetch pre-ingested content from the Vector Database (Qdrant).
+The Mind Map feature requires a synchronous call from the Main Backend to the AI Service. The Main Backend provides the user's context, the target subtopic, and the URLs of the learning materials. The AI Service processes this data and returns a structured hierarchical mind map.
 
-```text
-Main Backend ──── POST /api/v1/mindmap/generate ────► AI Service
-                                                    │
-                                                    ├──► Qdrant (Retrieve chunks by primary_url)
-                                                    │
-                                                    ├──► Gemini LLM (Generate JSON mindmap)
-                                                    │
-Main Backend ◄─── MindmapResponseSchema ────────────┘
-```
+**Service Flow:**
+The Main Backend sends the request containing the subtopic details and the relevant URLs. The AI Service generates a dynamically branched mind map tailored to the content and the user's weaknesses, and returns it as a structured JSON object.
 
 ---
 
-## 1. Request: Main Backend → AI Service
+## 1. Request Details
 
-**Endpoint:** `POST /api/v1/mindmap/generate`
-**Content-Type:** `application/json`
+- **Method:** POST
+- **Endpoint:** `http://localhost:8000/api/v1/mindmap/generate`
+- **Content-Type:** `application/json`
 
-### Request Body Example
+### JSON Body (Sent by Main Backend)
 
 ```json
 {
@@ -37,7 +26,7 @@ Main Backend ◄─── MindmapResponseSchema ──────────�
     "https://www.youtube.com/watch?v=xxx",
     "https://www.mongodb.com/nosql-explained"
   ],
-  "primary_url": "https://www.youtube.com/watch?v=xxx",
+  "primary_url": "https://www.coursera.org/learn/introduction-to-databases",
   "subtopic_name": "Database Fundamentals",
   "subtopic_difficulty": "Beginner",
   "weaknesses": {
@@ -46,24 +35,25 @@ Main Backend ◄─── MindmapResponseSchema ──────────�
 }
 ```
 
- | Field                 | Type          | Required | Description                                                                                                   |
- | --------------------- | ------------- | -------- | ------------------------------------------------------------------------------------------------------------- |
- | `user_id`             | string        | **Yes**  | Unique user identifier.                                                                                       |
- | `subtopic_id`         | string        | **Yes**  | Unique subtopic identifier.                                                                                   |
-+| `urls`                | string[]      | **Yes**  | All candidate source URLs for the subtopic. The selected `primary_url` must be one of these values.          |
- | `primary_url`         | string (URL)  | **Yes**  | The exact URL of the content the user wants to generate a mind map for (Must match the URL stored in Qdrant). |
- | `subtopic_name`       | string        | **Yes**  | The main title of the subtopic. Used as the Root node of the mind map.                                        |
- | `subtopic_difficulty` | string        | **Yes**  | Controls the depth and complexity of the generated mind map.                                                  |
- | `weaknesses`          | object \| null | **No**  | Key-Value pairs of user weaknesses to prioritize in the mind map.                                             |
+### Field Definitions
 
-> ⚠️ **CRITICAL:** The `primary_url` sent here MUST exactly match the URL stored in Qdrant.
-> ❗ **IMPORTANT NOTE:** The size of the generated mind map is **NOT fixed**. The number of nodes and branches returned depends dynamically on the content retrieved from the vector database.
+| Field                 | Type          | Required | Description                                                                                                   |
+| --------------------- | ------------- | -------- | ------------------------------------------------------------------------------------------------------------- |
+| `user_id`             | string        | **Yes** | Unique user identifier.                                                                                       |
+| `subtopic_id`         | string        | **Yes** | Unique subtopic identifier.                                                                                   |
+| `urls`                | string[]      | **Yes** | All candidate source URLs for the subtopic.                                                                   |
+| `primary_url`         | string (URL)  | **Yes** | The exact URL of the primary content the user is studying (Must be one of the values in the `urls` array).    |
+| `subtopic_name`       | string        | **Yes** | The main title of the subtopic. Used as the Root node of the mind map.                                        |
+| `subtopic_difficulty` | string        | **Yes** | Controls the depth and complexity of the generated mind map.                                                  |
+| `weaknesses`          | object / null | **No** | Key-Value pairs of user weaknesses to prioritize in the mind map generation.                                  |
 
 ---
 
-## 2. Response: AI Service → Main Backend
+## 2. Response Details
 
-### Success Response — HTTP 200 OK
+- **Status:** 200 OK
+
+### JSON Body (Returned by AI Service)
 
 ```json
 {
@@ -71,20 +61,17 @@ Main Backend ◄─── MindmapResponseSchema ──────────�
   "subtopic_id": "sub_456",
   "mindmap": {
     "topic": "Database Fundamentals",
+    "description": "Comprehensive overview of relational database principles.",
     "children": [
       {
-        "topic": "Relational Database Basics",
+        "topic": "Core Concepts",
+        "description": "Foundational blocks of DBMS.",
         "children": [
-          { "topic": "Terminology and Concepts", "children": [] },
-          { "topic": "Database Components", "children": [] }
-        ]
-      },
-      {
-        "topic": "Database Design",
-        "children": [
-          { "topic": "Schema and Modeling", "children": [] },
-          { "topic": "Data Integrity and Keys", "children": [] },
-          { "topic": "Normalization", "children": [] }
+          {
+            "topic": "Relational Model",
+            "description": "",
+            "children": []
+          }
         ]
       }
     ]
@@ -105,14 +92,14 @@ Main Backend ◄─── MindmapResponseSchema ──────────�
 | Field      | Type          | Description                                                    |
 | ---------- | ------------- | -------------------------------------------------------------- |
 | `topic`    | string        | Node label — concise, represents a single concept.             |
+| `description` | string     | Detailed explanation of the concept (may be empty string).     |
 | `children` | MindmapNode[] | Child nodes. Returns an empty array `[]` if it is a leaf node. |
 
 ### Mind Map Structure Guarantees
 
 * **Root Node:** Always exactly equals the `subtopic_name` from the request.
-* **Dynamic Branching:** The number of branches is **dynamic and content-driven** — there is no fixed size.
-* **Soft Limits:** Typically ranges between **2 to 15 main branches**, but may vary based on content richness.
-* **Nesting Depth:** Maximum of **3 levels deep** (Root → Main Branch → Sub-topic → Detail).
+* **Dynamic Branching:** The number of branches is dynamically generated based on the content (typically ranges between 2 to 15 main branches).
+* **Nesting Depth:** Maximum of 3 levels deep (Root -> Main Branch -> Sub-topic -> Detail).
 
 ---
 
@@ -121,34 +108,12 @@ Main Backend ◄─── MindmapResponseSchema ──────────�
 | HTTP Status                 | Error Code             | Detail Message / Reason                                            |
 | --------------------------- | ---------------------- | ------------------------------------------------------------------ |
 | `422 Unprocessable Entity`  | `VALIDATION_ERROR`     | Missing or invalid fields in the request body.                     |
-| `404 Not Found`             | `CONTENT_NOT_FOUND`    | No content found in vector store for the given `primary_url`.      |
-| `503 Service Unavailable`   | `RETRIEVAL_ERROR`      | Failed to retrieve content from vector store (Qdrant unavailable). |
-| `500 Internal Server Error` | `LLM_GENERATION_ERROR` | LLM failed to return valid JSON or timeout occurred.               |
+| `404 Not Found`             | `CONTENT_NOT_FOUND`    | No stored content found for the provided URLs.                     |
+| `503 Service Unavailable`   | `RETRIEVAL_ERROR`      | Failed to retrieve content due to internal database unavailability.|
+| `500 Internal Server Error` | `LLM_GENERATION_ERROR` | AI Engine failed to generate a valid mind map structure.           |
 
 ---
 
-## 4. Architectural Prerequisites
+## 4. Prerequisites
 
-To successfully generate a Mind Map, the content must already exist in the AI Service's Vector Database.
-
-### Expected Flow
-
-1. **Trigger Ingestion:**
-   `GET /api/v1/data/roadmap-content/{user_id}/{subtopic_id}` → content is fetched and stored in Qdrant.
-
-2. **User Selection:**
-   User selects a learning resource.
-
-3. **Generate Mind Map:**
-   `POST /api/v1/mindmap/generate` using the selected `primary_url`.
-
----
-
-## 5. Internal Processing Flow (AI Service)
-
-1. **Retrieve (Smart Fallback):** - Fetch chunks strictly from the `primary_url` first (up to 50 chunks).
-   - If the primary content is insufficient (< 50 chunks), fetch from the remaining secondary `urls` concurrently as a fallback.
-   - Cap the total retrieved chunks at 50 to optimize the LLM context window.
-2. **Prompt Construction:** Combine chunks + subtopic context + weaknesses.
-3. **LLM Generation:** Generate structured JSON mind map.
-4. **Validation:** Ensure response matches schema before returning.
+**Important:** The Mind Map generation relies on content that has been previously fetched and processed. The Main Backend must ensure that the `POST /api/v1/roadmap/generate` endpoint has been successfully called for the given `user_id` and `subtopic_id` before requesting a Mind Map.

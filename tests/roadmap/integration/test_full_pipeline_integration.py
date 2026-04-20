@@ -13,9 +13,9 @@ from src.ai_engine.vector_store.filters import is_url_already_stored
 logging.basicConfig(level=logging.INFO)
 
 
-@pytest.mark.integration  # type: ignore
-@pytest.mark.asyncio  # type: ignore
-async def test_full_pipeline_with_real_data():
+@pytest.mark.integration
+@pytest.mark.asyncio
+async def test_full_pipeline_with_real_data(shared_embedding_model):
     real_settings = Settings()  # type: ignore
     mock_request_data = RoadmapGenerationRequest(**MOCK_VALID_RESPONSE)
 

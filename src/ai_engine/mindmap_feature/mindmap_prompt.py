@@ -32,10 +32,9 @@ def build_mindmap_prompt(
         f"[Chunk {i}]\n{chunk}" for i, chunk in enumerate(chunks, 1)
     )
     subtopic_name_json = json.dumps(request.subtopic_name)
-    difficulty_json = json.dumps(request.subtopic_difficulty)
 
     return f"""You are an expert in educational content structuring. \
-Your job is to analyse learning content and organize it into a clear, \
+Your job is to analyze learning content and organize it into a clear, \
 hierarchical mind map.
 
 ## Target Subtopic
@@ -53,50 +52,28 @@ Analyze the learning content above and organize it into a hierarchical mind map.
 Follow these rules strictly:
 
 1. The root node topic must be exactly: {subtopic_name_json}
-2. Create main branches organically based on the core concepts found in the content. Do not invent branches if the content is small, and do not overly compress if it is large.
-3. The root must have between 2 and 15 direct children (main branches).
-4. Each main branch should contain sub-topics that naturally flow from it.
-5. If a sub-topic has enough supporting detail in the content, add children \
-to it. If the sub-topic is simple or atomic, leave its children as [].
-6. Maximum nesting depth is 3 levels: main branch → sub-topic → detail.
-7. Prioritize branches and sub-topics that address the learner's known weaknesses.
-8. Match depth and complexity to the {difficulty_json} difficulty level.
-9. Use clear, concise topic names — no full sentences.
-10. Base ONLY on the provided content — do not invent topics not covered in the chunks.
+2. **STRICT GENERALIZATION (Vendor-Neutral):** The target subtopic is "{request.subtopic_name}". Since this is a general fundamental topic, you MUST REMOVE all vendor-specific jargon. For example, replace "PL/SQL" or "T-SQL" with "Procedural SQL", and ignore specific software names (e.g., Oracle, SQL Server, MySQL). Map everything to standard ANSI SQL concepts.
+3. **STRICT SIZE & DEPTH LIMITS (CRITICAL FOR SPEED):**
+   - Maximum 2 levels of depth (Root -> Main Branch -> Sub-topic).
+   - Maximum 4 to 5 Main Branches.
+   - Maximum 4 Sub-topics per Main Branch.
+   - DO NOT over-expand. Keep the map highly focused.
+4. **Descriptions:** Write a 1-sentence "description" for the Root and Main Branches. For the final Sub-topics, leave the description completely empty ("").
+5. Prioritize branches addressing the learner's weaknesses.
 
-Respond ONLY with a valid JSON object. \
-No explanation, no markdown fences, no extra text. Exactly this structure:
+Respond ONLY with a valid JSON object matching this structure:
 {{
   "topic": {subtopic_name_json},
+  "description": "Short explanation",
   "children": [
     {{
-      "topic": "Main concept 1",
+      "topic": "Main Branch 1",
+      "description": "Short explanation",
       "children": [
         {{
           "topic": "Sub-topic 1.1",
-          "children": [
-            {{ "topic": "Detail 1.1.1", "children": [] }},
-            {{ "topic": "Detail 1.1.2", "children": [] }}
-          ]
-        }},
-        {{
-          "topic": "Sub-topic 1.2",
+          "description": "",
           "children": []
-        }}
-      ]
-    }},
-    {{
-      "topic": "Main concept 2",
-      "children": [
-        {{
-          "topic": "Sub-topic 2.1",
-          "children": []
-        }},
-        {{
-          "topic": "Sub-topic 2.2",
-          "children": [
-            {{ "topic": "Detail 2.2.1", "children": [] }}
-          ]
         }}
       ]
     }}
