@@ -12,5 +12,9 @@ def get_embeddings(model_name=settings.EMBEDDING_MODEL) -> HuggingFaceEmbeddings
     global _embeddings
     if _embeddings is None:
         logger.info("Loading embedding model: %s", model_name)
-        _embeddings = HuggingFaceEmbeddings(model_name=model_name)  # type: ignore
+        encode_kwargs = {"batch_size": 32}
+        _embeddings = HuggingFaceEmbeddings(
+            model_name=model_name,
+            encode_kwargs=encode_kwargs,  # type: ignore
+        )
     return _embeddings  # type: ignore
