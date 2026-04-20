@@ -92,6 +92,7 @@ The Main Backend sends the request containing the subtopic details and the relev
 | Field      | Type          | Description                                                    |
 | ---------- | ------------- | -------------------------------------------------------------- |
 | `topic`    | string        | Node label — concise, represents a single concept.             |
+| `description` | string     | Detailed explanation of the concept (may be empty string).     |
 | `children` | MindmapNode[] | Child nodes. Returns an empty array `[]` if it is a leaf node. |
 
 ### Mind Map Structure Guarantees
