@@ -12,34 +12,6 @@ class NoContentFoundError(Exception):
     pass
 
 
-class DistillationError(Exception):
-    """Raised when LLM fails to distill content."""
-
-    pass
-
-
-class PrimarySourceDistillationError(Exception):
-    """raised when primary source distillation fails"""
-
-    def __init__(self, url: str):
-        """
-        Initialize the exception for a failed primary-source distillation.
-
-        Records the failing primary source URL on the exception instance and sets the exception message to include that URL.
-
-        Parameters:
-            url (str): The URL of the primary source that failed to be distilled.
-        """
-        self.url = url
-        super().__init__(f"Failed to distill primary source: {url}")
-
-
-class NoDistilledContentError(Exception):
-    """raised when all URLs fail to distill"""
-
-    pass
-
-
 class LLMGenerationError(Exception):
     """Exception raised when there's an error during LLM question generation."""
 
@@ -54,11 +26,5 @@ class InvalidLLMResponseError(Exception):
 
 class EmptyContentError(Exception):
     """Exception raised when the source content provided for question generation is empty."""
-
-    pass
-
-
-class QuestionValidationError(Exception):
-    """Exception raised when a generated question fails Pydantic validation."""
 
     pass
