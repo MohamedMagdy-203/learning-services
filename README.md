@@ -75,91 +75,83 @@ The codebase is organized modularly to separate API routing, core configurations
 learning-services/
 ├── src/
 │   ├── ai_engine/                   # Core logic for data fetching, processing, and LLMs
+│   │   ├── BankQuestions_engine/    # Quiz Bank generation logic (MAIN FEATURE)
+│   │   │   ├── __init__.py
+│   │   │   ├── BankQuestions_generator.py  # Core engine: orchestrates LLM calls and builds QuizBank
+│   │   │   ├── ChunksRetrieval.py          # Retrieves chunks from Qdrant by URL (primary + secondary)
+│   │   │   └── openai_client_dependency.py # Handles OpenAI client init, reuse, and shutdown
+│   │   │
 │   │   ├── data_fetchers/           # Modules for retrieving and cleaning external data
 │   │   │   ├── __init__.py
 │   │   │   ├── cleaned_tavily_data.py # Pipeline orchestrator to fetch and clean subtopic content
 │   │   │   ├── data_cleaner.py      # Regex-based text sanitization (removes HTML, boilerplate, URLs)
-│   │   │   ├── distillation_retrieval.py #Chunks retrieval by URL
 │   │   │   ├── query_builder.py     # Logic to construct targeted search queries based on user profile
-│   │   │   └── tavily_client.py     # Async client wrapper for Tavily web search API
-│   │   ├── distiller_engine/        # Distillation pipeline core logic
+│   │   │   ├── tavily_client.py     # Async client wrapper for Tavily web search API
+│   │   │   └── qdrant_client_dependency.py # Qdrant client initialization and lifecycle management
+│   │   │
+│   │   ├── llm_generators/          # LLM-based prompt builders and helpers
 │   │   │   ├── __init__.py
-│   │   │   └── distiller.py         # Main orchestration for content distillation
-│   │   ├── llm_generators/          # LLM-based ranking, parsing, and prompt generation
-│   │   │   ├── __init__.py
-│   │   │   ├── distillation_prompts.py # Prompt builder for distillation tasks
-│   │   │   ├── reranker.py          # LLM reranking pipeline orchestrator
-│   │   │   ├── reranker_parser.py   # JSON response parser and raw_content enricher
-│   │   │   ├── reranker_prompt.py   # Prompt builder for the reranker LLM
-│   │   │   └── source_classifier.py # URL-based source type classifier (course/video/blog)
-
-│   │   ├── BankQuestions_engine/    # Quiz Bank generation logic (NEW)
-│   │   │   ├── __init__.py
-│   │   │   └── BankQuestions_generator.py # Generates quiz questions from distilled content using LLM
-
+│   │   │   ├── BankQuestions_prompts.py # Prompt builder for quiz generation (MCQs)
+│   │   │   ├── reranker.py          # (Optional) LLM reranking logic for sources
+│   │   │   ├── reranker_parser.py   # Parses LLM reranker responses into structured format
+│   │   │   ├── reranker_prompt.py   # Prompt builder for reranking
+│   │   │   └── source_classifier.py # Classifies sources (course/video/blog)
+│   │   │
 │   │   ├── text_processing/         # Text preprocessing and chunking utilities
 │   │   │   ├── __init__.py
 │   │   │   └── chunker.py           # Semantic text chunker with multilingual support
-│   │   └── vector_store/            # Embedding and vector database interaction layer
-│   │       ├── __init__.py
-│   │       ├── embedder.py              # HuggingFace embedding model loader
-│   │       ├── filters.py               # Qdrant deduplication filter by URL
-│   │       ├── prepare_store_document.py # Document preparation and chunking pipeline
-│   │       ├── qdrant_client.py         # Qdrant client and collection management
-│   │       └── store.py                 # Vector store ingestion entry point
-
+│   │
 │   ├── core/                        # Application-wide settings, utilities, and constants
 │   │   ├── __init__.py
 │   │   ├── config.py                # Pydantic BaseSettings for environment variables validation
 │   │   ├── constants.py             # Global constant values used across the application
-│   │   ├── exceptions.py            # Custom exception classes (e.g., TavilyCallingError)
-│   │   ├── messages.py              # Standardized string messages for API responses
-│   │   └── mock_data.py             # Static sample data used for testing and development fallback
-
-│   ├── models/                      # Data structures and validation models
+│   │   ├── exceptions.py            # Custom exception classes (LLMGenerationError, EmptyContentError, etc.)
+│   │   ├── messages.py              # Centralized log and error message templates
+│   │   └── mock_data.py             # Static sample data for testing/fallback
+│   │
+│   ├── models/                      # Data structures and validation models (Pydantic)
 │   │   ├── __init__.py
-│   │   ├── distillation_schemas.py  # Schemas for distillation pipeline inputs/outputs
-│   │   ├── BankQuestions_schemas.py # Schemas for quiz bank (Question, QuizBank, request validation) (NEW)
-│   │   └── schemas.py               # Pydantic schemas (UserProfileSchema, TargetSubtopicSchema)
-
-│   ├── routers/                     # FastAPI route definitions and controllers
+│   │   ├── BankQuestions_schemas.py # Schemas for quiz bank (Question, QuizBank, Request validation)
+│   │   └── schemas.py               # General schemas (UserProfile, Subtopic, etc.)
+│   │
+│   ├── routers/                     # FastAPI route definitions (controllers layer)
 │   │   ├── __init__.py
-│   │   ├── base.py                  # Base router including the root/welcome API endpoint
-│   │   ├── data.py                  # Endpoints for data retrieval and processing requests
-│   │   ├── distillation_router.py   # Endpoints for triggering distillation workflows
-│   │   └── BankQuestions_router.py  # Endpoint for quiz bank generation (NEW)
-
-│   ├── services/                    # Clients for communicating with internal/external microservices
+│   │   ├── base.py                  # Root/welcome endpoint
+│   │   ├── data.py                  # Endpoints for data retrieval & preprocessing
+│   │   └── BankQuestions_router.py  # Endpoint for quiz bank generation (/generate)
+│   │
+│   ├── services/                    # External/internal service communication layer
 │   │   ├── __init__.py
-│   │   └── main_backend_client.py   # HTTPX client to fetch roadmap context from the main backend
-
+│   │   └── main_backend_client.py   # HTTPX client to fetch roadmap context from main backend
+│   │
 │   ├── __init__.py
-│   └── main.py                      # FastAPI application instance and entry point
-
+│   └── main.py                      # FastAPI app entry point (startup/shutdown events)
+│
 ├── tests/                           # Automated testing suite (Unit & Integration tests)
 │   ├── __init__.py
-│   ├── conftest.py                  # Pytest configuration and custom CLI options (e.g., --integration)
+│   ├── conftest.py                  # Pytest configuration and shared fixtures
 │   ├── test_chunker.py              # Unit tests for text chunking logic
-│   ├── test_chunker_integration.py  # Integration tests for chunking within pipeline
-│   ├── test_cleaned_tavily_data.py  # Tests for the data fetching and cleaning pipeline
-│   ├── test_config.py               # Unit tests verifying application configuration loading
+│   ├── test_chunker_integration.py  # Integration tests for chunking pipeline
+│   ├── test_cleaned_tavily_data.py  # Tests for data fetching and cleaning pipeline
+│   ├── test_config.py               # Tests for environment configuration loading
 │   ├── test_data_router.py          # Tests for API endpoints in data router
-│   ├── test_distillation.py         # Tests for the distillation pipeline
 │   ├── test_full_pipeline_integration.py # End-to-end pipeline integration tests
-│   ├── test_main_backend_client.py  # Mocked tests verifying the main backend HTTP client
+│   ├── test_main_backend_client.py  # Mocked tests for backend HTTP client
 │   ├── test_reranker.py             # Unit tests for reranking logic
 │   ├── test_reranker_integration.py # Integration tests for reranker with LLM
-│   ├── test_tavily_client.py        # Unit tests for Tavily API interactions (with mocked responses)
-│   ├── test_tavily_integration.py   # Real API integration tests verifying live Tavily web searches
-│   ├── test_vector_store_integration.py # Integration tests for vector database operations
+│   ├── test_tavily_client.py        # Unit tests for Tavily API interactions
+│   ├── test_tavily_integration.py   # Real Tavily API integration tests
+│   ├── test_vector_store_integration.py # Integration tests for Qdrant operations
 │   ├── test_vector_store_unit.py    # Unit tests for vector store logic
-│   └── test_bank_questions.py       # Tests for quiz bank generation logic and validation (NEW)
-
+│   └── test_bank_questions.py       # Tests for quiz bank generation
+│
+├── docker-compose.yml               # Docker services orchestration
 ├── .env.example                     # Template showing required environment variables
 ├── .gitignore                       # List of files and folders to be ignored by Git version control
 ├── .pre-commit-config.yaml          # Configuration for code formatting and linting hooks (Black, Ruff)
 ├── README.md                        # Main project documentation and contribution guidelines
 └── requirements.txt                 # List of project Python dependencies and versions
+
 ```
 ## Feature: Quiz Generation
 
@@ -168,7 +160,7 @@ It uses the selected source as the primary knowledge base, supplements it with s
 
 ### Quiz Generation workflow
 
-![Quiz Generation](image.png)
+![Quiz Generation](image-2.png)
 
 ## Feature: Summarization
 
