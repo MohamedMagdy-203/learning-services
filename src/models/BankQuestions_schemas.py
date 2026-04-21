@@ -34,7 +34,15 @@ class QuizBank(BaseModel):
 
 
 class QuestionGenerationRequest(BaseModel):
-    distilled_results: List[Dict] = Field(..., description="Distilled content results.")
-    subtopic_id: str = Field(..., description="Subtopic ID.")
-    primary_url: HttpUrl = Field(..., description="Primary source URL.")
-    total_questions: int = Field(30, description="Total questions to generate.")
+    user_id: str = Field(..., description="ID of the user.")
+    subtopic_id: str = Field(..., description="ID of the subtopic.")
+
+    urls: List[HttpUrl] = Field(..., description="List of source URLs.")
+    primary_url: HttpUrl = Field(..., description="Primary selected URL.")
+
+    subtopic_name: str = Field(..., description="Name of the subtopic.")
+    subtopic_difficulty: str = Field(..., description="Difficulty level as string.")
+
+    weaknesses: Dict[str, str] = Field(
+        default_factory=dict, description="User weaknesses per concept."
+    )
