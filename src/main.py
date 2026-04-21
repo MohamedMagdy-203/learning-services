@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from .routers import base, data, summarization_router
+from .routers import base, roadmap, mindmap, summarization_router
 from src.ai_engine.summarization_engine.openai_client_dependency import (
     init_openai_client,
     close_openai_client,
@@ -32,6 +32,6 @@ async def shutdown_event():
 
 
 app.include_router(base.base_router)
-app.include_router(data.data_router)
-
 app.include_router(summarization_router.summ_router)
+app.include_router(roadmap.roadmap_router)
+app.include_router(mindmap.mindmap_router)

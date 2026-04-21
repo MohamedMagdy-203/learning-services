@@ -12,15 +12,18 @@ from src.core.config import get_settings
 
 logger = logging.getLogger(__name__)
 
+settings = get_settings()
+
 _client: genai.Client | None = None  # type: ignore
 
 
 def _get_client() -> genai.Client:  # type: ignore
+    timeout_ms = getattr(settings, "GEMINI_RERANKER_TIMEOUT_MS", 60000)
     global _client
     if _client is None:
         _client = genai.Client(  # type: ignore
-            api_key=get_settings().GEMINI_API_KEY,
-            http_options=types.HttpOptions(timeout=60000),  # type: ignore
+            api_key=settings.GEMINI_API_KEY,
+            http_options=types.HttpOptions(timeout=timeout_ms),  # type: ignore
         )
     return _client  # type: ignore
 
@@ -53,7 +56,7 @@ async def rerank_sources(
     )
 
     response = await _get_client().aio.models.generate_content(  # type: ignore
-        model="gemini-3-flash-preview",
+        model=settings.RERANKER_MODEL,
         contents=prompt,
     )
 

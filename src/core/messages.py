@@ -31,3 +31,9 @@ LLM_FAILED_RESPONSE = "LLM failed to generate summary"
 
 AI_INVALID_JSON = "AI failed to return valid JSON: %s"
 AI_MISSING_SUMMARY = "AI response missing 'summary' field or empty: %s"
+MINDMAP_CONTENT_NOT_FOUND_ERROR = (
+    "No content found in vector store for this subtopic. "
+    "Please ensure the sources are ingested first."
+)
+
+MINDMAP_RETRIEVAL_ERROR = "Failed to retrieve content. Please try again later."
