@@ -56,100 +56,38 @@ GET http://localhost:8000/api/v1/data/roadmap-content/{user_id}/{subtopic_id}
 }
 
 ```
-## 3. Main Backend → AI Service (Distillation)
+## 3. Main Backend → AI Service (Quiz Bank Generation)
 
 **Request**
 
-```http
-POST http://localhost:8000/api/v1/dist/distill-content
-```
-
-
-```json
-{
-  "urls": [
-    "https://example.com/course",
-    "https://example.com/video",
-    "https://example.com/blog"
-  ],
-  "primary_url": "https://example.com/video"
-}
-
-```
-
-**Response**
-
-```json
-{
-  "results": [
-    {
-      "url": "https://example.com/course",
-      "is_primary": false,
-      "distilled_content": {
-        "key_terms": [
-          { "term": "Database", "definition": "..." }
-        ],
-        "main_points": [
-          "Point 1",
-          "Point 2"
-        ],
-        "examples": [
-          "Example 1"
-        ]
-      }
-    },
-    {
-      "url": "https://example.com/video",
-      "is_primary": true,
-      "distilled_content": {
-        "key_terms": [],
-        "main_points": [
-          "Important concept"
-        ],
-        "examples": []
-      }
-    }
-  ]
-}
-```
-## 4. Main Backend → AI Service (Quiz Bank Generation)
-
-**Request**
 ```http
 POST http://localhost:8000/api/v1/quiz-bank/generate
 ```
 
+
 ```json
 {
-  "distilled_results": [
-    {
-      "url": "https://example.com/video",
-      "is_primary": true,
-      "distilled_content": {
-        "key_terms": [],
-        "main_points": ["Important concept"],
-        "examples": []
-      }
-    },
-    {
-      "url": "https://example.com/blog",
-      "is_primary": false,
-      "distilled_content": {
-        "key_terms": [],
-        "main_points": ["Extra info"],
-        "examples": []
-      }
-    }
-  ],
+  "user_id": "user_123",
   "subtopic_id": "sub_456",
-  "primary_url": "https://example.com/video",
-  "total_questions": 30
+  "urls": [
+    "https://www.coursera.org/learn/introduction-to-databases",
+    "https://www.youtube.com/watch?v=xxx",
+    "https://www.mongodb.com/nosql-explained"
+  ],
+  "primary_url": "https://www.youtube.com/watch?v=xxx",
+  "subtopic_name": "Database Fundamentals",
+  "subtopic_difficulty": "Beginner",
+  "weaknesses": {
+    "Normalization": "Struggles with 2NF and 3NF concepts"
+  }
 }
 
 ```
 
 **Response**
+
 ```json
+
 {
   "quiz_id": "quiz_789",
   "subtopic_id": "sub_456",
@@ -166,4 +104,5 @@ POST http://localhost:8000/api/v1/quiz-bank/generate
     }
   ]
 }
+
 ```
