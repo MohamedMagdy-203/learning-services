@@ -2,28 +2,37 @@ WELCOME_MESSAGE = "Welcome to Learning Services API"
 SERVER_RUNNING_SUCCESSFULLY = "The server is running successfully"
 FETCH_ROADMAP_CONTEXT_ERROR = "Failed to fetch roadmap context"
 
-NO_CONTENT_FOUND = "No content found for this URL."
-DISTILLATION_JSON_ERROR = "Failed to parse LLM response as JSON"
-DISTILLATION_GENERAL_ERROR = "Failed to distill content"
-CONTENT_TRUNCATED_NOTE = "Content truncated to stay within context limits for the LLM."
-CONTENT_TRUNCATED_SYSTEM_NOTE = "\n\n[SYSTEM NOTE: The content was truncated due to length limits. Please distill based on the available text above.]"
-PRIMARY_SOURCE_REQUIRED_ERROR = "Critical Error: The primary source ({url}) is required for question generation but failed to distill."
-NO_CONTENT_DISTILLED_ERROR = (
-    "Failed to distill any of the provided content URLs. Please check your sources."
-)
+
+# Retrieval
+RETRIEVE_CHUNKS_START = "Starting chunk retrieval for URL: %s"
+RETRIEVE_CHUNKS_SUCCESS = "Retrieved %s chunks for URL: %s"
+NO_CONTENT_FOUND = "No content found for URL: {url}"
+RETRIEVE_CHUNKS_ERROR = "Error retrieving chunks for URL: %s | Error: %s"
+QDRANT_RETRIEVE_FAILED = "Failed to retrieve data from Qdrant: {error}"
+RETRIEVE_MULTI_URL_START = "Starting multi-url chunk retrieval for URLs: %s"
+RETRIEVE_MULTI_URL_SKIP_URL = "Skipping failed URL: %s | Reason: %s"
+NO_CONTENT_FOUND_PRIMARY = "No content found for primary URL: {primary_url}"
+NO_CONTENT_FOUND_ALL = "No content found for any provided URLs"
+RETRIEVE_MULTI_URL_SUCCESS = "Multi-url retrieval success. Total documents: %s"
 
 
-INVALID_QUESTION_COUNT = "Cannot generate {num_questions} questions. Number of questions must be positive for source {source_url}."
-EMPTY_SOURCE_CONTENT = "Source content for {source_url} is empty."
-INVALID_JSON_FORMAT = "LLM response for {source_url} is not valid JSON."
+# Bank Questions
+
+EMPTY_SOURCE_CONTENT = "Source content is empty."
 NO_QUESTIONS_FOUND = "No questions found in LLM response for {source_url}."
-VALIDATION_FAILED = "Question validation failed for subtopic {subtopic_id}."
 LLM_API_ERROR = "LLM API error for {source_url}: {error}"
 GENERATION_STARTED = "Starting question generation for subtopic {subtopic_id}."
-GENERATION_COMPLETED = "Generated {count} questions for subtopic {subtopic_id}."
-PROMPT_GENERATION_ERROR = "Error generating prompt for source {source_url}: {error}"
-INVALID_JSON = "Invalid JSON returned from LLM"
-SKIP_QUESTION = "Invalid question skipped: {e}"
-FEWER_EXPECTED_QUESTIONS = "Generated fewer questions than expected"
+SKIP_QUESTION = "Invalid question skipped: {error}"
 QUIZ_GENERATED_SUCCESSFULLY = "Quiz generated successfully: {count} questions"
-BANK_GENERATION_FAILED = "Failed to generate quiz bank"
+BANK_GENERATION_FAILED = (
+    "Failed to generate quiz bank for subtopic {subtopic_id}: {error}"
+)
+FALLBACK_TRIGGERED = "Fallback triggered: {missing} missing"
+INVALID_JSON = "Invalid JSON from LLM, retrying..."
+LLM_TIMEOUT = "LLM timeout (attempt {attempt})"
+LLM_RETRY_ERROR = "LLM error (attempt {attempt}): {error}"
+SECONDARY_SOURCE_FAILED = "Secondary source {index} failed: {error}"
+LESS_THAN_TWO_SECONDARY = "Less than 2 secondary docs received"
+INVALID_QUESTION_COUNT = (
+    "Invalid number of questions ({num_questions}) requested for source: {source_url}. "
+)
