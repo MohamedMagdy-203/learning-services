@@ -1,56 +1,74 @@
-from typing import Dict
+from typing import List
+from langchain_core.documents import Document
 
 
 def get_bank_questions_generation_prompt(
-    distilled_content: Dict, num_questions: int, difficulty: str
+    documents: List[Document],
+    num_questions: int,
+    difficulty_distribution: dict,
 ) -> str:
-    """
-    Generates a prompt for the LLM to create questions based on distilled content.
-    All questions will be in Multiple Choice Question (MCQ) format.
-    The output must strictly follow the schema provided in the prompt.
-    Language of the questions must match the language of the source content.
-    """
-    content_str = str(distilled_content)
+    context_str = "\n\n".join(doc.page_content for doc in documents)
+
+    max_context_chars = 16000
+    if len(context_str) > max_context_chars:
+        context_str = context_str[:max_context_chars]
 
     return f"""
-Based on the following content, generate {num_questions} questions with a \'{difficulty}\' difficulty level.
-All questions MUST be in Multiple-Choice (MCQ) format.
-
+You are an expert educational quiz generator.
+Your task is to generate EXACTLY {num_questions} high-quality multiple-choice questions (MCQs) based ONLY on the provided content.
 
 Content:
-{content_str}
+{context_str}
 
-Output MUST be a JSON array of objects. Each object must strictly follow this structure:
-- content: "The question text"
-- options: ["option1", "option2", "option3", "option4"] (For True/False questions, this MUST be ["True", "False"])
-- correct_answer: "The correct option text ( one of the options, or \'True\' / \'False\' for T/F questions)"
-- explanation: "Why this answer is correct"
-- difficulty: "{difficulty}"
+RULES:
 
-IMPORTANT:
-- For standard MCQ: provide 4 distinct options in the \'options\' list.
-- For True/False questions: the \'options\' list MUST contain exactly ["True", "False"].
--The questions, options, and explanations MUST be written in the SAME LANGUAGE as the source content provided below.
-If the content is in Arabic, generate everything in Arabic.
-If the content is in English, generate everything in English.
-- Return ONLY the JSON array.
-
-Here are concise examples of the expected JSON output format:
-
-Example 1
+Output MUST be a valid JSON object with the following structure:
 {{
-    "content": "Which keyword is used to define a function in Python?",
-    "options": ["func", "def", "function", "define"],
-    "correct_answer": "def",
-    "explanation": "In Python, the 'def' keyword is used to define a function.",
-    "difficulty": "easy"
+  "questions": [
+    {{
+      "content": "The question text",
+      "options": ["option1", "option2", "option3", "option4"],
+      "correct_answer": "The correct option text",
+      "explanation": "Why this answer is correct",
+      "difficulty": "easy | medium | hard"
+    }}
+  ]
 }}
 
-Example 2
+- You MUST generate EXACTLY {num_questions} questions.
+- Do NOT generate any question that is not directly supported by the provided content.
+- Do NOT repeat questions.
+- Each question must test a different concept.
+- Avoid generating questions that are semantically similar.
+- Prefer questions that require understanding, not just direct copying from the text.
+
+- You MUST strictly follow this distribution:
+   • easy: {difficulty_distribution["easy"]}
+   • medium: {difficulty_distribution["medium"]}
+   • hard: {difficulty_distribution["hard"]}
+
+IMPORTANT:
+- For standard MCQ: provide 4 distinct options.
+- correct_answer MUST match one option exactly.
+
+- True/False:
+  • English → ["True", "False"]
+  • Arabic → ["صحيح", "خطأ"]
+
+- Language MUST match source content.
+
+- Return ONLY the JSON object.
+
+Example:
 {{
-    "content": "تعتبر JavaScript لغة برمجة من جانب الخادم (Server-side).",
-    "options": ["صحيح", "خطأ"],
-    "correct_answer": "خطأ",
-    "explanation": "JavaScript تستخدم بشكل أساسي كلغة برمجة من جانب العميل (Client-side) في المتصفحات، ولكن يمكن استخدامها من جانب الخادم أيضاً مع Node.js.",
-    "difficulty": "medium"
-}} """
+  "questions": [
+    {{
+      "content": "Which keyword is used to define a function in Python?",
+      "options": ["func", "def", "function", "define"],
+      "correct_answer": "def",
+      "explanation": "In Python, the 'def' keyword is used.",
+      "difficulty": "easy"
+    }}
+  ]
+}}
+"""
