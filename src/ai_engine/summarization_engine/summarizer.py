@@ -52,11 +52,24 @@ class SummarizationService:
                     timeout=self.timeout,
                 )
                 return response.choices[0].message.content
-            except (APIConnectionError, RateLimitError, APIStatusError) as e:
+            except (APIConnectionError, RateLimitError) as e:
                 logger.warning(f"Transient LLM error (Attempt {attempt+1}): {e}")
                 if attempt == self.max_retries:
                     raise
                 await asyncio.sleep(1)
+            except APIStatusError as e:
+                if e.status_code == 429 or (500 <= e.status_code < 600):
+                    logger.warning(
+                        f"Transient LLM APIStatusError (Attempt {attempt+1}): HTTP {e.status_code}"
+                    )
+                    if attempt == self.max_retries:
+                        raise
+                    await asyncio.sleep(1)
+                else:
+                    logger.error(
+                        f"Fatal LLM APIStatusError: HTTP {e.status_code} - {e.message}"
+                    )
+                    raise
             except Exception as e:
                 logger.error(f"Fatal LLM error: {e}")
                 raise
