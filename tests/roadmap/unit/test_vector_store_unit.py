@@ -18,9 +18,7 @@ def sample_reranker_input():
 @patch("src.ai_engine.vector_store.prepare_store_document.is_url_already_stored")
 @patch("src.ai_engine.vector_store.prepare_store_document.chunk_text")
 async def test_prepare_documents_with_mock_data(
-    mock_chunk,
-    mock_is_stored,
-    sample_reranker_input,  # شلنا mock_get_embeddings من هنا
+    mock_chunk, mock_is_stored, sample_reranker_input
 ):
     mock_is_stored.side_effect = lambda url: "udemy.com" in url
     mock_chunk.return_value = ["chunk1", "chunk2"]
@@ -28,13 +26,14 @@ async def test_prepare_documents_with_mock_data(
 
     assert len(documents) > 0  # type: ignore
 
-    urls_in_docs = [doc.metadata["url"] for doc in documents]
-    assert not any("udemy.com" in url for url in urls_in_docs)
+    urls_in_docs = [doc.metadata["url"] for doc in documents]  # type: ignore
+    assert not any("udemy.com" in url for url in urls_in_docs)  # type: ignore
 
-    assert documents[0].metadata["url"] is not None
-    assert documents[0].metadata["source_type"] is not None
-    logger_urls = [doc.metadata["url"] for doc in documents]
-    assert "youtube.com" in str(logger_urls)
+    assert documents[0].metadata["url"] is not None  # type: ignore
+    assert documents[0].metadata["source_type"] is not None  # type: ignore
+
+    logger_urls = [doc.metadata["url"] for doc in documents]  # type: ignore
+    assert any("youtube.com" in url for url in logger_urls)  # type: ignore
 
 
 @pytest.mark.asyncio
@@ -53,4 +52,6 @@ async def test_ingest_calls_qdrant_correctly(
 
     await ingest_reranker_results(sample_reranker_input)  # type: ignore
 
-    assert mock_vector_store.add_documents.called
+    mock_prepare.assert_called_once_with(sample_reranker_input)
+    mock_get_store.assert_called_once()
+    mock_vector_store.add_documents.assert_called_once_with(mock_prepare.return_value)
