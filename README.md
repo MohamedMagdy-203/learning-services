@@ -17,6 +17,8 @@
     - [Quiz Generation workflow](#quiz-generation-workflow)
   - [Feature: Summarization](#feature-summarization)
   - [Summarization workflow](#summarization-workflow)
+  - [Feature: Summarization](#feature-summarization-1)
+    - [Summarization workflow](#summarization-workflow-1)
   - [Project Structure](#project-structure)
   - [Tech Stack](#tech-stack)
   - [Setup \& Installation](#setup--installation)
@@ -120,7 +122,7 @@ The summarization is performed using an OpenAI-powered pipeline via an injected 
 This flow ensures that summaries are always based on stored and relevant data, while keeping the output simple and readable for users.
 
 ### Summarization workflow
-![Summarization](summarization-image.jpeg)
+![Summarization](assets\summarization-image.jpeg)
 
 
 
