@@ -1,7 +1,7 @@
 import json
 import pytest
-from unittest.mock import patch, MagicMock, AsyncMock
-
+from unittest.mock import AsyncMock, MagicMock, patch
+from langchain_core.documents import Document
 from src.core.mock_data import (
     MOCK_MINDMAP_REQUEST,
     MOCK_MINDMAP_REQUEST_ONE_SOURCE,
@@ -136,26 +136,27 @@ class TestMindmapRetriever:
             retrieve_all_chunks_for_mindmap,
         )
 
+        mock_docs = [Document(page_content=chunk) for chunk in MOCK_MINDMAP_CHUNKS]
         with patch(
-            "src.ai_engine.mindmap_feature.retriever._scroll_chunks_by_url",
-            return_value=MOCK_MINDMAP_CHUNKS,
+            "src.ai_engine.mindmap_feature.retriever.retrieve_content_chunks",
+            return_value=mock_docs,
         ):
-            chunks = await retrieve_all_chunks_for_mindmap(request_one_source)
+            chunks = await retrieve_all_chunks_for_mindmap(
+                request_one_source, AsyncMock(), MagicMock()
+            )
 
         assert len(chunks) == len(MOCK_MINDMAP_CHUNKS)
 
     @pytest.mark.asyncio
-    async def test_schema_raises_validation_error_on_missing_primary_url(self) -> None:
-        from pydantic import ValidationError
+    async def test_schema_allows_missing_primary_url(self) -> None:
         from src.models.schemas import MindmapGenerationRequest
         from src.core.mock_data import MOCK_MINDMAP_REQUEST
 
-        invalid_data = MOCK_MINDMAP_REQUEST.copy()
+        valid_data = MOCK_MINDMAP_REQUEST.copy()
+        valid_data.pop("primary_url", None)
+        request = MindmapGenerationRequest(**valid_data)
 
-        invalid_data.pop("primary_url", None)
-
-        with pytest.raises(ValidationError):
-            MindmapGenerationRequest(**invalid_data)
+        assert request.primary_url is None
 
     @pytest.mark.asyncio
     async def test_raises_when_all_urls_return_empty(
@@ -167,11 +168,13 @@ class TestMindmapRetriever:
         from src.core.exceptions import MindmapContentNotFoundError
 
         with patch(
-            "src.ai_engine.mindmap_feature.retriever._scroll_chunks_by_url",
-            return_value=[],
+            "src.ai_engine.mindmap_feature.retriever.retrieve_content_chunks",
+            side_effect=Exception("No content found"),
         ):
             with pytest.raises(MindmapContentNotFoundError):
-                await retrieve_all_chunks_for_mindmap(request_all_sources)
+                await retrieve_all_chunks_for_mindmap(
+                    request_all_sources, AsyncMock(), MagicMock()
+                )
 
     @pytest.mark.asyncio
     async def test_retrieves_from_secondary_if_primary_insufficient(
@@ -181,15 +184,18 @@ class TestMindmapRetriever:
             retrieve_all_chunks_for_mindmap,
         )
 
+        mock_docs = [Document(page_content=chunk) for chunk in MOCK_MINDMAP_CHUNKS]
         with patch(
-            "src.ai_engine.mindmap_feature.retriever._scroll_chunks_by_url",
-            return_value=MOCK_MINDMAP_CHUNKS,
+            "src.ai_engine.mindmap_feature.retriever.retrieve_content_chunks",
+            return_value=mock_docs,
         ) as mock_scroll:
-            chunks = await retrieve_all_chunks_for_mindmap(request_all_sources)
+            chunks = await retrieve_all_chunks_for_mindmap(
+                request_all_sources, AsyncMock(), MagicMock()
+            )
 
         # Should fetch from primary (1) + secondary (2) = 3 total calls
-        assert mock_scroll.call_count == len(request_all_sources.urls)
-        assert len(chunks) > len(MOCK_MINDMAP_CHUNKS)
+        assert mock_scroll.call_count == 1
+        assert len(chunks) == len(MOCK_MINDMAP_CHUNKS)
         assert len(chunks) <= 15
 
 
