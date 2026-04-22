@@ -292,3 +292,45 @@ MOCK_MINDMAP_RESPONSE: Dict[str, Any] = {
         },
     ],
 }
+roadmap_request = {
+    "user_profile_schema": {
+        "id": "user_123",
+        "tracks": ["Backend Development", "Data Engineering"],
+        "learningStyle": "Visual/Practical",
+        "currentGoal": "Mastering SQL Performance",
+        "studyTimePerWeek": "10 hours",
+        "role": "Junior Developer",
+    },
+    "target_subtopic_schema": {
+        "Subtopic_id": "sub_456",
+        "Name": "Database Fundamentals",
+        "Description": "Core concepts of relational databases, indexing, and normalization.",
+        "Difficulty": "Intermediate",
+    },
+    "weakness_schema": {
+        "Topics": {
+            "Indexing": "Difficulty understanding B-Tree structures",
+            "Normalization": "Confused between 2NF and 3NF",
+            "Joins": "Slow performance with nested loops",
+        }
+    },
+}
+mindmap_summary_request = {
+    "user_id": "user_123",
+    "subtopic_id": "sub_456",
+    "urls": [
+        "https://www.coursera.org/learn/introduction-to-databases",
+        "https://www.classcentral.com/course/youtube-database-fundamentals-for-beginners-database-tutorial-141003",
+        "https://learn.microsoft.com/en-us/shows/dbfundamentals/",
+    ],
+    "primary_url": "https://learn.microsoft.com/en-us/shows/dbfundamentals/",
+    "subtopic_name": "Database Fundamentals",
+    "subtopic_difficulty": "Beginner",
+    "weaknesses": {
+        "Data Modeling": "Struggles with designing efficient database schemas",
+        "SQL vs NoSQL": "Confused about when to use relational vs non-relational databases",
+        "Normalization": "Has difficulty understanding normalization",
+        "Query Writing": "Needs practice writing efficient SQL queries",
+        "Data Integrity": "Limited understanding of constraints like primary keys",
+    },
+}
