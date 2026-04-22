@@ -18,7 +18,7 @@ from src.core.config import get_settings, Settings
 
 logger = logging.getLogger(__name__)
 
-summ_router = APIRouter(prefix="/api/v1/summarize", tags=["Summarization"])
+summ_router = APIRouter(prefix="/api/v1/summarize", tags=["summarization"])
 
 
 def get_summarization_service(
