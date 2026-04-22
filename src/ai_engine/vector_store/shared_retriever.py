@@ -66,7 +66,9 @@ async def retrieve_content_chunks(
 ) -> List[Document]:
     logger.info("Retrieving chunks | primary_url=%s", primary_url)
     all_documents: List[Document] = []
+    saved_exception = None
 
+    # 1. Fetch from primary URL
     try:
         primary_docs = await _scroll_documents_by_url(
             url=primary_url,
@@ -76,14 +78,15 @@ async def retrieve_content_chunks(
         )
         all_documents.extend(primary_docs)
     except Exception as exc:
+        saved_exception = exc
         logger.error("Primary URL retrieval failed | error=%s", str(exc))
 
+    # 2. Fetch from secondary URLs if needed
     if len(all_documents) < settings.PRIMARY_URL_CHUNKS_LIMIT and secondary_urls:
         logger.info(
             "Primary URL yielded %d chunks. Fetching from secondary URLs...",
             len(all_documents),
         )
-
         tasks = [
             _scroll_documents_by_url(
                 url=url,
@@ -95,17 +98,17 @@ async def retrieve_content_chunks(
         ]
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
-        for url, res in zip(secondary_urls, results):
+        for res in results:
             if isinstance(res, Exception):
-                logger.error("Secondary URL '%s' failed", url)
+                saved_exception = res
+                logger.error(f"Retrieval error encountered: {res}")
                 continue
-            if res:
-                all_documents.extend(res)  # type: ignore
+            all_documents.extend(res)
 
-        all_documents = all_documents[: settings.PRIMARY_URL_CHUNKS_LIMIT]
-
+    # 3. Final Check (Raise error if NO documents at all)
     if not all_documents:
-        raise NoContentFoundError("No content found across all URLs.")
+        if saved_exception:
+            raise saved_exception
+        raise NoContentFoundError(f"No content found for {primary_url}")
 
-    logger.info("Total chunks collected | count=%d", len(all_documents))
-    return all_documents
+    return all_documents[: settings.PRIMARY_URL_CHUNKS_LIMIT]
