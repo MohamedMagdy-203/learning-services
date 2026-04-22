@@ -1,6 +1,6 @@
 import pytest
 from pydantic import HttpUrl
-from qdrant_client import AsyncQdrantClient
+from qdrant_client import AsyncQdrantClient, models
 from openai import AsyncOpenAI
 
 from src.core.config import get_settings
@@ -11,12 +11,31 @@ from src.models.summarization_schemas import SummarizationRequest
 @pytest.mark.integration
 @pytest.mark.asyncio
 async def test_summarization_full_pipeline():
-    """
-    Tests the real pipeline with Qdrant and LLM.
-    Assumes 'https://learn.microsoft.com/en-us/shows/dbfundamentals/' is ingested.
-    """
     settings = get_settings()
     qdrant_client = AsyncQdrantClient(url=settings.QDRANT_URL)
+
+    collection_name = settings.QDRANT_COLLECTION_NAME
+    try:
+        search_result = await qdrant_client.scroll(
+            collection_name=collection_name,
+            scroll_filter=models.Filter(
+                must=[
+                    models.FieldCondition(
+                        key="metadata.url",
+                        match=models.MatchValue(
+                            value="https://learn.microsoft.com/en-us/shows/dbfundamentals/"
+                        ),
+                    )
+                ]
+            ),
+            limit=1,
+        )
+        if not search_result[0]:
+            pytest.skip("Required integration test data not found in Qdrant. Skipping.")
+    except Exception:
+        pytest.skip(
+            "Qdrant connection failed or collection missing. Skipping integration test."
+        )
 
     # We initialize real OpenAI client for integration testing
     openai_client = AsyncOpenAI(
