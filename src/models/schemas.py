@@ -48,14 +48,17 @@ class RoadmapRankedResultSchema(BaseModel):
 class MindmapGenerationRequest(BaseModel):
     user_id: str
     subtopic_id: str
-    urls: List[HttpUrl] = Field(min_length=1)
-    primary_url: HttpUrl
-    subtopic_name: str
-    subtopic_difficulty: str
-    weaknesses: Optional[Dict[str, str]] = None
+    urls: List[HttpUrl] = Field(default_factory=list)
+    subtopic_name: Optional[str] = None
+    subtopic_difficulty: Optional[str] = "Intermediate"
+    primary_url: Optional[HttpUrl] = None
+    weaknesses: Optional[Dict[str, str]] = Field(default_factory=dict)
 
     @model_validator(mode="after")
     def validate_primary_url_membership(self) -> "MindmapGenerationRequest":
+        if self.primary_url is None:
+            return self
+
         if self.primary_url not in self.urls:
             raise ValueError(
                 f"primary_url '{self.primary_url}' must be one of the provided urls"
