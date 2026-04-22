@@ -34,9 +34,7 @@ async def generate_summary(
     service: SummarizationService = Depends(get_summarization_service),
 ):
     result = await service.summarize_content(
-        user_id=request.user_id,
-        subtopic_id=request.subtopic_id,
-        primary_url=str(request.primary_url),
+        request=request,
         qdrant_client=qdrant_client,
     )
     if "error" in result:
