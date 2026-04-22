@@ -15,11 +15,12 @@ def sample_reranker_input():
 
 
 @pytest.mark.asyncio  # type: ignore
-@patch("src.ai_engine.text_processing.chunker.get_embeddings")
 @patch("src.ai_engine.vector_store.prepare_store_document.is_url_already_stored")
-@patch("src.ai_engine.text_processing.chunker.chunk_text")
+@patch("src.ai_engine.vector_store.prepare_store_document.chunk_text")
 async def test_prepare_documents_with_mock_data(
-    mock_chunk, mock_is_stored, mock_get_embeddings, sample_reranker_input
+    mock_chunk,
+    mock_is_stored,
+    sample_reranker_input,  # شلنا mock_get_embeddings من هنا
 ):
     mock_is_stored.side_effect = lambda url: "udemy.com" in url
     mock_chunk.return_value = ["chunk1", "chunk2"]
@@ -27,13 +28,13 @@ async def test_prepare_documents_with_mock_data(
 
     assert len(documents) > 0  # type: ignore
 
-    urls_in_docs = [doc.metadata["url"] for doc in documents]  # type: ignore
-    assert not any("udemy.com" in url for url in urls_in_docs)  # type: ignore
+    urls_in_docs = [doc.metadata["url"] for doc in documents]
+    assert not any("udemy.com" in url for url in urls_in_docs)
 
-    assert documents[0].metadata["url"] is not None  # type: ignore
-    assert documents[0].metadata["source_type"] is not None  # type: ignore
-    logger_urls = [doc.metadata["url"] for doc in documents]  # type: ignore
-    assert "youtube.com" in str(logger_urls)  # type: ignore
+    assert documents[0].metadata["url"] is not None
+    assert documents[0].metadata["source_type"] is not None
+    logger_urls = [doc.metadata["url"] for doc in documents]
+    assert "youtube.com" in str(logger_urls)
 
 
 @pytest.mark.asyncio
