@@ -1,12 +1,14 @@
 import logging
 from fastapi import APIRouter, HTTPException, status, Depends
-from qdrant_client import QdrantClient
+from qdrant_client import AsyncQdrantClient
 
 from src.core.config import get_settings, Settings
 from src.core.exceptions import MindmapContentNotFoundError, MindmapRetrievalError
 from src.core.messages import MINDMAP_CONTENT_NOT_FOUND_ERROR, MINDMAP_RETRIEVAL_ERROR
 from src.models.schemas import MindmapGenerationRequest, MindmapResponseSchema
-from src.ai_engine.vector_store.qdrant_client import get_qdrant_client
+from src.ai_engine.data_fetchers.qdrant_client_dependency import (
+    get_qdrant_client_dependency,
+)
 from src.ai_engine.mindmap_feature.retriever import retrieve_all_chunks_for_mindmap
 from src.ai_engine.mindmap_feature.mindmap_generator import generate_mindmap
 
@@ -22,7 +24,7 @@ mindmap_router = APIRouter(prefix="/api/v1/mindmap", tags=["mindmap"])
 )
 async def generate_mindmap_endpoint(
     request: MindmapGenerationRequest,
-    client: QdrantClient = Depends(get_qdrant_client),
+    qdrant_client: AsyncQdrantClient = Depends(get_qdrant_client_dependency),
     settings: Settings = Depends(get_settings),
 ) -> MindmapResponseSchema:
     """
@@ -45,7 +47,7 @@ async def generate_mindmap_endpoint(
 
     try:
         chunks = await retrieve_all_chunks_for_mindmap(
-            request=request, client=client, settings=settings
+            request=request, client=qdrant_client, settings=settings
         )
     except MindmapContentNotFoundError:
         logger.error(
