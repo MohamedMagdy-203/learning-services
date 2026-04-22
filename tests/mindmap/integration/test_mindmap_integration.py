@@ -1,5 +1,7 @@
 import pytest
 import logging
+from src.core.config import get_settings
+from qdrant_client import AsyncQdrantClient
 
 from src.core.mock_data import (
     MOCK_MINDMAP_REQUEST,
@@ -29,7 +31,11 @@ async def test_retrieval_all_sources(
     """Ensure the number of chunks per source does not exceed the limit."""
     from src.ai_engine.mindmap_feature.retriever import retrieve_all_chunks_for_mindmap
 
-    chunks = await retrieve_all_chunks_for_mindmap(request_all_sources)
+    settings = get_settings()
+    client = AsyncQdrantClient(url=settings.QDRANT_URL)
+    chunks = await retrieve_all_chunks_for_mindmap(
+        request_all_sources, client, settings
+    )
 
     assert isinstance(chunks, list)
     assert len(chunks) > 0
@@ -54,17 +60,15 @@ async def test_retrieval_one_source(
 ) -> None:
     """Ensure the retriever works correctly when only one source is provided."""
     from src.ai_engine.mindmap_feature.retriever import retrieve_all_chunks_for_mindmap
+    from src.core.config import get_settings
+    from qdrant_client import AsyncQdrantClient
 
-    chunks = await retrieve_all_chunks_for_mindmap(request_one_source)
+    settings = get_settings()
+    client = AsyncQdrantClient(url=settings.QDRANT_URL)
 
-    assert isinstance(chunks, list)
+    chunks = await retrieve_all_chunks_for_mindmap(request_one_source, client, settings)
+
     assert len(chunks) > 0
-
-    logger.info("\n" + "=" * 60)
-    logger.info("RETRIEVAL — ONE SOURCE")
-    logger.info("=" * 60)
-    logger.info("Total chunks: %d", len(chunks))
-    logger.info("=" * 60)
 
 
 @pytest.mark.integration
@@ -72,17 +76,20 @@ async def test_retrieval_one_source(
 async def test_chunks_per_source_limits(
     request_all_sources: MindmapGenerationRequest,
 ) -> None:
-    from src.ai_engine.mindmap_feature.retriever import (
-        retrieve_all_chunks_for_mindmap,
-        PRIMARY_URL_CHUNKS_LIMIT,
-        SECONDARY_URL_CHUNKS_LIMIT,
+    from src.ai_engine.mindmap_feature.retriever import retrieve_all_chunks_for_mindmap
+    from src.core.config import get_settings
+    from qdrant_client import AsyncQdrantClient
+
+    settings = get_settings()
+    client = AsyncQdrantClient(url=settings.QDRANT_URL)
+
+    chunks = await retrieve_all_chunks_for_mindmap(
+        request_all_sources, client, settings
     )
 
-    chunks = await retrieve_all_chunks_for_mindmap(request_all_sources)
-
     secondary_count = len(request_all_sources.urls) - 1
-    max_total = PRIMARY_URL_CHUNKS_LIMIT + (
-        secondary_count * SECONDARY_URL_CHUNKS_LIMIT
+    max_total = settings.PRIMARY_URL_CHUNKS_LIMIT + (
+        secondary_count * settings.SECONDARY_URL_CHUNKS_LIMIT
     )
     assert len(chunks) <= max_total
 
@@ -94,8 +101,15 @@ async def test_full_generation_pipeline(
 ) -> None:
     from src.ai_engine.mindmap_feature.retriever import retrieve_all_chunks_for_mindmap
     from src.ai_engine.mindmap_feature.mindmap_generator import generate_mindmap
+    from src.core.config import get_settings
+    from qdrant_client import AsyncQdrantClient
 
-    chunks = await retrieve_all_chunks_for_mindmap(request_all_sources)
+    settings = get_settings()
+    client = AsyncQdrantClient(url=settings.QDRANT_URL)
+
+    chunks = await retrieve_all_chunks_for_mindmap(
+        request_all_sources, client, settings
+    )
 
     assert len(chunks) > 0, "No chunks found — check Qdrant URLs"
 
