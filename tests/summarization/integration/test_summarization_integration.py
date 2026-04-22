@@ -63,3 +63,6 @@ async def test_summarization_full_pipeline():
     assert "summary" in result
     assert len(result["summary"]) > 0
     assert result["user_id"] == "user_int_1"
+    assert result["summary"] != ""
+    await qdrant_client.close()
+    await openai_client.close()
