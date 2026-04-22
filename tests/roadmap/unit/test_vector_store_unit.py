@@ -15,10 +15,11 @@ def sample_reranker_input():
 
 
 @pytest.mark.asyncio  # type: ignore
-@patch("src.ai_engine.text_processing.chunker.chunk_text")
+@patch("src.ai_engine.text_processing.chunker.get_embeddings")
 @patch("src.ai_engine.vector_store.prepare_store_document.is_url_already_stored")
+@patch("src.ai_engine.text_processing.chunker.chunk_text")
 async def test_prepare_documents_with_mock_data(
-    mock_is_stored, mock_chunk, sample_reranker_input
+    mock_chunk, mock_is_stored, mock_get_embeddings, sample_reranker_input
 ):
     mock_is_stored.side_effect = lambda url: "udemy.com" in url
     mock_chunk.return_value = ["chunk1", "chunk2"]
@@ -35,13 +36,15 @@ async def test_prepare_documents_with_mock_data(
     assert "youtube.com" in str(logger_urls)  # type: ignore
 
 
-@pytest.mark.asyncio  # type: ignore
+@pytest.mark.asyncio
+@patch("src.ai_engine.vector_store.store.get_embeddings")
 @patch("src.ai_engine.vector_store.store.get_vector_store")
 @patch("src.ai_engine.vector_store.store.prepare_documents")
 async def test_ingest_calls_qdrant_correctly(
     mock_prepare,  # type: ignore
     mock_get_store,  # type: ignore
-    sample_reranker_input,  # type: ignore
+    mock_get_embeddings,
+    sample_reranker_input,
 ):
     mock_vector_store = MagicMock()
     mock_get_store.return_value = mock_vector_store
