@@ -5,7 +5,7 @@ from typing import List, Dict, Any
 import re
 from langchain_core.documents import Document
 from openai import AsyncOpenAI
-
+from openai import APIConnectionError, RateLimitError, APIStatusError
 from src.ai_engine.vector_store.shared_retriever import retrieve_content_chunks
 from src.ai_engine.summarization_engine.summarization_prompt import (
     build_summarization_prompt,
@@ -52,11 +52,14 @@ class SummarizationService:
                     timeout=self.timeout,
                 )
                 return response.choices[0].message.content
-            except Exception as e:
-                logger.warning(f"LLM attempt {attempt + 1} failed: {e}")
+            except (APIConnectionError, RateLimitError, APIStatusError) as e:
+                logger.warning(f"Transient LLM error (Attempt {attempt+1}): {e}")
                 if attempt == self.max_retries:
                     raise
                 await asyncio.sleep(1)
+            except Exception as e:
+                logger.error(f"Fatal LLM error: {e}")
+                raise
 
     async def summarize_content(
         self,
@@ -90,7 +93,6 @@ class SummarizationService:
             logger.error(RETRIEVE_ERROR, primary_url, e)
             return {"error": RETRIEVE_FAILED_RESPONSE}
 
-        # بصينا الداتا للـ Prompt
         prompt = build_summarization_prompt(
             documents=documents,
             subtopic_name=request.subtopic_name,
@@ -114,13 +116,17 @@ class SummarizationService:
                     or "summary" not in result
                     or not str(result["summary"]).strip()
                 ):
-                    logger.error(AI_MISSING_SUMMARY, content)
+                    logger.error(
+                        f"{AI_MISSING_SUMMARY} - Content type: {type(content)}, Length: {len(content)}"
+                    )
                     return {"error": LLM_FAILED_RESPONSE}
 
                 summary_text = result["summary"]
 
             except json.JSONDecodeError:
-                logger.error(AI_INVALID_JSON, content)
+                logger.error(
+                    f"{AI_INVALID_JSON} - Content type: {type(content)}, Length: {len(content)}"
+                )
                 return {"error": LLM_FAILED_RESPONSE}
 
             logger.info(SUMMARIZATION_SUCCESS)
