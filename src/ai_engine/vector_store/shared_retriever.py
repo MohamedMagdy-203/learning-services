@@ -98,10 +98,12 @@ async def retrieve_content_chunks(
         ]
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
-        for res in results:
+        for url, res in zip(secondary_urls, results):
             if isinstance(res, Exception):
                 saved_exception = res
-                logger.error(f"Retrieval error encountered: {res}")
+                logger.error(
+                    f"Retrieval error encountered for secondary URL {url}: {res}"
+                )
                 continue
             all_documents.extend(res)
 
