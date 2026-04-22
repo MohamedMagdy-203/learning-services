@@ -42,12 +42,13 @@ Important Rules:
    - Bold important terms.
 4. Do NOT add fabricated information outside the provided content.
 
-Output format (STRICT JSON ONLY):
-{{
-  "summary": "Your fully Markdown-formatted summary string goes here (ensure to properly escape newlines as \\n within the JSON string)"
-}}
-
 Content:
+<<<BEGIN CONTENT>>>
 {context_str}
+<<<END CONTENT>>>
+
+Output format (STRICT JSON ONLY):
+{{ "summary": "..." }}
 """
+
     return prompt
