@@ -109,9 +109,7 @@ async def test_deduplication():
             primary_url="http://test.com",
         )
 
-    contents = [q.content for q in result.questions]
-
-    assert len(set(contents)) == 1
+    assert len(result.questions) == 1
 
 
 @pytest.mark.asyncio
