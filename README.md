@@ -71,15 +71,20 @@ Below is the high-level data flow of the Learning Services AI Engine:
 
 The codebase is organized modularly to separate API routing, core configurations, data models, and the AI engine logic:
 
-```
+```text
+
 learning-services/
 ├── src/
 │   ├── ai_engine/                   # Core logic for data fetching, processing, and LLMs
 │   │   ├── BankQuestions_engine/    # Quiz Bank generation logic (MAIN FEATURE)
 │   │   │   ├── __init__.py
 │   │   │   ├── BankQuestions_generator.py  # Core engine: orchestrates LLM calls and builds QuizBank
-│   │   │   ├── ChunksRetrieval.py          # Retrieves chunks from Qdrant by URL (primary + secondary)
 │   │   │   └── openai_client_dependency.py # Handles OpenAI client init, reuse, and shutdown
+│   │   │
+│   │   ├── adaptive_engine/         # Adaptive quiz engine logic and session analytics
+│   │   │   ├── __init__.py
+│   │   │   ├── adaptive_quiz_engine.py     # Core adaptive engine for confidence scoring and difficulty adjustment
+│   │   │   └── quiz_session_helpers.py     # Session analytics helpers (accuracy, streaks, timing, consistency)
 │   │   │
 │   │   ├── data_fetchers/           # Modules for retrieving and cleaning external data
 │   │   │   ├── __init__.py
@@ -87,6 +92,7 @@ learning-services/
 │   │   │   ├── data_cleaner.py      # Regex-based text sanitization (removes HTML, boilerplate, URLs)
 │   │   │   ├── query_builder.py     # Logic to construct targeted search queries based on user profile
 │   │   │   ├── tavily_client.py     # Async client wrapper for Tavily web search API
+│   │   │   ├── ChunksRetrieval.py   # Retrieves chunks from Qdrant by URL (primary + secondary)
 │   │   │   └── qdrant_client_dependency.py # Qdrant client initialization and lifecycle management
 │   │   │
 │   │   ├── llm_generators/          # LLM-based prompt builders and helpers
@@ -112,13 +118,15 @@ learning-services/
 │   ├── models/                      # Data structures and validation models (Pydantic)
 │   │   ├── __init__.py
 │   │   ├── BankQuestions_schemas.py # Schemas for quiz bank (Question, QuizBank, Request validation)
+│   │   ├── adaptive_quiz_schemas.py # Schemas for adaptive quiz sessions and answer tracking
 │   │   └── schemas.py               # General schemas (UserProfile, Subtopic, etc.)
 │   │
 │   ├── routers/                     # FastAPI route definitions (controllers layer)
 │   │   ├── __init__.py
 │   │   ├── base.py                  # Root/welcome endpoint
 │   │   ├── data.py                  # Endpoints for data retrieval & preprocessing
-│   │   └── BankQuestions_router.py  # Endpoint for quiz bank generation (/generate)
+│   │   ├── BankQuestions_router.py  # Endpoint for quiz bank generation (/generate)
+│   │   └── adaptive_quiz.py         # Endpoints for adaptive quiz session lifecycle
 │   │
 │   ├── services/                    # External/internal service communication layer
 │   │   ├── __init__.py
@@ -143,7 +151,8 @@ learning-services/
 │   ├── test_tavily_integration.py   # Real Tavily API integration tests
 │   ├── test_vector_store_integration.py # Integration tests for Qdrant operations
 │   ├── test_vector_store_unit.py    # Unit tests for vector store logic
-│   └── test_bank_questions.py       # Tests for quiz bank generation
+│   ├── test_bank_questions.py       # Tests for quiz bank generation
+│   └── test_adaptive_engine.py      # Tests for adaptive quiz confidence and difficulty logic
 │
 ├── docker-compose.yml               # Docker services orchestration
 ├── .env.example                     # Template showing required environment variables
@@ -151,7 +160,6 @@ learning-services/
 ├── .pre-commit-config.yaml          # Configuration for code formatting and linting hooks (Black, Ruff)
 ├── README.md                        # Main project documentation and contribution guidelines
 └── requirements.txt                 # List of project Python dependencies and versions
-
 ```
 ## Feature: Quiz Generation
 
