@@ -15,6 +15,8 @@ async def init_openai_client():
         openai_client = AsyncOpenAI(
             api_key=settings.GEMINI_API_KEY,
             base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
+            timeout=30.0,
+            max_retries=3,
         )
 
 
