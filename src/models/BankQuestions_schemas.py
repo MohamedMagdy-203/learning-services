@@ -1,5 +1,6 @@
 from typing import List, Literal, Dict
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import BaseModel, Field, HttpUrl, model_validator
+from src.core.messages import PRIMARY_URL_NOT_IN_URLS
 
 
 class Question(BaseModel):
@@ -46,3 +47,9 @@ class QuestionGenerationRequest(BaseModel):
     weaknesses: Dict[str, str] = Field(
         default_factory=dict, description="User weaknesses per concept."
     )
+
+    @model_validator(mode="after")
+    def validate_primary_url(self):
+        if self.primary_url not in self.urls:
+            raise ValueError(PRIMARY_URL_NOT_IN_URLS)
+        return self
