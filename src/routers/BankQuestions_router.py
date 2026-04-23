@@ -24,7 +24,7 @@ from src.core.messages import (
     EMPTY_SOURCE_CONTENT,
 )
 from src.core.exceptions import (
-    EmptyContentError,
+    NoContentFoundError,
     LLMGenerationError,
     InvalidLLMResponseError,
 )
@@ -68,7 +68,7 @@ async def generate_quiz_bank(
 
         return quiz_bank
 
-    except EmptyContentError:
+    except NoContentFoundError:
         logger.error(EMPTY_SOURCE_CONTENT)
         raise HTTPException(
             status_code=400,
