@@ -146,6 +146,12 @@ class BankQuestionsGenerator:
             generated_questions = []
 
             for q_data in questions_data:
+                if not isinstance(q_data, dict):
+                    logger.warning(
+                        SKIP_QUESTION.format(error="Question item is not an object")
+                    )
+                    continue
+
                 options = q_data.get("options", [])
                 correct = q_data.get("correct_answer")
                 difficulty = q_data.get("difficulty", "medium")
