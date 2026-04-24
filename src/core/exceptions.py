@@ -22,9 +22,3 @@ class InvalidLLMResponseError(Exception):
     """Exception raised when the LLM response is not in the expected format."""
 
     pass
-
-
-class EmptyContentError(Exception):
-    """Exception raised when the source content provided for question generation is empty."""
-
-    pass

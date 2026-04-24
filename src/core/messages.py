@@ -14,10 +14,12 @@ RETRIEVE_MULTI_URL_SKIP_URL = "Skipping failed URL: %s | Reason: %s"
 NO_CONTENT_FOUND_PRIMARY = "No content found for primary URL: {primary_url}"
 NO_CONTENT_FOUND_ALL = "No content found for any provided URLs"
 RETRIEVE_MULTI_URL_SUCCESS = "Multi-url retrieval success. Total documents: %s"
+FALLBACK_ATTEMPT_FAILED = "Fallback attempt {attempt} failed: {error}"
+NO_PRIMARY_DOCUMENTS_FOUND = "No primary documents found."
 
 
 # Bank Questions
-
+PRIMARY_URL_NOT_IN_URLS = "primary_url must be included in urls"
 EMPTY_SOURCE_CONTENT = "Source content is empty."
 NO_QUESTIONS_FOUND = "No questions found in LLM response for {source_url}."
 LLM_API_ERROR = "LLM API error for {source_url}: {error}"
@@ -29,10 +31,14 @@ BANK_GENERATION_FAILED = (
 )
 FALLBACK_TRIGGERED = "Fallback triggered: {missing} missing"
 INVALID_JSON = "Invalid JSON from LLM, retrying..."
-LLM_TIMEOUT = "LLM timeout (attempt {attempt})"
-LLM_RETRY_ERROR = "LLM error (attempt {attempt}): {error}"
 SECONDARY_SOURCE_FAILED = "Secondary source {index} failed: {error}"
 LESS_THAN_TWO_SECONDARY = "Less than 2 secondary docs received"
 INVALID_QUESTION_COUNT = (
     "Invalid number of questions ({num_questions}) requested for source: {source_url}. "
 )
+
+UNABLE_TO_REACH_TARGET = (
+    "Unable to reach target question count. "
+    "Generated only {current} out of {target} unique questions."
+)
+FALLBACK_ROUND_LOG = "Fallback round {round}: generating {batch} questions"
