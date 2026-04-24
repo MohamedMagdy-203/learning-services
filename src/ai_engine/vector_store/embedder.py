@@ -1,16 +1,20 @@
 import logging
 from langchain_huggingface import HuggingFaceEmbeddings  # type: ignore
+from src.core.config import get_settings
 
 logger = logging.getLogger(__name__)
 
-EMBEDDING_MODEL: str = "paraphrase-multilingual-mpnet-base-v2"
-
+settings = get_settings()
 _embeddings: HuggingFaceEmbeddings | None = None
 
 
-def get_embeddings() -> HuggingFaceEmbeddings:  # type: ignore
+def get_embeddings(model_name=settings.EMBEDDING_MODEL) -> HuggingFaceEmbeddings:  # type: ignore
     global _embeddings
     if _embeddings is None:
-        logger.info("Loading embedding model: %s", EMBEDDING_MODEL)
-        _embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL)  # type: ignore
+        logger.info("Loading embedding model: %s", model_name)
+        encode_kwargs = {"batch_size": 32}
+        _embeddings = HuggingFaceEmbeddings(
+            model_name=model_name,
+            encode_kwargs=encode_kwargs,  # type: ignore
+        )
     return _embeddings  # type: ignore

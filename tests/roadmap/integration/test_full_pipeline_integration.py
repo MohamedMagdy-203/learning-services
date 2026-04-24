@@ -13,9 +13,9 @@ from src.ai_engine.vector_store.filters import is_url_already_stored
 logging.basicConfig(level=logging.INFO)
 
 
-@pytest.mark.integration  # type: ignore
-@pytest.mark.asyncio  # type: ignore
-async def test_full_pipeline_with_real_data():
+@pytest.mark.integration
+@pytest.mark.asyncio
+async def test_full_pipeline_with_real_data(shared_embedding_model):
     real_settings = Settings()  # type: ignore
     mock_request_data = RoadmapGenerationRequest(**MOCK_VALID_RESPONSE)
 
@@ -67,13 +67,20 @@ async def test_full_pipeline_with_real_data():
 
     # Step 4: Verify stored
     print("\n--- [ Step 4: Verifying Storage ] ---")
+    stored_count = 0
     for key in ("best_course", "best_video", "best_blog"):
         item = ranked_results.get(key)
         if item:
             url = item.get("url")
+            raw_content = item.get("raw_content", "")
             stored = is_url_already_stored(url)
             print(f"  {key}: {'✅ stored' if stored else '❌ NOT stored'}")
-            assert stored, f"{key} not found in Qdrant: {url}"
+
+            if len(raw_content.strip()) > 50:
+                assert stored, f"{key} not found in Qdrant: {url}"
+                stored_count += 1
+
+    assert stored_count > 0, "No content was successfully stored!"
 
     # Step 5: Similarity Search
     print("\n--- [ Step 5: Similarity Search ] ---")

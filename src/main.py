@@ -5,6 +5,8 @@ from src.ai_engine.BankQuestions_engine.openai_client_dependency import (
     init_openai_client,
     close_openai_client,
 )
+from .routers import roadmap, mindmap, summarization_router
+
 from src.ai_engine.data_fetchers.qdrant_client_dependency import (
     init_qdrant_client,
     close_qdrant_client,
@@ -35,3 +37,6 @@ app.include_router(base.base_router)
 app.include_router(data.data_router)
 
 app.include_router(gen_router)
+app.include_router(summarization_router.summ_router)
+app.include_router(roadmap.roadmap_router)
+app.include_router(mindmap.mindmap_router)

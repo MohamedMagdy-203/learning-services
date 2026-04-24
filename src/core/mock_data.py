@@ -188,3 +188,149 @@ arabic_content = (
     """
     * 10
 )
+
+MOCK_Qdrant_Schema = {
+    "page_content": "Database normalization is the process of organizing a relational database...",
+    "metadata": {
+        "source_type": "best_video",
+        "title": "Database Fundamentals Tutorial for Beginners - YouTube",
+        "url": "https://www.youtube.com/watch?v=RPkzMR59x50",
+    },
+}
+
+# ── Mindmap Mock Data ──
+
+MOCK_MINDMAP_REQUEST: Dict[str, Any] = {
+    "user_id": "user_123",
+    "subtopic_id": "sub_456",
+    "urls": [
+        "https://www.coursera.org/learn/introduction-to-databases",
+        "https://www.classcentral.com/course/youtube-database-fundamentals-for-beginners-database-tutorial-141003",
+        "https://learn.microsoft.com/en-us/shows/dbfundamentals/",
+    ],
+    "primary_url": "https://learn.microsoft.com/en-us/shows/dbfundamentals/",
+    "subtopic_name": "Database Fundamentals",
+    "subtopic_difficulty": "Beginner",
+    "weaknesses": {
+        "Data Modeling": "Struggles with designing efficient database schemas",
+        "SQL vs NoSQL": "Confused about when to use relational vs non-relational databases",
+        "Normalization": "Has difficulty understanding normalization",
+        "Query Writing": "Needs practice writing efficient SQL queries",
+        "Data Integrity": "Limited understanding of constraints like primary keys",
+    },
+}
+
+MOCK_MINDMAP_REQUEST_ONE_SOURCE: Dict[str, Any] = {
+    **MOCK_MINDMAP_REQUEST,
+    "urls": [
+        "https://learn.microsoft.com/en-us/shows/dbfundamentals/",
+    ],
+    "primary_url": "https://learn.microsoft.com/en-us/shows/dbfundamentals/",
+}
+
+MOCK_MINDMAP_CHUNKS: list[str] = [
+    "Database normalization is the process of organizing a relational database "
+    "to reduce data redundancy and improve data integrity. Normal forms: 1NF, 2NF, 3NF.",
+    "SQL databases use structured query language for defining and manipulating data. "
+    "They enforce a rigid schema with tables, rows, and columns.",
+    "NoSQL databases provide flexible schemas for unstructured data. "
+    "Types include document, key-value, column-family, and graph databases.",
+    "Primary keys uniquely identify each record in a table. "
+    "Foreign keys create relationships between tables.",
+    "JOINs allow querying data across multiple related tables. "
+    "Types: INNER JOIN, LEFT JOIN, RIGHT JOIN, FULL OUTER JOIN.",
+    "Transactions ensure ACID properties: Atomicity, Consistency, Isolation, Durability.",
+]
+
+MOCK_MINDMAP_RESPONSE: Dict[str, Any] = {
+    "topic": "Database Fundamentals",
+    "description": "Core concepts of databases.",
+    "children": [
+        {
+            "topic": "SQL Databases",
+            "description": "Relational systems.",
+            "children": [
+                {"topic": "Tables and Schemas", "description": "", "children": []},
+                {"topic": "SQL Queries", "description": "", "children": []},
+                {"topic": "JOINs", "description": "", "children": []},
+            ],
+        },
+        {
+            "topic": "NoSQL Databases",
+            "description": "Non-relational systems.",
+            "children": [
+                {"topic": "Document Stores", "description": "", "children": []},
+                {"topic": "Key-Value Stores", "description": "", "children": []},
+                {"topic": "When to use NoSQL", "description": "", "children": []},
+            ],
+        },
+        {
+            "topic": "Data Modeling",
+            "description": "Designing data structures.",
+            "children": [
+                {"topic": "Primary Keys", "description": "", "children": []},
+                {"topic": "Foreign Keys", "description": "", "children": []},
+                {"topic": "Relationships", "description": "", "children": []},
+            ],
+        },
+        {
+            "topic": "Normalization",
+            "description": "Reducing data redundancy.",
+            "children": [
+                {"topic": "1NF", "description": "", "children": []},
+                {"topic": "2NF", "description": "", "children": []},
+                {"topic": "3NF", "description": "", "children": []},
+            ],
+        },
+        {
+            "topic": "Data Integrity",
+            "description": "Ensuring data accuracy and consistency.",
+            "children": [
+                {"topic": "Constraints", "description": "", "children": []},
+                {"topic": "Transactions and ACID", "description": "", "children": []},
+            ],
+        },
+    ],
+}
+roadmap_request = {
+    "user_profile_schema": {
+        "id": "user_123",
+        "tracks": ["Backend Development", "Data Engineering"],
+        "learningStyle": "Visual/Practical",
+        "currentGoal": "Mastering SQL Performance",
+        "studyTimePerWeek": "10 hours",
+        "role": "Junior Developer",
+    },
+    "target_subtopic_schema": {
+        "Subtopic_id": "sub_456",
+        "Name": "Database Fundamentals",
+        "Description": "Core concepts of relational databases, indexing, and normalization.",
+        "Difficulty": "Intermediate",
+    },
+    "weakness_schema": {
+        "Topics": {
+            "Indexing": "Difficulty understanding B-Tree structures",
+            "Normalization": "Confused between 2NF and 3NF",
+            "Joins": "Slow performance with nested loops",
+        }
+    },
+}
+mindmap_summary_request = {
+    "user_id": "user_123",
+    "subtopic_id": "sub_456",
+    "urls": [
+        "https://www.coursera.org/learn/introduction-to-databases",
+        "https://www.classcentral.com/course/youtube-database-fundamentals-for-beginners-database-tutorial-141003",
+        "https://learn.microsoft.com/en-us/shows/dbfundamentals/",
+    ],
+    "primary_url": "https://learn.microsoft.com/en-us/shows/dbfundamentals/",
+    "subtopic_name": "Database Fundamentals",
+    "subtopic_difficulty": "Beginner",
+    "weaknesses": {
+        "Data Modeling": "Struggles with designing efficient database schemas",
+        "SQL vs NoSQL": "Confused about when to use relational vs non-relational databases",
+        "Normalization": "Has difficulty understanding normalization",
+        "Query Writing": "Needs practice writing efficient SQL queries",
+        "Data Integrity": "Limited understanding of constraints like primary keys",
+    },
+}

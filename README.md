@@ -7,309 +7,453 @@
   - [Overview](#overview)
   - [System Architecture \& Workflow](#system-architecture--workflow)
     - [Step-by-Step Flow Explanation](#step-by-step-flow-explanation)
-
-  - [Project Structure](#project-structure)
+  - [Feature: Roadmap Generation](#feature-roadmap-generation)
+  - [Feature: Mindmap Generation](#feature-mindmap-generation)
+    - [Mindmap Flow](#mindmap-flow)
+  - [Feature: Quiz Generation](#feature-quiz-generation)
   - [Feature: Summarization](#feature-summarization)
-  - [Summarization workflow](#summarization-workflow)
+  - [Project Structure](#project-structure)
   - [Tech Stack](#tech-stack)
   - [Setup \& Installation](#setup--installation)
     - [1. Prerequisites](#1-prerequisites)
     - [2. Clone the Repository](#2-clone-the-repository)
     - [3. Environment Setup](#3-environment-setup)
-    - [4. Install Dependencies](#4-install-dependencies)
-    - [5. Setup Pre-commit Hooks](#5-setup-pre-commit-hooks)
+    - [4. Start Qdrant](#4-start-qdrant)
+    - [5. Install Dependencies](#5-install-dependencies)
+    - [6. Setup Pre-commit Hooks](#6-setup-pre-commit-hooks)
   - [Running the Application](#running-the-application)
   - [Testing](#testing)
   - [Contribution Guidelines \& Git Workflow](#contribution-guidelines--git-workflow)
     - [1. Branching Strategy](#1-branching-strategy)
     - [2. Commits](#2-commits)
-    - [3. Pull Requests (PRs)](#3-pull-requests-prs)
+    - [3. Pull Requests](#3-pull-requests)
   - [License](#license)
+
+---
 
 ## Overview
 
-The Learning Services is an intelligent backend engine designed to
-generate personalized educational roadmaps and learning materials. By
-leveraging user profile data (such as learning styles, study time, and
-goals) alongside specific target subtopics, the system dynamically
-fetches, processes, and curates educational content. It utilizes
-external tools like the Tavily API for web searching and integrates a
-sophisticated Vector Database pipeline for processing and generating
-quizzes, mindmaps, and summaries.
+The **Learning Services** is an intelligent backend AI engine designed to generate personalized educational roadmaps and learning materials. By leveraging user profile data (such as learning styles, study time, and goals) alongside specific target subtopics, the system dynamically fetches, processes, and curates educational content.
+
+It integrates:
+- **Tavily API** for real-time web search
+- **Google Gemini** as the core LLM for reranking and generation
+- **Qdrant** as a vector database for semantic retrieval
+- **HuggingFace** multilingual embeddings for Arabic & English support
+
+---
 
 ## System Architecture & Workflow
 
-Below is the high-level data flow of the Learning Services AI Engine:
+```mermaid
+flowchart TD
+    A([Main Backend]) -->|POST /api/v1/roadmap/generate| B[Roadmap Router]
 
-![System Architecture](assets/Project_Flow_Diagram.png)
+    B --> C[Query Builder]
+    C --> D[Tavily Web Search]
+    D --> E[Data Cleaner]
+    E --> F[LLM Reranker - Gemini]
+
+    F --> G{Best Sources}
+    G --> G1[Best Course]
+    G --> G2[Best Video]
+    G --> G3[Best Blog]
+
+    G1 & G2 & G3 -->|Background Task| H[Vector Store Pipeline]
+
+    H --> H1[Deduplication Filter]
+    H1 --> H2[Semantic Chunker]
+    H2 --> H3[HuggingFace Embedder]
+    H3 --> H4[(Qdrant Vector DB)]
+
+    F -->|Ranked URLs| A
+
+    A -->|POST /api/v1/mindmap/generate| I[Mindmap Router]
+    A -->|POST /api/v1/summarize/generate| J[Summarization Router]
+
+    I --> K[Qdrant Retriever - Scroll]
+    K --> H4
+    H4 --> K
+    K --> L[Mindmap Prompt Builder]
+    L --> M[Gemini LLM]
+    M --> N[Mindmap Parser & Validator]
+    N --> A
+
+    J --> O[Shared Retriever - Scroll]
+    O --> H4
+    H4 --> O
+    O --> P[Summarization Prompt Builder]
+    P --> Q[OpenAI-compatible Gemini]
+    Q --> R[JSON Parser]
+    R --> A
+```
 
 ### Step-by-Step Flow Explanation
 
-1. **Input Collection:** The system takes "Sign up preferences" (user
-    tracks, learning style) and the "Target Subtopic" (name,
-    description, difficulty).
-2. **Web Search & Extraction:** A query is dynamically built and sent
-    to the Tavily web search tool to fetch relevant articles, courses
-    (Coursera, Udemy), and YouTube videos. The content is then extracted
-    and cleaned (removing HTML tags, boilerplate text, and URLs).
-3. **LLM Reranker / Judge:** The extracted content is evaluated by a
-    Large Language Model (LLM) to determine its relevance and quality.
-    The best sources are stored in the database and presented in the
-    user's roadmap.
-4. **Vector Database Pipeline:** When a user selects a specific content
-    source, the system fetches the raw data (via PDF extraction, web
-    scraping, or video transcript extraction). The text is cleaned,
-    chunked into smaller pieces, converted into embeddings, and stored
-    in a Vector Database.
-5. **Content Generation:** The user can request specific outputs like a
-    Quiz, Mindmap, or Summary. The system uses an LLM to reformulate the
-    query, searches the Vector Database for the top K relevant chunks,
-    and feeds them into another LLM to generate the final educational
-    material, which is then stored in the database.
+1. **Input Collection** — The Main Backend sends user profile (tracks, learning style, goals) and target subtopic (name, description, difficulty).
+2. **Web Search & Extraction** — A targeted query is built and sent to Tavily, fetching articles, courses (Coursera, Udemy), and YouTube videos. Raw content is cleaned (HTML tags, boilerplate, URLs removed).
+3. **LLM Reranker / Judge** — Gemini evaluates all sources and selects the single best course, video, and blog for this specific learner.
+4. **Vector Store Pipeline** — In the background, each selected source is deduplicated, semantically chunked, embedded, and stored in Qdrant.
+5. **Content Generation** — The user can then request a Mindmap or Summary. The system retrieves relevant chunks from Qdrant using `primary_url` filtering and feeds them to Gemini for generation.
 
-## Project Structure
+---
 
-The codebase is organized modularly to separate API routing, core configurations, data models, and the AI engine logic:
+## Feature: Roadmap Generation
 
-```text
+Generates a personalized learning roadmap by searching, ranking, and returning the best course, video, and blog for a given subtopic.
 
-learning-services/
-├── src/
-│   ├── ai_engine/                   # Core logic for data fetching, processing, and LLMs
-│   │   ├── BankQuestions_engine/    # Quiz Bank generation logic (MAIN FEATURE)
-│   │   │   ├── __init__.py
-│   │   │   ├── BankQuestions_generator.py  # Core engine: orchestrates LLM calls and builds QuizBank
-│   │   │   └── openai_client_dependency.py # Handles OpenAI client init, reuse, and shutdown
-│   │   │
-│   │   ├── adaptive_engine/         # Adaptive quiz engine logic and session analytics
-│   │   │   ├── __init__.py
-│   │   │   ├── adaptive_quiz_engine.py     # Core adaptive engine for confidence scoring and difficulty adjustment
-│   │   │   └── quiz_session_helpers.py     # Session analytics helpers (accuracy, streaks, timing, consistency)
-│   │   │
-│   │   ├── data_fetchers/           # Modules for retrieving and cleaning external data
-│   │   │   ├── __init__.py
-│   │   │   ├── cleaned_tavily_data.py # Pipeline orchestrator to fetch and clean subtopic content
-│   │   │   ├── data_cleaner.py      # Regex-based text sanitization (removes HTML, boilerplate, URLs)
-│   │   │   ├── query_builder.py     # Logic to construct targeted search queries based on user profile
-│   │   │   ├── tavily_client.py     # Async client wrapper for Tavily web search API
-│   │   │   ├── ChunksRetrieval.py   # Retrieves chunks from Qdrant by URL (primary + secondary)
-│   │   │   └── qdrant_client_dependency.py # Qdrant client initialization and lifecycle management
-│   │   │
-│   │   ├── llm_generators/          # LLM-based prompt builders and helpers
-│   │   │   ├── __init__.py
-│   │   │   ├── BankQuestions_prompts.py # Prompt builder for quiz generation (MCQs)
-│   │   │   ├── reranker.py          # (Optional) LLM reranking logic for sources
-│   │   │   ├── reranker_parser.py   # Parses LLM reranker responses into structured format
-│   │   │   ├── reranker_prompt.py   # Prompt builder for reranking
-│   │   │   └── source_classifier.py # Classifies sources (course/video/blog)
-│   │   │
-│   │   ├── text_processing/         # Text preprocessing and chunking utilities
-│   │   │   ├── __init__.py
-│   │   │   └── chunker.py           # Semantic text chunker with multilingual support
-│   │
-│   ├── core/                        # Application-wide settings, utilities, and constants
-│   │   ├── __init__.py
-│   │   ├── config.py                # Pydantic BaseSettings for environment variables validation
-│   │   ├── constants.py             # Global constant values used across the application
-│   │   ├── exceptions.py            # Custom exception classes (LLMGenerationError, EmptyContentError, etc.)
-│   │   ├── messages.py              # Centralized log and error message templates
-│   │   └── mock_data.py             # Static sample data for testing/fallback
-│   │
-│   ├── models/                      # Data structures and validation models (Pydantic)
-│   │   ├── __init__.py
-│   │   ├── BankQuestions_schemas.py # Schemas for quiz bank (Question, QuizBank, Request validation)
-│   │   ├── adaptive_quiz_schemas.py # Schemas for adaptive quiz sessions and answer tracking
-│   │   └── schemas.py               # General schemas (UserProfile, Subtopic, etc.)
-│   │
-│   ├── routers/                     # FastAPI route definitions (controllers layer)
-│   │   ├── __init__.py
-│   │   ├── base.py                  # Root/welcome endpoint
-│   │   ├── data.py                  # Endpoints for data retrieval & preprocessing
-│   │   ├── BankQuestions_router.py  # Endpoint for quiz bank generation (/generate)
-│   │   └── adaptive_quiz.py         # Endpoints for adaptive quiz session lifecycle
-│   │
-│   ├── services/                    # External/internal service communication layer
-│   │   ├── __init__.py
-│   │   └── main_backend_client.py   # HTTPX client to fetch roadmap context from main backend
-│   │
-│   ├── __init__.py
-│   └── main.py                      # FastAPI app entry point (startup/shutdown events)
-│
-├── tests/                           # Automated testing suite (Unit & Integration tests)
-│   ├── __init__.py
-│   ├── conftest.py                  # Pytest configuration and shared fixtures
-│   ├── test_chunker.py              # Unit tests for text chunking logic
-│   ├── test_chunker_integration.py  # Integration tests for chunking pipeline
-│   ├── test_cleaned_tavily_data.py  # Tests for data fetching and cleaning pipeline
-│   ├── test_config.py               # Tests for environment configuration loading
-│   ├── test_data_router.py          # Tests for API endpoints in data router
-│   ├── test_full_pipeline_integration.py # End-to-end pipeline integration tests
-│   ├── test_main_backend_client.py  # Mocked tests for backend HTTP client
-│   ├── test_reranker.py             # Unit tests for reranking logic
-│   ├── test_reranker_integration.py # Integration tests for reranker with LLM
-│   ├── test_tavily_client.py        # Unit tests for Tavily API interactions
-│   ├── test_tavily_integration.py   # Real Tavily API integration tests
-│   ├── test_vector_store_integration.py # Integration tests for Qdrant operations
-│   ├── test_vector_store_unit.py    # Unit tests for vector store logic
-│   ├── test_bank_questions.py       # Tests for quiz bank generation
-│   └── test_adaptive_engine.py      # Tests for adaptive quiz confidence and difficulty logic
-│
-├── docker-compose.yml               # Docker services orchestration
-├── .env.example                     # Template showing required environment variables
-├── .gitignore                       # List of files and folders to be ignored by Git version control
-├── .pre-commit-config.yaml          # Configuration for code formatting and linting hooks (Black, Ruff)
-├── README.md                        # Main project documentation and contribution guidelines
-└── requirements.txt                 # List of project Python dependencies and versions
+```mermaid
+sequenceDiagram
+    participant MB as Main Backend
+    participant RR as Roadmap Router
+    participant TV as Tavily API
+    participant LLM as Gemini Reranker
+    participant QD as Qdrant
+
+    MB->>RR: POST /api/v1/roadmap/generate
+    RR->>TV: Search (query built from subtopic + user profile)
+    TV-->>RR: Raw results (general + courses + videos)
+    RR->>RR: Clean & filter content
+    RR->>LLM: Rerank sources (user profile + cleaned sources)
+    LLM-->>RR: best_course, best_video, best_blog
+    RR-->>MB: Ranked result (title + url only)
+    RR-)QD: Background ingestion (chunk + embed + store)
 ```
+
+---
+
+## Feature: Mindmap Generation
+
+Generates a hierarchical mind map from content already stored in Qdrant for a specific subtopic source.
+
+```mermaid
+flowchart TD
+    A([Main Backend]) -->|POST /api/v1/mindmap/generate| B[Mindmap Router]
+
+    B --> C{Retrieve Chunks}
+    C -->|primary_url filter - scroll| D[(Qdrant)]
+    D --> C
+    C -->|if primary insufficient| E[Secondary URLs - scroll]
+    E --> D
+
+    C --> F[Build Mindmap Prompt]
+    F --> G[Gemini LLM\ntemp=0.2 · max_tokens=8192\nresponse_mime_type=application/json]
+    G --> H[Parse & Validate\nMindmapNodeSchema]
+    H --> I([Return Mindmap Tree])
+```
+
+### Mindmap Flow
+
+**Phase 1 — Request & Context**
+The router receives the request with `primary_url`, subtopic info, and user weaknesses. No additional backend call is made.
+
+**Phase 2 — Retrieval from Qdrant**
+Chunks are fetched using strict `metadata.url` scroll-based retrieval (not similarity search). Primary URL is fetched first; secondary URLs supplement if needed.
+
+**Phase 3 — Generation & Response**
+The chunks are assembled into a structured prompt. Gemini generates the mindmap. Output is parsed and validated into `MindmapNodeSchema` before returning.
+
+---
+
 ## Feature: Quiz Generation
 
-An AI-powered learning feature that transforms the learner’s selected **content source** (best course, best video, or best blog) into a personalized study experience and instant feedback.
-It uses the selected source as the primary knowledge base, supplements it with supporting ranked sources when needed, and adapts question difficulty dynamically based on some factors that will be explained later.After each answer, the learner receives immediate corrective feedback,At the end of the session the system produces weakness summary, key concepts to review, and optional AI-generated visual or audio learning aids.
+An AI-powered feature that transforms a learner's selected content source into a personalized quiz experience with adaptive difficulty and instant corrective feedback.
 
-### Quiz Generation workflow
+```mermaid
+flowchart TD
+    A([Main Backend]) -->|POST /api/v1/quiz/generate| B[Quiz Router]
+    B --> C[Retrieve Chunks from Qdrant]
+    C --> D[Build Quiz Prompt\nwith weaknesses + difficulty]
+    D --> E[Gemini LLM]
+    E --> F[Parse Questions]
+    F --> G([Return Quiz])
+    G --> H[Learner Answers]
+    H --> I[Feedback Engine]
+    I --> J[Weakness Summary]
+```
 
-![Quiz Generation](image-2.png)
+---
 
 ## Feature: Summarization
 
-The Summarization feature provides structured learning by distilling content stored in a Qdrant vector database. The service retrieves the top relevant sections for a specific topic using vector similarity search, then uses the configured LLM pipeline to generate a concise, beginner-friendly summary grounded in the retrieved context.
+Provides structured, beginner-friendly summaries by distilling content from Qdrant using vector scroll retrieval, then processing with an OpenAI-compatible Gemini pipeline.
 
-## Summarization workflow
+```mermaid
+sequenceDiagram
+    participant MB as Main Backend
+    participant SR as Summarization Router
+    participant QD as Qdrant
+    participant LLM as Gemini (via OpenAI client)
 
-![Summarization](assets/summarization-image.jpeg)
+    MB->>SR: POST /api/v1/summarize/generate
+    SR->>QD: Scroll by primary_url
+    QD-->>SR: Relevant chunks (Documents)
+    SR->>SR: Build prompt (subtopic + difficulty + weaknesses)
+    SR->>LLM: Chat completion (JSON mode)
+    LLM-->>SR: { "summary": "..." }
+    SR-->>MB: { user_id, subtopic_id, primary_url, summary }
+```
 
+---
+
+## Project Structure
+
+```text
+learning-services/
+├── src/
+│   ├── ai_engine/
+│   │   ├── data_fetchers/
+│   │   │   ├── cleaned_tavily_data.py     # Pipeline: fetch + clean subtopic content
+│   │   │   ├── data_cleaner.py            # Regex-based text sanitization
+│   │   │   ├── query_builder.py           # Build targeted search queries
+│   │   │   ├── tavily_client.py           # Async Tavily web search wrapper
+│   │   │   ├── chunks_retrieval.py        # Retrieve chunks from Qdrant by URL
+│   │   │   └── qdrant_client_dependency.py # Shared AsyncQdrantClient (DI)
+│   │   ├── llm_generators/
+│   │   │   ├── reranker.py                # LLM reranking orchestrator
+│   │   │   ├── reranker_parser.py         # JSON parser + raw_content enricher
+│   │   │   ├── reranker_prompt.py         # Reranker prompt builder
+│   │   │   └── source_classifier.py       # URL-based source type classifier
+│   │   ├── mindmap_feature/
+│   │   │   ├── mindmap_generator.py       # Gemini mindmap generation
+│   │   │   ├── mindmap_parser.py          # JSON → MindmapNodeSchema validator
+│   │   │   ├── mindmap_prompt.py          # Mindmap prompt builder
+│   │   │   └── retriever.py               # Retrieve chunks for mindmap
+│   │   ├── summarization_engine/
+│   │   │   ├── summarizer.py              # Summarization orchestrator
+│   │   │   ├── summarization_prompt.py    # Summarization prompt builder
+│   │   │   └── openai_client_dependency.py # Shared AsyncOpenAI client (DI)
+│   │   ├── text_processing/
+│   │   │   └── chunker.py                 # Semantic chunker (multilingual)
+│   │   └── vector_store/
+│   │       ├── embedder.py                # HuggingFace embedding model loader
+│   │       ├── filters.py                 # Deduplication by URL
+│   │       ├── prepare_store_document.py  # Document preparation pipeline
+│   │       ├── qdrant_client.py           # Sync QdrantClient + collection setup
+│   │       ├── shared_retriever.py        # Shared scroll-based retriever
+│   │       └── store.py                   # Ingestion entry point
+│   ├── core/
+│   │   ├── config.py                      # Pydantic BaseSettings
+│   │   ├── constants.py                   # Global constants
+│   │   ├── exceptions.py                  # Custom exception classes
+│   │   ├── messages.py                    # Standardized response messages
+│   │   └── mock_data.py                   # Static sample data for tests
+│   ├── models/
+│   │   ├── schemas.py                     # Pydantic schemas (Roadmap, Mindmap)
+│   │   └── summarization_schemas.py       # Summarization request/response schemas
+│   ├── routers/
+│   │   ├── base.py                        # Root/welcome endpoint
+│   │   ├── roadmap.py                     # Roadmap generation endpoints
+│   │   ├── mindmap.py                     # Mindmap generation endpoints
+│   │   └── summarization_router.py        # Summarization endpoints
+│   ├── services/
+│   │   └── main_backend_client.py         # HTTPX client for main backend
+│   └── main.py                            # FastAPI app + startup/shutdown events
+│
+├── tests/
+│   ├── mindmap/
+│   │   ├── unit/test_mindmap_unit.py
+│   │   └── integration/test_mindmap_integration.py
+│   ├── roadmap/
+│   │   ├── unit/
+│   │   │   ├── test_reranker.py
+│   │   │   ├── test_roadmap_router.py
+│   │   │   ├── test_tavily_client.py
+│   │   │   ├── test_vector_store_unit.py
+│   │   │   ├── test_chunker.py
+│   │   │   └── test_cleaned_tavily_data.py
+│   │   └── integration/
+│   │       ├── test_full_pipeline_integration.py
+│   │       ├── test_chunker_integration.py
+│   │       ├── test_reranker_integration.py
+│   │       ├── test_tavily_integration.py
+│   │       └── test_vector_store_integration.py
+│   ├── summarization/
+│   │   ├── unit/test_summarization_unit.py
+│   │   └── integration/test_summarization_integration.py
+│   └── test_config.py
+│
+├── docs/
+│   ├── Roadmap_API_Contract.md
+│   ├── Mindmap_API_Contract.md
+│   ├── Summarization_API_contract.md
+│   └── Qdrant_Schema.md
+├── .env.example
+├── .gitignore
+├── .pre-commit-config.yaml
+├── docker-compose.yml
+├── requirements.txt
+└── README.md
+```
+
+---
 
 ## Tech Stack
 
-- **Framework:** FastAPI
-- **Validation:** Pydantic
-- **Database / ORM:** SQLAlchemy, PostgreSQL (psycopg2-binary)
-- **HTTP Client:** HTTPX
-- **AI & Search:** Tavily Python Client, Google GenAI, Tiktoken
-- **Testing:** Pytest, Respx, Pytest-Asyncio
-- **Code Quality:** Pre-commit, Black, Ruff
+| Layer | Technology |
+|---|---|
+| Framework | FastAPI + Uvicorn |
+| Validation | Pydantic v2 |
+| LLM | Google Gemini (via `google-genai` + OpenAI-compatible endpoint) |
+| Vector DB | Qdrant (AsyncQdrantClient) |
+| Embeddings | HuggingFace `paraphrase-multilingual-mpnet-base-v2` (768 dims) |
+| Web Search | Tavily Python Client |
+| HTTP Client | HTTPX |
+| Text Splitting | LangChain SemanticChunker |
+| Testing | Pytest + Pytest-Asyncio + Respx |
+| Code Quality | Pre-commit, Black, Ruff |
+| Database | PostgreSQL + SQLAlchemy (psycopg2) |
+
+---
 
 ## Setup & Installation
 
 ### 1. Prerequisites
 
-Ensure you have Python installed. It is highly recommended to use a
-virtual environment to manage dependencies.
+- Python 3.11+
+- Docker (for Qdrant)
 
 ### 2. Clone the Repository
 
-Clone the project to your local machine and navigate into the project
-directory.
+```bash
+git clone <repo-url>
+cd learning-services
+```
 
 ### 3. Environment Setup
 
 Create a virtual environment and activate it:
 
-``` bash
+```bash
 python -m venv .venv
-source .venv/bin/activate  # On Windows use: .venv\Scripts\activate
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 ```
 
-Create a `.env` file in the root directory based on the provided
-example:
+Create a `.env` file from the provided example:
 
-``` env
+```bash
+cp .env.example .env
+```
+
+Fill in your keys:
+
+```env
 APP_NAME="Learning Services"
 APP_VERSION="1.0.0"
 MAIN_BACKEND_URL="http://localhost:3000"
-TAVILY_API_KEY="Your Tavily api key"
-GEMINI_API_KEY = "Your Gemini api key"
+TAVILY_API_KEY="your_tavily_key"
+GEMINI_API_KEY="your_gemini_key"
+QDRANT_URL="http://localhost:6333"
+QDRANT_COLLECTION_NAME="learning_materials"
+HF_TOKEN="your_huggingface_token"
 ```
 
-### 4. Install Dependencies
+### 4. Start Qdrant
 
-Install the required Python packages from the requirements file:
+```bash
+docker-compose up -d
+```
 
-``` bash
+### 5. Install Dependencies
+
+```bash
 pip install -r requirements.txt
 ```
 
-### 5. Setup Pre-commit Hooks
+### 6. Setup Pre-commit Hooks
 
-To ensure code quality, install the pre-commit hooks before making any
-contributions:
-
-``` bash
+```bash
 pip install pre-commit
 pre-commit install
 ```
 
+---
+
 ## Running the Application
 
-To start the FastAPI development server, run:
-
-``` bash
+```bash
 uvicorn src.main:app --reload
 ```
 
-The API will be available at `http://localhost:8000`. You can view the
-automatic API documentation by navigating to
-`http://localhost:8000/docs`.
+- API base: `http://localhost:8000`
+- Swagger docs: `http://localhost:8000/docs`
+- ReDoc: `http://localhost:8000/redoc`
+
+---
 
 ## Testing
 
-The project uses `pytest` for testing.
+Run all unit tests:
 
-To run all standard unit tests:
-
-``` bash
-pytest
+```bash
+pytest -v -s
 ```
 
-To run integration tests (which make actual calls to external APIs like
-Tavily), use the custom integration flag:
+Run with live logs:
 
-``` bash
-pytest --integration
+```bash
+pytest -v -s --log-cli-level=INFO
 ```
+
+Run integration tests (requires real API keys + running Qdrant):
+
+```bash
+pytest --integration -v -s --log-cli-level=INFO
+```
+
+Run a specific test file:
+
+```bash
+pytest tests/mindmap/unit/test_mindmap_unit.py -v
+```
+
+---
 
 ## Contribution Guidelines & Git Workflow
 
-To maintain high code quality and avoid merge conflicts, all team
-members **MUST** strictly follow these rules:
-
 ### 1. Branching Strategy
 
-- **`main`**: Production-ready code ONLY. Direct pushes are blocked.
-- **`develop`**: The integration branch. All feature branches must
-    branch off from here and merge back here.
+| Branch | Purpose |
+|---|---|
+| `main` | Production-ready code — direct pushes **blocked** |
+| `develop` | Integration branch — all PRs target here |
 
-**Feature Branches Naming Convention:**
+**Feature branch naming:**
 
-- `feat/feature-name` (e.g., `feat/pdf-extraction`)
-- `fix/bug-name` (e.g., `fix/db-connection`)
-- `chore/task-name` (e.g., `chore/update-dependencies`)
-- `docs/document-name` (e.g., `docs/api-endpoints`)
+```
+feat/feature-name     → feat/pdf-extraction
+fix/bug-name          → fix/db-connection
+chore/task-name       → chore/update-dependencies
+docs/document-name    → docs/api-contracts
+```
 
 ### 2. Commits
 
-Use descriptive, conventional commit messages:
+Use conventional commit messages:
 
-- **Allowed:** `feat: add Tavily web search integration`
-- **Allowed:** `fix: handle empty pdf files during extraction`
-- **Allowed:** `chore: update requirements.txt`
-- **Not Allowed:** `fixed bug` or `updated files` or `done`
+```
+✅ feat: add Tavily web search integration
+✅ fix: handle empty pdf files during extraction
+✅ chore: update requirements.txt
+❌ fixed bug
+❌ updated files
+❌ done
+```
 
-### 3. Pull Requests (PRs)
+### 3. Pull Requests
 
-- **Direct pushes to `main` or `develop` are BLOCKED.**
-- Push your feature branch to GitHub and open a Pull Request against
-    the `develop` branch.
-- Fill out the provided PR Template.
-- Wait for at least **1 Approval** (from the Team Lead) before
-    merging.
-- Ensure your code doesn't break existing functionality before
-    requesting a review.
+- Direct pushes to `main` or `develop` are **blocked**
+- Open a PR against `develop`
+- Fill in the PR template
+- Requires at least **1 approval** from the Team Lead
+- All pre-commit checks and tests must pass
+
+---
 
 ## License
 
 This project is protected under a **Custom Educational & Contributor License**.
 
-The source code is open for **personal learning and educational purposes only**. You are highly encouraged to fork the repository and submit Pull Requests to help us improve the project. However, commercial use, unauthorized redistribution, or using this code in production environments without explicit permission is strictly prohibited.
+The source code is open for **personal learning and educational purposes only**. Commercial use, unauthorized redistribution, or use in production environments without explicit permission is strictly prohibited.
 
-For full details, please refer to the `LICENSE` file in the root directory.
+See the `LICENSE` file for full details.
