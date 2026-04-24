@@ -83,6 +83,7 @@ POST http://localhost:8000/api/v1/quiz-bank/generate
 }
 
 ```
+- `primary_url` must be one of the URLs provided in `urls`.
 
 **Response**
 
