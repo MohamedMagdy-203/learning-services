@@ -1,4 +1,4 @@
-﻿# Learning Services
+# Learning Services
 
 ## Table of Contents
 
@@ -200,90 +200,105 @@ sequenceDiagram
 
 ```text
 learning-services/
-Γö£ΓöÇΓöÇ src/
-Γöé   Γö£ΓöÇΓöÇ ai_engine/
-Γöé   Γöé   Γö£ΓöÇΓöÇ data_fetchers/
-Γöé   Γöé   Γöé   Γö£ΓöÇΓöÇ cleaned_tavily_data.py     # Pipeline: fetch + clean subtopic content
-Γöé   Γöé   Γöé   Γö£ΓöÇΓöÇ data_cleaner.py            # Regex-based text sanitization
-Γöé   Γöé   Γöé   Γö£ΓöÇΓöÇ query_builder.py           # Build targeted search queries
-Γöé   Γöé   Γöé   Γö£ΓöÇΓöÇ tavily_client.py           # Async Tavily web search wrapper
-Γöé   Γöé   Γöé   Γö£ΓöÇΓöÇ chunks_retrieval.py        # Retrieve chunks from Qdrant by URL
-Γöé   Γöé   Γöé   ΓööΓöÇΓöÇ qdrant_client_dependency.py # Shared AsyncQdrantClient (DI)
-Γöé   Γöé   Γö£ΓöÇΓöÇ llm_generators/
-Γöé   Γöé   Γöé   Γö£ΓöÇΓöÇ reranker.py                # LLM reranking orchestrator
-Γöé   Γöé   Γöé   Γö£ΓöÇΓöÇ reranker_parser.py         # JSON parser + raw_content enricher
-Γöé   Γöé   Γöé   Γö£ΓöÇΓöÇ reranker_prompt.py         # Reranker prompt builder
-Γöé   Γöé   Γöé   ΓööΓöÇΓöÇ source_classifier.py       # URL-based source type classifier
-Γöé   Γöé   Γö£ΓöÇΓöÇ mindmap_feature/
-Γöé   Γöé   Γöé   Γö£ΓöÇΓöÇ mindmap_generator.py       # Gemini mindmap generation
-Γöé   Γöé   Γöé   Γö£ΓöÇΓöÇ mindmap_parser.py          # JSON ΓåÆ MindmapNodeSchema validator
-Γöé   Γöé   Γöé   Γö£ΓöÇΓöÇ mindmap_prompt.py          # Mindmap prompt builder
-Γöé   Γöé   Γöé   ΓööΓöÇΓöÇ retriever.py               # Retrieve chunks for mindmap
-Γöé   Γöé   Γö£ΓöÇΓöÇ summarization_engine/
-Γöé   Γöé   Γöé   Γö£ΓöÇΓöÇ summarizer.py              # Summarization orchestrator
-Γöé   Γöé   Γöé   Γö£ΓöÇΓöÇ summarization_prompt.py    # Summarization prompt builder
-Γöé   Γöé   Γöé   ΓööΓöÇΓöÇ openai_client_dependency.py # Shared AsyncOpenAI client (DI)
-Γöé   Γöé   Γö£ΓöÇΓöÇ text_processing/
-Γöé   Γöé   Γöé   ΓööΓöÇΓöÇ chunker.py                 # Semantic chunker (multilingual)
-Γöé   Γöé   ΓööΓöÇΓöÇ vector_store/
-Γöé   Γöé       Γö£ΓöÇΓöÇ embedder.py                # HuggingFace embedding model loader
-Γöé   Γöé       Γö£ΓöÇΓöÇ filters.py                 # Deduplication by URL
-Γöé   Γöé       Γö£ΓöÇΓöÇ prepare_store_document.py  # Document preparation pipeline
-Γöé   Γöé       Γö£ΓöÇΓöÇ qdrant_client.py           # Sync QdrantClient + collection setup
-Γöé   Γöé       Γö£ΓöÇΓöÇ shared_retriever.py        # Shared scroll-based retriever
-Γöé   Γöé       ΓööΓöÇΓöÇ store.py                   # Ingestion entry point
-Γöé   Γö£ΓöÇΓöÇ core/
-Γöé   Γöé   Γö£ΓöÇΓöÇ config.py                      # Pydantic BaseSettings
-Γöé   Γöé   Γö£ΓöÇΓöÇ constants.py                   # Global constants
-Γöé   Γöé   Γö£ΓöÇΓöÇ exceptions.py                  # Custom exception classes
-Γöé   Γöé   Γö£ΓöÇΓöÇ messages.py                    # Standardized response messages
-Γöé   Γöé   ΓööΓöÇΓöÇ mock_data.py                   # Static sample data for tests
-Γöé   Γö£ΓöÇΓöÇ models/
-Γöé   Γöé   Γö£ΓöÇΓöÇ schemas.py                     # Pydantic schemas (Roadmap, Mindmap)
-Γöé   Γöé   ΓööΓöÇΓöÇ summarization_schemas.py       # Summarization request/response schemas
-Γöé   Γö£ΓöÇΓöÇ routers/
-Γöé   Γöé   Γö£ΓöÇΓöÇ base.py                        # Root/welcome endpoint
-Γöé   Γöé   Γö£ΓöÇΓöÇ roadmap.py                     # Roadmap generation endpoints
-Γöé   Γöé   Γö£ΓöÇΓöÇ mindmap.py                     # Mindmap generation endpoints
-Γöé   Γöé   ΓööΓöÇΓöÇ summarization_router.py        # Summarization endpoints
-Γöé   Γö£ΓöÇΓöÇ services/
-Γöé   Γöé   ΓööΓöÇΓöÇ main_backend_client.py         # HTTPX client for main backend
-Γöé   ΓööΓöÇΓöÇ main.py                            # FastAPI app + startup/shutdown events
-Γöé
-Γö£ΓöÇΓöÇ tests/
-Γöé   Γö£ΓöÇΓöÇ mindmap/
-Γöé   Γöé   Γö£ΓöÇΓöÇ unit/test_mindmap_unit.py
-Γöé   Γöé   ΓööΓöÇΓöÇ integration/test_mindmap_integration.py
-Γöé   Γö£ΓöÇΓöÇ roadmap/
-Γöé   Γöé   Γö£ΓöÇΓöÇ unit/
-Γöé   Γöé   Γöé   Γö£ΓöÇΓöÇ test_reranker.py
-Γöé   Γöé   Γöé   Γö£ΓöÇΓöÇ test_roadmap_router.py
-Γöé   Γöé   Γöé   Γö£ΓöÇΓöÇ test_tavily_client.py
-Γöé   Γöé   Γöé   Γö£ΓöÇΓöÇ test_vector_store_unit.py
-Γöé   Γöé   Γöé   Γö£ΓöÇΓöÇ test_chunker.py
-Γöé   Γöé   Γöé   ΓööΓöÇΓöÇ test_cleaned_tavily_data.py
-Γöé   Γöé   ΓööΓöÇΓöÇ integration/
-Γöé   Γöé       Γö£ΓöÇΓöÇ test_full_pipeline_integration.py
-Γöé   Γöé       Γö£ΓöÇΓöÇ test_chunker_integration.py
-Γöé   Γöé       Γö£ΓöÇΓöÇ test_reranker_integration.py
-Γöé   Γöé       Γö£ΓöÇΓöÇ test_tavily_integration.py
-Γöé   Γöé       ΓööΓöÇΓöÇ test_vector_store_integration.py
-Γöé   Γö£ΓöÇΓöÇ summarization/
-Γöé   Γöé   Γö£ΓöÇΓöÇ unit/test_summarization_unit.py
-Γöé   Γöé   ΓööΓöÇΓöÇ integration/test_summarization_integration.py
-Γöé   ΓööΓöÇΓöÇ test_config.py
-Γöé
-Γö£ΓöÇΓöÇ docs/
-Γöé   Γö£ΓöÇΓöÇ Roadmap_API_Contract.md
-Γöé   Γö£ΓöÇΓöÇ Mindmap_API_Contract.md
-Γöé   Γö£ΓöÇΓöÇ Summarization_API_contract.md
-Γöé   ΓööΓöÇΓöÇ Qdrant_Schema.md
-Γö£ΓöÇΓöÇ .env.example
-Γö£ΓöÇΓöÇ .gitignore
-Γö£ΓöÇΓöÇ .pre-commit-config.yaml
-Γö£ΓöÇΓöÇ docker-compose.yml
-Γö£ΓöÇΓöÇ requirements.txt
-ΓööΓöÇΓöÇ README.md
+├── src/
+│   ├── ai_engine/
+│   │   ├── data_fetchers/
+│   │   │   ├── cleaned_tavily_data.py      # Pipeline: fetch + clean subtopic content
+│   │   │   ├── data_cleaner.py             # Regex-based text sanitization
+│   │   │   ├── query_builder.py            # Build targeted search queries
+│   │   │   ├── tavily_client.py            # Async Tavily web search wrapper
+│   │   │   ├── chunks_retrieval.py         # Retrieve chunks from Qdrant by URL
+│   │   │   └── qdrant_client_dependency.py # Shared AsyncQdrantClient (DI)
+│   │   │
+│   │   ├── llm_generators/
+│   │   │   ├── reranker.py                 # LLM reranking orchestrator
+│   │   │   ├── reranker_parser.py          # JSON parser + raw_content enricher
+│   │   │   ├── reranker_prompt.py          # Reranker prompt builder
+│   │   │   └── source_classifier.py        # URL-based source type classifier
+│   │   │
+│   │   ├── mindmap_feature/
+│   │   │   ├── mindmap_generator.py        # Gemini mindmap generation
+│   │   │   ├── mindmap_parser.py           # JSON → MindmapNodeSchema validator
+│   │   │   ├── mindmap_prompt.py           # Mindmap prompt builder
+│   │   │   └── retriever.py                # Retrieve chunks for mindmap
+│   │   │
+│   │   ├── summarization_engine/
+│   │   │   ├── summarizer.py               # Summarization orchestrator
+│   │   │   ├── summarization_prompt.py     # Summarization prompt builder
+│   │   │   └── openai_client_dependency.py # Shared AsyncOpenAI client (DI)
+│   │   │
+│   │   ├── text_processing/
+│   │   │   └── chunker.py                  # Semantic chunker (multilingual)
+│   │   │
+│   │   └── vector_store/
+│   │       ├── embedder.py                 # HuggingFace embedding model loader
+│   │       ├── filters.py                  # Deduplication by URL
+│   │       ├── prepare_store_document.py   # Document preparation pipeline
+│   │       ├── qdrant_client.py            # Sync QdrantClient + collection setup
+│   │       ├── shared_retriever.py         # Shared scroll-based retriever
+│   │       └── store.py                    # Ingestion entry point
+│   │
+│   ├── core/
+│   │   ├── config.py                       # Pydantic BaseSettings
+│   │   ├── constants.py                    # Global constants
+│   │   ├── exceptions.py                   # Custom exception classes
+│   │   ├── messages.py                     # Standardized response messages
+│   │   └── mock_data.py                    # Static sample data for tests
+│   │
+│   ├── models/
+│   │   ├── schemas.py                      # Pydantic schemas (Roadmap, Mindmap)
+│   │   └── summarization_schemas.py        # Summarization request/response schemas
+│   │
+│   ├── routers/
+│   │   ├── base.py                         # Root/welcome endpoint
+│   │   ├── roadmap.py                      # Roadmap generation endpoints
+│   │   ├── mindmap.py                      # Mindmap generation endpoints
+│   │   └── summarization_router.py         # Summarization endpoints
+│   │
+│   ├── services/
+│   │   └── main_backend_client.py          # HTTPX client for main backend
+│   │
+│   └── main.py                             # FastAPI app + startup/shutdown events
+│
+├── tests/
+│   ├── mindmap/
+│   │   ├── unit/test_mindmap_unit.py
+│   │   └── integration/test_mindmap_integration.py
+│   │
+│   ├── roadmap/
+│   │   ├── unit/
+│   │   │   ├── test_reranker.py
+│   │   │   ├── test_roadmap_router.py
+│   │   │   ├── test_tavily_client.py
+│   │   │   ├── test_vector_store_unit.py
+│   │   │   ├── test_chunker.py
+│   │   │   └── test_cleaned_tavily_data.py
+│   │   │
+│   │   └── integration/
+│   │       ├── test_full_pipeline_integration.py
+│   │       ├── test_chunker_integration.py
+│   │       ├── test_reranker_integration.py
+│   │       ├── test_tavily_integration.py
+│   │       └── test_vector_store_integration.py
+│   │
+│   ├── summarization/
+│   │   ├── unit/test_summarization_unit.py
+│   │   └── integration/test_summarization_integration.py
+│   │
+│   └── test_config.py
+│
+├── docs/
+│   ├── Roadmap_API_Contract.md
+│   ├── Mindmap_API_Contract.md
+│   ├── Summarization_API_contract.md
+│   └── Qdrant_Schema.md
+│
+├── .env.example
+├── .gitignore
+├── .pre-commit-config.yaml
+├── docker-compose.yml
+├── requirements.txt
+└── README.md
 ```
 
 ---
