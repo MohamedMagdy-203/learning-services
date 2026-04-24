@@ -9,42 +9,38 @@ This module is responsible for generating a quiz bank from retrieved content usi
 - Returns a structured quiz with unique questions
 """
 
-import json
 import asyncio
-import uuid
+import json
 import logging
 import re
+import uuid
 from typing import List
-
+from langchain_core.documents import Document
 from openai import AsyncOpenAI
 from pydantic import ValidationError
-from langchain_core.documents import Document
 
-from src.core.config import get_settings
-from src.models.BankQuestions_schemas import Question, QuizBank
 from src.ai_engine.llm_generators.BankQuestions_prompts import (
     get_bank_questions_generation_prompt,
 )
-
+from src.core.config import get_settings
 from src.core.exceptions import (
-    LLMGenerationError,
+    NoContentFoundError,
     InvalidLLMResponseError,
-    EmptyContentError,
+    LLMGenerationError,
 )
-
 from src.core.messages import (
-    INVALID_QUESTION_COUNT,
-    NO_QUESTIONS_FOUND,
-    LLM_API_ERROR,
-    SKIP_QUESTION,
-    INVALID_JSON,
-    NO_CONTENT_FOUND,
+    FALLBACK_ATTEMPT_FAILED,
     FALLBACK_TRIGGERED,
-    LLM_TIMEOUT,
-    LLM_RETRY_ERROR,
+    INVALID_JSON,
+    LLM_API_ERROR,
+    NO_CONTENT_FOUND,
+    NO_PRIMARY_DOCUMENTS_FOUND,
+    NO_QUESTIONS_FOUND,
     SECONDARY_SOURCE_FAILED,
-    LESS_THAN_TWO_SECONDARY,
+    SKIP_QUESTION,
+    UNABLE_TO_REACH_TARGET,
 )
+from src.models.BankQuestions_schemas import Question, QuizBank
 
 logger = logging.getLogger(__name__)
 
@@ -66,34 +62,18 @@ class BankQuestionsGenerator:
         self.client = client
         self.settings = get_settings()
 
-    async def _call_llm_with_retry(self, prompt: str, retries: int = 3):
-        for attempt in range(retries):
-            try:
-                response = await asyncio.wait_for(
-                    self.client.chat.completions.create(
-                        model=self.settings.LLM_MODEL_NAME,
-                        messages=[{"role": "user", "content": prompt}],
-                        response_format={"type": "json_object"},
-                        temperature=self.settings.LLM_TEMPERATURE,
-                    ),
-                    timeout=30,
-                )
-                return response
+    async def _call_llm(self, prompt: str):
+        try:
+            return await self.client.chat.completions.create(
+                model=self.settings.LLM_MODEL_NAME,
+                messages=[{"role": "user", "content": prompt}],
+                response_format={"type": "json_object"},
+                temperature=self.settings.LLM_TEMPERATURE,
+            )
 
-            except asyncio.TimeoutError:
-                logger.warning(LLM_TIMEOUT.format(attempt=attempt + 1))
-
-            except Exception as e:
-                logger.warning(
-                    LLM_RETRY_ERROR.format(
-                        attempt=attempt + 1,
-                        error=str(e),
-                    )
-                )
-
-            await asyncio.sleep(2**attempt)
-
-        raise LLMGenerationError("LLM failed after retries")
+        except Exception as e:
+            logger.exception("LLM request failed")
+            raise LLMGenerationError(str(e)) from e
 
     async def _generate_for_source(
         self,
@@ -104,15 +84,11 @@ class BankQuestionsGenerator:
         difficulty_distribution: dict,
     ) -> List[Question]:
         if num_questions <= 0:
-            raise LLMGenerationError(
-                INVALID_QUESTION_COUNT.format(
-                    num_questions=num_questions,
-                    source_url=source_url,
-                )
-            )
+            # Return empty list if no questions are requested
+            return []
 
         if not documents:
-            raise EmptyContentError(NO_CONTENT_FOUND.format(url=source_url))
+            raise NoContentFoundError(NO_CONTENT_FOUND.format(url=source_url))
 
         prompt = get_bank_questions_generation_prompt(
             documents,
@@ -121,8 +97,7 @@ class BankQuestionsGenerator:
         )
 
         try:
-            response = await self._call_llm_with_retry(prompt)
-
+            response = await self._call_llm(prompt)
             content = response.choices[0].message.content
 
             if not content:
@@ -132,6 +107,7 @@ class BankQuestionsGenerator:
 
             try:
                 data = json.loads(content)
+
             except json.JSONDecodeError:
                 logger.error(INVALID_JSON)
                 raise InvalidLLMResponseError(INVALID_JSON)
@@ -190,10 +166,16 @@ class BankQuestionsGenerator:
 
         except ValidationError:
             raise
+
         except InvalidLLMResponseError:
             raise
+
         except Exception as e:
-            logger.exception(f"LLM error while generating from {source_url}")
+            logger.exception(
+                "LLM error while generating from %s",
+                source_url,
+            )
+
             raise LLMGenerationError(
                 LLM_API_ERROR.format(
                     source_url=source_url,
@@ -207,65 +189,79 @@ class BankQuestionsGenerator:
         subtopic_id: str,
         primary_url: str,
     ) -> QuizBank:
-        TOTAL_QUESTIONS = 30
+        TOTAL_QUESTIONS = 100
+        PRIMARY_SHARE = 0.7
+        SECONDARY_SHARE_PER_SOURCE = 0.15
 
         primary_docs = [d for d in documents if d.metadata.get("is_primary")]
+
         if not primary_docs:
-            raise EmptyContentError("No primary documents found")
+            raise NoContentFoundError(NO_PRIMARY_DOCUMENTS_FOUND)
 
         secondary_docs = [d for d in documents if not d.metadata.get("is_primary")]
 
-        if len(secondary_docs) < 2:
-            logger.warning(LESS_THAN_TWO_SECONDARY)
+        secondary_by_url: dict[str, List[Document]] = {}
 
-        primary_dist = {"easy": 7, "medium": 7, "hard": 7}
-        secondary_dist = {"easy": 2, "medium": 2, "hard": 1}
-
-        primary_task = self._generate_for_source(
-            primary_docs,
-            primary_url,
-            subtopic_id,
-            21,
-            primary_dist,
-        )
-
-        secondary_tasks = []
-
-        for i, doc in enumerate(secondary_docs[:2]):
+        for i, doc in enumerate(secondary_docs):
             url = doc.metadata.get("url")
 
             if not url:
                 logger.warning(
-                    f"Skipping secondary doc at index {i} due to missing URL"
+                    f"Skipping secondary doc at index {i} " "due to missing URL"
                 )
                 continue
 
-            secondary_tasks.append(
+            secondary_by_url.setdefault(str(url), []).append(doc)
+
+        primary_target_count = int(TOTAL_QUESTIONS * PRIMARY_SHARE)
+        secondary_target_count_per_source = int(
+            TOTAL_QUESTIONS * SECONDARY_SHARE_PER_SOURCE
+        )
+
+        tasks = []
+        primary_questions_to_request = primary_target_count
+
+        # Primary source task
+        tasks.append(
+            self._generate_for_source(
+                primary_docs,
+                primary_url,
+                subtopic_id,
+                primary_questions_to_request,
+                build_distribution(primary_questions_to_request),
+            )
+        )
+
+        # Secondary sources tasks (limit to 2 as per original logic, but make it more robust)
+        secondary_urls_to_process = list(secondary_by_url.items())[:2]
+        for url, docs_for_url in secondary_urls_to_process:
+            tasks.append(
                 self._generate_for_source(
-                    [doc],
+                    docs_for_url,
                     url,
                     subtopic_id,
-                    5,
-                    secondary_dist,
+                    secondary_target_count_per_source,
+                    build_distribution(secondary_target_count_per_source),
                 )
             )
 
         results = await asyncio.gather(
-            primary_task,
-            *secondary_tasks,
+            *tasks,
             return_exceptions=True,
         )
 
         primary_result = results[0]
-
-        if isinstance(primary_result, Exception):
-            raise primary_result
-
         secondary_results = results[1:]
 
         all_questions = []
-        all_questions.extend(primary_result)
+        if isinstance(primary_result, Exception):
+            logger.error(f"Primary source generation failed: {primary_result}")
 
+            raise primary_result
+        else:
+            all_questions.extend(primary_result)
+
+        questions_from_secondary_sources = 0
         for i, res in enumerate(secondary_results):
             if isinstance(res, Exception):
                 logger.warning(
@@ -274,23 +270,27 @@ class BankQuestionsGenerator:
                         error=str(res),
                     )
                 )
-                continue
-            all_questions.extend(res)
+
+            else:
+                all_questions.extend(res)
+                questions_from_secondary_sources += len(res)
 
         seen = set()
         unique_questions = []
 
         for q in all_questions:
-            key = normalize(q.content + "".join(sorted(q.options)))
+            key = normalize(q.content)
+
             if key not in seen:
                 seen.add(key)
                 unique_questions.append(q)
+
         attempts = 0
         max_attempts = 3
 
+        # Fallback mechanism to reach TOTAL_QUESTIONS using primary source
         while len(unique_questions) < TOTAL_QUESTIONS and attempts < max_attempts:
             attempts += 1
-
             missing = TOTAL_QUESTIONS - len(unique_questions)
 
             logger.warning(FALLBACK_TRIGGERED.format(missing=missing))
@@ -305,14 +305,21 @@ class BankQuestionsGenerator:
                     missing,
                     fallback_dist,
                 )
+
             except Exception as e:
-                logger.warning(f"Fallback attempt {attempts} failed: {str(e)}")
+                logger.warning(
+                    FALLBACK_ATTEMPT_FAILED.format(
+                        attempt=attempts,
+                        error=str(e),
+                    )
+                )
                 break
 
             added = 0
 
             for q in extra:
-                key = normalize(q.content + "".join(sorted(q.options)))
+                key = normalize(q.content)
+
                 if key not in seen:
                     seen.add(key)
                     unique_questions.append(q)
@@ -321,10 +328,13 @@ class BankQuestionsGenerator:
             if added == 0:
                 break
 
-        if len(unique_questions) < TOTAL_QUESTIONS and unique_questions:
-            logger.warning("Force filling to reach TOTAL_QUESTIONS")
-            while len(unique_questions) < TOTAL_QUESTIONS:
-                unique_questions.append(unique_questions[0])
+        if len(unique_questions) < TOTAL_QUESTIONS:
+            logger.warning(
+                UNABLE_TO_REACH_TARGET.format(
+                    current=len(unique_questions),
+                    target=TOTAL_QUESTIONS,
+                )
+            )
 
         unique_questions = unique_questions[:TOTAL_QUESTIONS]
 
