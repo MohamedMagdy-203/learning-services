@@ -42,6 +42,22 @@ UNABLE_TO_REACH_TARGET = (
     "Generated only {current} out of {target} unique questions."
 )
 FALLBACK_ROUND_LOG = "Fallback round {round}: generating {batch} questions"
+
+# Adaptive Engine
+STOPPING_QUIZ = "Stopping quiz. Reason: {reason}"
+NO_MORE_QUESTIONS = "No more questions. Ending quiz."
+
+
+NO_QUESTIONS_AVAILABLE = "No questions available in this bank"
+REQUIRED_IDS = "bank_id and user_id are required"
+AI_QUESTION_GENERATION_FAILED = (
+    "Failed to generate questions from AI engine. Please try again."
+)
+AI_INSUFFICIENT_URL_CONTENT = (
+    "The provided URLs do not contain enough content to generate questions."
+)
+
+
 # Logging
 RETRIEVE_CHUNKS_START = "Attempting to retrieve chunks for URL: %s"
 RETRIEVE_CHUNKS_SUCCESS = "Retrieved %d chunks for URL: %s"
@@ -58,7 +74,7 @@ SUMMARIZATION_SUCCESS = "Summary generated successfully."
 
 # Retrieval Logs
 RETRIEVE_ERROR = "Error retrieving chunks for URL %s: %s"
-NO_CONTENT_FOUND = "No content found for URL: %s"
+
 
 # LLM Errors
 LLM_INVOCATION_ERROR = "Error during LLM invocation: %s"
