@@ -1,5 +1,6 @@
 import logging
 from typing import Dict, Any
+from src.ai_engine.quiz_feature.session_analytics import SessionAnalytics
 from src.ai_engine.quiz_feature.question_retrieval import QuestionRetrieval
 from src.ai_engine.quiz_feature.session_manager import QuizSession
 from src.core.messages import STOPPING_QUIZ, NO_MORE_QUESTIONS
@@ -58,7 +59,44 @@ class AdaptiveQuizEngine:
             logger.warning(NO_MORE_QUESTIONS)
             return {"status": "finished", "summary": self._calculate_summary(history)}
 
+        next_diff = self._get_next_difficulty(
+            current_difficulty, is_correct, response_time, history
+        )
+
         session.asked_questions.add(next_q.question_id)
-        session.last_difficulty = next_q.difficulty
+        session.last_difficulty = next_diff
 
         return {"status": "ongoing", "next_question": next_q.model_dump()}
+
+    def _get_next_difficulty(
+        self, current_difficulty, is_correct, response_time, history
+    ):
+        if current_difficulty not in self.DIFFICULTIES:
+            current_difficulty = "medium"
+
+        index = self.DIFFICULTIES.index(current_difficulty)
+
+        expected_time = {"easy": 20, "medium": 30, "hard": 45}.get(
+            current_difficulty, 30
+        )
+
+        time_ratio = response_time / expected_time
+
+        is_fast = time_ratio <= 0.8
+        is_slow = time_ratio >= 1.2
+
+        correct_streak = SessionAnalytics.consecutive_correct(history)
+        wrong_streak = SessionAnalytics.consecutive_wrong(history)
+
+        if is_correct:
+            if index < 2 and (is_fast or correct_streak >= 2):
+                return self.DIFFICULTIES[index + 1]
+            return current_difficulty
+
+        if wrong_streak >= 2 and index > 0:
+            return self.DIFFICULTIES[index - 1]
+
+        if is_slow and index > 0:
+            return self.DIFFICULTIES[index - 1]
+
+        return current_difficulty
