@@ -360,6 +360,7 @@ TAVILY_API_KEY="your_tavily_key"
 GEMINI_API_KEY="your_gemini_key"
 QDRANT_URL="http://localhost:6333"
 QDRANT_COLLECTION_NAME="learning_materials"
+QUIZ_COLLECTION_NAME: str = "quiz_questions"
 HF_TOKEN="your_huggingface_token"
 ```
 
