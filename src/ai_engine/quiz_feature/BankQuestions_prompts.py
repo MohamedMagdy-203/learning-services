@@ -9,10 +9,6 @@ def get_bank_questions_generation_prompt(
 ) -> str:
     context_str = "\n\n".join(doc.page_content for doc in documents)
 
-    max_context_chars = 100000
-    if len(context_str) > max_context_chars:
-        context_str = context_str[:max_context_chars]
-
     return f"""
 You are a STRICT quiz generation engine.
 
