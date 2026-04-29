@@ -22,7 +22,7 @@ class TargetSubtopicSchema(BaseModel):
 
 
 class WeaknessSchema(BaseModel):
-    Topics: Dict[str, str]
+    Topics: Optional[Dict[str, str]]
 
 
 class RoadmapGenerationRequest(BaseModel):
