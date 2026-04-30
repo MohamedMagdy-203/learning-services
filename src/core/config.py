@@ -13,7 +13,7 @@ class Settings(BaseSettings):  # type: ignore
     LLM_TEMPERATURE: float = 0.3
     QDRANT_URL: str = "http://localhost:6333"
     QDRANT_COLLECTION_NAME: str = "learning_materials"
-    QUIZ_COLLECTION_NAME: str = "quiz_questions"
+    QUIZ_BANK_SIZE: int = 100
     GEMINI_RERANKER_TIMEOUT_MS: int = 60000
     HF_TOKEN: str
     RERANKER_MODEL: str = "gemini-2.5-flash-lite"

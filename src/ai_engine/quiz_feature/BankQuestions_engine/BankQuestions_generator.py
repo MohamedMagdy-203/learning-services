@@ -34,6 +34,7 @@ from src.core.messages import (
     NO_PRIMARY_DOCUMENTS_FOUND,
     NO_QUESTIONS_FOUND,
     INVALID_JSON,
+    INVALID_FORMAT,
 )
 
 from src.ai_engine.quiz_feature.BankQuestions_prompts import (
@@ -103,12 +104,12 @@ class BankQuestionsGenerator:
 
         try:
             data = json.loads(content)
-        except json.JSONDecodeError:
-            raise InvalidLLMResponseError(INVALID_JSON)
+        except json.JSONDecodeError as e:
+            raise InvalidLLMResponseError(INVALID_JSON) from e
 
         questions_data = data.get("questions")
         if not isinstance(questions_data, list):
-            raise InvalidLLMResponseError("Invalid questions format")
+            raise InvalidLLMResponseError(INVALID_FORMAT)
 
         generated_questions = []
 
@@ -160,7 +161,7 @@ class BankQuestionsGenerator:
         primary_url: str,
         bank_id: str,
     ) -> QuizBank:
-        TOTAL_QUESTIONS = 100
+        TOTAL_QUESTIONS = self.settings.QUIZ_BANK_SIZE
         PRIMARY_SHARE = 0.7
         SECONDARY_SHARE_PER_SOURCE = 0.15
 
@@ -221,14 +222,17 @@ class BankQuestionsGenerator:
         while len(unique_questions) < TOTAL_QUESTIONS:
             missing = TOTAL_QUESTIONS - len(unique_questions)
 
-            extra = await self._generate_for_source(
-                primary_docs,
-                primary_url,
-                subtopic_id,
-                missing,
-                build_distribution(missing),
-                bank_id=bank_id,
-            )
+            try:
+                extra = await self._generate_for_source(
+                    primary_docs,
+                    primary_url,
+                    subtopic_id,
+                    missing,
+                    build_distribution(missing),
+                    bank_id=bank_id,
+                )
+            except (NoContentFoundError, InvalidLLMResponseError, LLMGenerationError):
+                break
 
             added = 0
             for q in extra:

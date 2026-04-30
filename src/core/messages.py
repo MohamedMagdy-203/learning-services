@@ -42,6 +42,8 @@ UNABLE_TO_REACH_TARGET = (
     "Generated only {current} out of {target} unique questions."
 )
 FALLBACK_ROUND_LOG = "Fallback round {round}: generating {batch} questions"
+INVALID_FORMAT = "Invalid questions format"
+
 
 # Adaptive Engine
 STOPPING_QUIZ = "Stopping quiz. Reason: {reason}"
