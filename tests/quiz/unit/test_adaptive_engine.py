@@ -50,7 +50,7 @@ async def test_process_answer_continue():
     session = make_session()
 
     result = await engine.process_answer(
-        session=session, is_correct=True, response_time=10
+        session=session, question_id="q1", is_correct=True, response_time=10
     )
 
     assert result["status"] == "ongoing"
@@ -74,7 +74,7 @@ async def test_process_answer_end_by_max_questions():
     ]
 
     result = await engine.process_answer(
-        session=session, is_correct=True, response_time=10
+        session=session, question_id="q1", is_correct=True, response_time=10
     )
 
     assert result["status"] == "finished"
@@ -93,7 +93,7 @@ async def test_process_answer_no_question():
     session = make_session()
 
     result = await engine.process_answer(
-        session=session, is_correct=True, response_time=10
+        session=session, question_id="q1", is_correct=True, response_time=10
     )
 
     assert result["status"] == "finished"
@@ -118,7 +118,7 @@ async def test_difficulty_changes():
     ]
 
     result = await engine.process_answer(
-        session=session, is_correct=True, response_time=5
+        session=session, question_id="q1", is_correct=True, response_time=5
     )
 
     assert result["status"] in ["ongoing", "finished"]
@@ -135,7 +135,9 @@ async def test_history_tracking():
     engine = AdaptiveQuizEngine(retriever)
     session = make_session()
 
-    await engine.process_answer(session, True, 10)
+    await engine.process_answer(
+        session=session, question_id="q1", is_correct=True, response_time=10
+    )
 
     assert len(session.history) == 1
     assert session.history[0]["is_correct"] is True
