@@ -99,13 +99,15 @@ async def generate_quiz_bank(
             "message": "Question bank generated and stored successfully.",
         }
 
-    except NoContentFoundError:
+    except NoContentFoundError as e:
         logger.error(EMPTY_SOURCE_CONTENT)
-        raise HTTPException(status_code=400, detail=AI_INSUFFICIENT_URL_CONTENT)
+        raise HTTPException(status_code=400, detail=AI_INSUFFICIENT_URL_CONTENT) from e
 
     except (LLMGenerationError, InvalidLLMResponseError) as e:
-        logger.error(f"LLM generation error: {str(e)}")
-        raise HTTPException(status_code=502, detail=AI_QUESTION_GENERATION_FAILED)
+        logger.error(f"LLM generation error: {e}")
+        raise HTTPException(
+            status_code=502, detail=AI_QUESTION_GENERATION_FAILED
+        ) from e
 
     except Exception as e:
         logger.error(
@@ -117,7 +119,7 @@ async def generate_quiz_bank(
         raise HTTPException(
             status_code=500,
             detail="Failed to generate quiz",
-        )
+        ) from e
 
 
 quiz_router = APIRouter(prefix="/api/v1/quiz", tags=["Quiz Execution"])
