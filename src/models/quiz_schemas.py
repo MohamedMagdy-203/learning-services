@@ -15,6 +15,12 @@ class Question(BaseModel):
     explanations: Dict[str, str]
     metadata: Dict[str, Any] = Field(default_factory=dict)
 
+    @model_validator(mode="after")
+    def validate_correct_answer_in_options(self):
+        if self.correct_answer not in self.options:
+            raise ValueError("correct_answer must be one of options")
+        return self
+
 
 class QuizBank(BaseModel):
     bank_id: str
@@ -28,7 +34,7 @@ class QuestionGenerationRequest(BaseModel):
     urls: List[HttpUrl]
     primary_url: HttpUrl
     subtopic_name: str
-    subtopic_difficulty: str
+    subtopic_difficulty: Literal["easy", "medium", "hard"]
     weaknesses: Dict[str, str]
 
     @model_validator(mode="after")
