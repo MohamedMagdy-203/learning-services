@@ -3,21 +3,15 @@ class TavilyCallingError(Exception):
 
 
 class NoContentFoundError(Exception):
-    """Raised when no content is found for a given URL."""
-
-    pass
+    DEFAULT_MESSAGE = "No content found for the given URL"
 
 
 class LLMGenerationError(Exception):
-    """Exception raised when there's an error during LLM question generation."""
-
-    pass
+    DEFAULT_MESSAGE = "Error during LLM question generation"
 
 
 class InvalidLLMResponseError(Exception):
-    """Exception raised when the LLM response is not in the expected format."""
-
-    pass
+    DEFAULT_MESSAGE = "LLM response is not in the expected format"
 
 
 class MindmapContentNotFoundError(Exception):
