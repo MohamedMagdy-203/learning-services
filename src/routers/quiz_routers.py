@@ -136,7 +136,8 @@ async def start_quiz(
     request: StartQuizRequest,
     engine: AdaptiveQuizEngine = Depends(get_engine),
 ):
-    bank_id, user_id = request.bank_id, request.user_id
+    bank_id = request.bank_id
+    user_id = request.user_id
 
     first_question = await engine.get_initial_question(bank_id)
     if not first_question:
@@ -179,8 +180,11 @@ async def submit_answer(
         }
 
     next_q = result["next_question"]
+    if hasattr(next_q, "model_dump"):
+        next_q = next_q.model_dump()
+
     return {
         "session_id": session_id,
         "status": "ongoing",
-        "next_question": next_q.model_dump(),
+        "next_question": next_q,
     }
