@@ -47,7 +47,7 @@ class SessionAnalytics:
         mean = sum(values) / len(values)
         variance = sum((x - mean) ** 2 for x in values) / len(values)
 
-        return max(0.0, min(1 - variance, 1.0))
+        return max(0.0, min(1 - 4 * variance, 1.0))
 
     @staticmethod
     def question_count_score(total_answered: int, max_questions: int):
