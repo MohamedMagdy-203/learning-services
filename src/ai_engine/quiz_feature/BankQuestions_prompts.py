@@ -72,7 +72,7 @@ IMPORTANT DETAILS
 - Each option MUST have a corresponding explanation.
 - correct_answer MUST match one option exactly.
 - Do NOT return empty fields.
-- Language MUST match source content IF arabic answer in arabic and if english answer in english.
+- The output language MUST match the source content's language: if the source is in Arabic, generate questions, options and explanations in Arabic; if it is in English, generate them in English.
 
 - For True/False MCQ:
   • English → ["True", "False"]
