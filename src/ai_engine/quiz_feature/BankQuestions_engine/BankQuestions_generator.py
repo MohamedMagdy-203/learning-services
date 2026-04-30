@@ -219,7 +219,12 @@ class BankQuestionsGenerator:
                 seen.add(key)
                 unique_questions.append(q)
 
-        while len(unique_questions) < TOTAL_QUESTIONS:
+        max_fill_attempts = 3
+        attempt = 0
+
+        while len(unique_questions) < TOTAL_QUESTIONS and attempt < max_fill_attempts:
+            attempt += 1
+
             missing = TOTAL_QUESTIONS - len(unique_questions)
 
             try:
@@ -231,7 +236,12 @@ class BankQuestionsGenerator:
                     build_distribution(missing),
                     bank_id=bank_id,
                 )
-            except (NoContentFoundError, InvalidLLMResponseError, LLMGenerationError):
+            except (
+                NoContentFoundError,
+                InvalidLLMResponseError,
+                LLMGenerationError,
+            ) as e:
+                logger.warning("Fill-remainder attempt %s failed: %s", attempt, e)
                 break
 
             added = 0
