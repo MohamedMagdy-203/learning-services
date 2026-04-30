@@ -1,7 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends
 import logging
 import uuid
-from typing import Dict, Any
 
 from src.ai_engine.quiz_feature.adaptive_engine import AdaptiveQuizEngine
 from src.ai_engine.quiz_feature.session_manager import session_manager
@@ -13,7 +12,11 @@ from src.ai_engine.data_fetchers.qdrant_client_dependency import (
 from src.ai_engine.quiz_feature.BankQuestions_engine.BankQuestions_generator import (
     BankQuestionsGenerator,
 )
-from src.models.quiz_schemas import QuestionGenerationRequest
+from src.models.quiz_schemas import (
+    QuestionGenerationRequest,
+    SubmitAnswerRequest,
+    StartQuizRequest,
+)
 from src.ai_engine.quiz_feature.ChunksRetrieval import retrieve_chunks_multi_urls
 from src.ai_engine.quiz_feature.BankQuestions_engine.openai_client_dependency import (
     get_openai_client,
@@ -29,7 +32,6 @@ from src.core.messages import (
     AI_QUESTION_GENERATION_FAILED,
     AI_INSUFFICIENT_URL_CONTENT,
     NO_QUESTIONS_AVAILABLE,
-    REQUIRED_IDS,
 )
 from src.core.exceptions import (
     NoContentFoundError,
@@ -131,13 +133,10 @@ async def get_engine(qdrant_client=Depends(get_qdrant_client_dependency)):
 
 @quiz_router.post("/start")
 async def start_quiz(
-    request: Dict[str, str], engine: AdaptiveQuizEngine = Depends(get_engine)
+    request: StartQuizRequest,
+    engine: AdaptiveQuizEngine = Depends(get_engine),
 ):
-    bank_id = request.get("bank_id")
-    user_id = request.get("user_id")
-
-    if not bank_id or not user_id:
-        raise HTTPException(status_code=400, detail=REQUIRED_IDS)
+    bank_id, user_id = request.bank_id, request.user_id
 
     first_question = await engine.get_initial_question(bank_id)
     if not first_question:
@@ -156,12 +155,12 @@ async def start_quiz(
 
 @quiz_router.post("/answer")
 async def submit_answer(
-    request: Dict[str, Any], engine: AdaptiveQuizEngine = Depends(get_engine)
+    request: SubmitAnswerRequest, engine: AdaptiveQuizEngine = Depends(get_engine)
 ):
-    session_id = request.get("session_id")
-    question_id = request.get("question_id")
-    is_correct = request.get("is_correct")
-    response_time = request.get("response_time")
+    session_id = request.session_id
+    question_id = request.question_id
+    is_correct = request.is_correct
+    response_time = request.response_time
 
     session = session_manager.get_session(session_id)
     if not session:

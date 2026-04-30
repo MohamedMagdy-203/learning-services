@@ -36,3 +36,15 @@ class QuestionGenerationRequest(BaseModel):
         if self.primary_url not in self.urls:
             raise ValueError(PRIMARY_URL_NOT_IN_URLS)
         return self
+
+
+class StartQuizRequest(BaseModel):
+    bank_id: str = Field(..., min_length=1)
+    user_id: str = Field(..., min_length=1)
+
+
+class SubmitAnswerRequest(BaseModel):
+    session_id: str
+    question_id: str
+    is_correct: bool
+    response_time: float = Field(..., ge=0)
