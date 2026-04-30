@@ -207,7 +207,6 @@ learning-services/
 │   │   │   ├── data_cleaner.py             # Regex-based text sanitization
 │   │   │   ├── query_builder.py            # Build targeted search queries
 │   │   │   ├── tavily_client.py            # Async Tavily web search wrapper
-│   │   │   ├── chunks_retrieval.py         # Retrieve chunks from Qdrant by URL
 │   │   │   └── qdrant_client_dependency.py # Shared AsyncQdrantClient (DI)
 │   │   │
 │   │   ├── llm_generators/
@@ -230,13 +229,26 @@ learning-services/
 │   │   ├── text_processing/
 │   │   │   └── chunker.py                  # Semantic chunker (multilingual)
 │   │   │
-│   │   └── vector_store/
-│   │       ├── embedder.py                 # HuggingFace embedding model loader
-│   │       ├── filters.py                  # Deduplication by URL
-│   │       ├── prepare_store_document.py   # Document preparation pipeline
-│   │       ├── qdrant_client.py            # Sync QdrantClient + collection setup
-│   │       ├── shared_retriever.py         # Shared scroll-based retriever
-│   │       └── store.py                    # Ingestion entry point
+│   │   ├── vector_store/
+│   │   │   ├── embedder.py                 # HuggingFace embedding model loader
+│   │   │   ├── filters.py                  # Deduplication by URL
+│   │   │   ├── prepare_store_document.py   # Document preparation pipeline
+│   │   │   ├── qdrant_client.py            # Sync QdrantClient + collection setup
+│   │   │   ├── shared_retriever.py         # Shared scroll-based retriever
+│   │   │   └── store.py                    # Ingestion entry point
+│   │   │
+│   │   └── quiz_feature/
+│   │       ├── adaptive_engine.py          # Adaptive quiz logic engine
+│   │       ├── session_manager.py          # Quiz session state manager
+│   │       ├── question_retrieval.py       # Retrieve quiz questions
+│   │       ├── qdrant_question_store.py    # Qdrant question storage layer
+│   │       ├── quiz_qdrant_client.py       # Qdrant client wrapper for quiz
+│   │       ├── ChunksRetrieval.py          # Retrieve chunks for quiz (NOTE: moved from data_fetchers)
+│   │       ├── BankQuestions_prompts.py    # Prompt builder for bank questions
+│   │       │
+│   │       └── BankQuestions_engine/
+│   │           ├── BankQuestions_generator.py   # LLM-based question generator
+│   │           └── openai_client_dependency.py  # AsyncOpenAI client for quiz
 │   │
 │   ├── core/
 │   │   ├── config.py                       # Pydantic BaseSettings
@@ -247,13 +259,16 @@ learning-services/
 │   │
 │   ├── models/
 │   │   ├── schemas.py                      # Pydantic schemas (Roadmap, Mindmap)
-│   │   └── summarization_schemas.py        # Summarization request/response schemas
+│   │   ├── summarization_schemas.py        # Summarization request/response schemas
+│   │   ├── quiz_schemas.py                 # Quiz request/response schemas
+│   │   └── BankQuestions_schemas.py        # Bank questions schemas
 │   │
 │   ├── routers/
 │   │   ├── base.py                         # Root/welcome endpoint
 │   │   ├── roadmap.py                      # Roadmap generation endpoints
 │   │   ├── mindmap.py                      # Mindmap generation endpoints
-│   │   └── summarization_router.py         # Summarization endpoints
+│   │   ├── summarization_router.py         # Summarization endpoints
+│   │   └── quiz_routers.py                 # Quiz feature endpoints
 │   │
 │   ├── services/
 │   │   └── main_backend_client.py          # HTTPX client for main backend
@@ -285,13 +300,19 @@ learning-services/
 │   │   ├── unit/test_summarization_unit.py
 │   │   └── integration/test_summarization_integration.py
 │   │
+│   ├── quiz/
+│   │   └── unit/
+│   │       ├── test_bank_questions.py
+│   │       └── test_adaptive_engine.py
+│   │
 │   └── test_config.py
 │
 ├── docs/
 │   ├── Roadmap_API_Contract.md
 │   ├── Mindmap_API_Contract.md
 │   ├── Summarization_API_contract.md
-│   └── Qdrant_Schema.md
+│   ├── Qdrant_Schema.md
+│   └── Quiz_API_Contract.md
 │
 ├── .env.example
 ├── .gitignore
