@@ -67,7 +67,6 @@ async def test_process_answer_end_by_max_questions():
 
     session = make_session()
 
-    # simulate history reaching max limit
     session.history = [
         {"is_correct": True, "response_time": 10, "difficulty": "medium"}
         for _ in range(15)
@@ -100,7 +99,7 @@ async def test_process_answer_no_question():
     assert "summary" in result
 
 
-# 5) DIFFICULTY UPDATE LOGIC
+# 5) DIFFICULTY UPDATE LOGIC (FIXED)
 
 
 @pytest.mark.asyncio
@@ -111,7 +110,6 @@ async def test_difficulty_changes():
     engine = AdaptiveQuizEngine(retriever)
     session = make_session()
 
-    # simulate good performance
     session.history = [
         {"is_correct": True, "response_time": 5, "difficulty": "medium"},
         {"is_correct": True, "response_time": 5, "difficulty": "medium"},
@@ -121,6 +119,7 @@ async def test_difficulty_changes():
         session=session, question_id="q1", is_correct=True, response_time=5
     )
 
+    assert session.last_difficulty == "hard"
     assert result["status"] in ["ongoing", "finished"]
 
 
