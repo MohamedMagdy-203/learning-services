@@ -60,15 +60,6 @@ AI_INSUFFICIENT_URL_CONTENT = (
 )
 
 
-# Logging
-RETRIEVE_CHUNKS_START = "Attempting to retrieve chunks for URL: %s"
-RETRIEVE_CHUNKS_SUCCESS = "Retrieved %d chunks for URL: %s"
-RETRIEVE_CHUNKS_ERROR = "Error retrieving chunks from Qdrant for URL %s: %s"
-
-# Errors
-
-QDRANT_RETRIEVE_FAILED = "Failed to retrieve chunks from Qdrant: {error}"
-
 # Summarization Logs
 SUMMARIZATION_START = "Starting summarization for URL: %s"
 SUMMARIZATION_INVOKE_LLM = "Invoking LLM for summarization..."
