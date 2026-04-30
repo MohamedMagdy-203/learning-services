@@ -436,24 +436,25 @@ pytest tests/mindmap/unit/test_mindmap_unit.py -v
 
 **Feature branch naming:**
 
-```
-feat/feature-name     ΓåÆ feat/pdf-extraction
-fix/bug-name          ΓåÆ fix/db-connection
-chore/task-name       ΓåÆ chore/update-dependencies
-docs/document-name    ΓåÆ docs/api-contracts
+```text
+feat/feature-name     → feat/pdf-extraction
+fix/bug-name          → fix/db-connection
+chore/task-name       → chore/update-dependencies
+docs/document-name    → docs/api-contracts
 ```
 
 ### 2. Commits
 
 Use conventional commit messages:
 
-```
-Γ£à feat: add Tavily web search integration
-Γ£à fix: handle empty pdf files during extraction
-Γ£à chore: update requirements.txt
-Γ¥î fixed bug
-Γ¥î updated files
-Γ¥î done
+```text
+✅ feat: add Tavily web search integration
+✅ fix: handle empty pdf files during extraction
+✅ chore: update requirements.txt
+❌ fixed bug
+❌ updated files
+❌ done
+
 ```
 
 ### 3. Pull Requests
