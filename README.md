@@ -90,11 +90,11 @@ flowchart TD
 
 ### Step-by-Step Flow Explanation
 
-1. **Input Collection** ΓÇö The Main Backend sends user profile (tracks, learning style, goals) and target subtopic (name, description, difficulty).
-2. **Web Search & Extraction** ΓÇö A targeted query is built and sent to Tavily, fetching articles, courses (Coursera, Udemy), and YouTube videos. Raw content is cleaned (HTML tags, boilerplate, URLs removed).
-3. **LLM Reranker / Judge** ΓÇö Gemini evaluates all sources and selects the single best course, video, and blog for this specific learner.
-4. **Vector Store Pipeline** ΓÇö In the background, each selected source is deduplicated, semantically chunked, embedded, and stored in Qdrant.
-5. **Content Generation** ΓÇö The user can then request a Mindmap or Summary. The system retrieves relevant chunks from Qdrant using `primary_url` filtering and feeds them to Gemini for generation.
+1. **Input Collection** — The Main Backend sends user profile (tracks, learning style, goals) and target subtopic (name, description, difficulty).
+2. **Web Search & Extraction** — A targeted query is built and sent to Tavily, fetching articles, courses (Coursera, Udemy), and YouTube videos. Raw content is cleaned (HTML tags, boilerplate, URLs removed).
+3. **LLM Reranker / Judge** — Gemini evaluates all sources and selects the single best course, video, and blog for this specific learner.
+4. **Vector Store Pipeline** — In the background, each selected source is deduplicated, semantically chunked, embedded, and stored in Qdrant.
+5. **Content Generation** — The user can then request a Mindmap or Summary. The system retrieves relevant chunks from Qdrant using `primary_url` filtering and feeds them to Gemini for generation.
 
 ---
 
@@ -144,13 +144,13 @@ flowchart TD
 
 ### Mindmap Flow
 
-**Phase 1 ΓÇö Request & Context**
+**Phase 1 — Request & Context**
 The router receives the request with `primary_url`, subtopic info, and user weaknesses. No additional backend call is made.
 
-**Phase 2 ΓÇö Retrieval from Qdrant**
+**Phase 2 — Retrieval from Qdrant**
 Chunks are fetched using strict `metadata.url` scroll-based retrieval (not similarity search). Primary URL is fetched first; secondary URLs supplement if needed.
 
-**Phase 3 ΓÇö Generation & Response**
+**Phase 3 — Generation & Response**
 The chunks are assembled into a structured prompt. Gemini generates the mindmap. Output is parsed and validated into `MindmapNodeSchema` before returning.
 
 ---
@@ -360,7 +360,7 @@ TAVILY_API_KEY="your_tavily_key"
 GEMINI_API_KEY="your_gemini_key"
 QDRANT_URL="http://localhost:6333"
 QDRANT_COLLECTION_NAME="learning_materials"
-QUIZ_COLLECTION_NAME: str = "quiz_questions"
+QUIZ_COLLECTION_NAME="quiz_questions"
 HF_TOKEN="your_huggingface_token"
 ```
 
