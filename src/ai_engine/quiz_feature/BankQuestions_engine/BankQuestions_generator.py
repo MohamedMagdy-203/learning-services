@@ -205,8 +205,17 @@ class BankQuestionsGenerator:
 
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
+        primary_res, *secondary_res = results
+
+        if isinstance(primary_res, Exception):
+            raise LLMGenerationError(
+                "Primary source question generation failed"
+            ) from primary_res
+
         all_questions = []
-        for res in results:
+        all_questions.extend(primary_res)
+
+        for res in secondary_res:
             if not isinstance(res, Exception):
                 all_questions.extend(res)
 
@@ -224,7 +233,6 @@ class BankQuestionsGenerator:
 
         while len(unique_questions) < TOTAL_QUESTIONS and attempt < max_fill_attempts:
             attempt += 1
-
             missing = TOTAL_QUESTIONS - len(unique_questions)
 
             try:
