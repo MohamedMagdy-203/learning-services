@@ -1,22 +1,19 @@
 from qdrant_client import AsyncQdrantClient
 from qdrant_client.http.models import Distance, VectorParams  # type: ignore
-import threading
 from src.core.config import get_settings
 
 VECTOR_SIZE: int = 1
 
 _client: AsyncQdrantClient | None = None
-_client_lock = threading.Lock()
 
 
-def get_quiz_qdrant_client() -> AsyncQdrantClient:  # type: ignore
+def get_quiz_qdrant_client() -> AsyncQdrantClient:
     global _client
 
     if _client is None:
-        with _client_lock:
-            if _client is None:
-                settings = get_settings()
-                _client = AsyncQdrantClient(url=settings.QDRANT_URL)
+        settings = get_settings()
+        _client = AsyncQdrantClient(url=settings.QDRANT_URL)
+
     return _client
 
 
