@@ -144,9 +144,10 @@ async def start_quiz(
     bank_id = request.bank_id
     user_id = request.user_id
 
-    first_question = await engine.get_initial_question(bank_id)
-    if not first_question:
-        raise HTTPException(status_code=404, detail=NO_QUESTIONS_AVAILABLE)
+    try:
+        first_question = await engine.get_initial_question(bank_id)
+    except Exception as e:
+        raise HTTPException(status_code=404, detail=NO_QUESTIONS_AVAILABLE) from e
 
     session = session_manager.create_session(bank_id, user_id)
     session.asked_questions.add(first_question.question_id)
