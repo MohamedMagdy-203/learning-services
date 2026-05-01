@@ -11,7 +11,7 @@ from src.core.exceptions import NoContentFoundError
 from src.core.messages import (
     RETRIEVE_CHUNKS_START,
     RETRIEVE_CHUNKS_SUCCESS,
-    RETRIEVE_CHUNKS_ERROR,
+    RETRIEVE_ERROR,
     RETRIEVE_MULTI_URL_START,
     RETRIEVE_MULTI_URL_SUCCESS,
     RETRIEVE_MULTI_URL_SKIP_URL,
@@ -95,7 +95,7 @@ async def _retrieve_chunks_single_url(
         raise
 
     except Exception as e:
-        logger.error(RETRIEVE_CHUNKS_ERROR, url, str(e))
+        logger.error(RETRIEVE_ERROR, url, str(e))
         raise RuntimeError(QDRANT_RETRIEVE_FAILED.format(error=str(e))) from e
 
 
