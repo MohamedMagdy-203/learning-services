@@ -137,7 +137,7 @@ flowchart TD
     E --> D
 
     C --> F[Build Mindmap Prompt]
-    F --> G[Gemini LLM\ntemp=0.2 ┬╖ max_tokens=8192\nresponse_mime_type=application/json]
+    F --> G[Gemini LLM\ntemp=0.2 · max_tokens=8192\nresponse_mime_type=application/json]
     G --> H[Parse & Validate\nMindmapNodeSchema]
     H --> I([Return Mindmap Tree])
 ```
@@ -452,8 +452,8 @@ pytest tests/mindmap/unit/test_mindmap_unit.py -v
 
 | Branch | Purpose |
 |---|---|
-| `main` | Production-ready code ΓÇö direct pushes **blocked** |
-| `develop` | Integration branch ΓÇö all PRs target here |
+| `main` | Production-ready code — direct pushes **blocked** |
+| `develop` | Integration branch — all PRs target here |
 
 **Feature branch naming:**
 
