@@ -1,11 +1,9 @@
-# pytest tests/quiz/unit/test_bank_questions.py
-
 import pytest
 import uuid
 from unittest.mock import AsyncMock, MagicMock, patch
 from langchain_core.documents import Document
 import itertools
-
+from src.core.exceptions import LLMGenerationError
 from src.ai_engine.quiz_feature.BankQuestions_engine.BankQuestions_generator import (
     BankQuestionsGenerator,
 )
@@ -13,10 +11,8 @@ from src.ai_engine.quiz_feature.BankQuestions_engine.BankQuestions_generator imp
 from src.ai_engine.quiz_feature.question_retrieval import QuestionRetrieval
 from src.ai_engine.quiz_feature.session_manager import SessionManager
 from src.ai_engine.quiz_feature.qdrant_question_store import QdrantQuestionStore
-
 from src.models.quiz_schemas import Question
 from src.core.exceptions import NoContentFoundError
-
 
 # HELPERS
 
@@ -65,7 +61,7 @@ async def test_generator_100_questions():
     counter = itertools.count()
 
     async def fake_generate(*args, **kwargs):
-        return [make_question(i=next(counter)) for _ in range(10)]
+        return [make_question(i=next(counter)) for _ in range(60)]
 
     with patch.object(generator, "_generate_for_source", side_effect=fake_generate):
         result = await generator.generate_bank_questions(
@@ -75,7 +71,7 @@ async def test_generator_100_questions():
             bank_id="bank_123",
         )
 
-    assert len(result.questions) <= 100
+    assert len(result.questions) == 100
 
 
 @pytest.mark.asyncio
@@ -143,10 +139,7 @@ async def test_qdrant_store_upsert_called():
 
     store = QdrantQuestionStore(client=client, collection_name="test_collection")
 
-    await store.store_questions(
-        questions=[make_question()],
-        bank_id="bank_123",
-    )
+    await store.store_questions(questions=[make_question(bank_id="bank_123")])
 
     client.upsert.assert_called_once()
 
@@ -157,10 +150,7 @@ async def test_qdrant_store_payload_structure():
 
     store = QdrantQuestionStore(client=client, collection_name="test_collection")
 
-    await store.store_questions(
-        questions=[make_question()],
-        bank_id="bank_123",
-    )
+    await store.store_questions(questions=[make_question(bank_id="bank_123")])
 
     points = client.upsert.call_args[1]["points"]
 
@@ -169,8 +159,6 @@ async def test_qdrant_store_payload_structure():
 
 
 # 3) RETRIEVAL TESTS
-
-
 @pytest.mark.asyncio
 async def test_retrieval_by_bank():
     client = AsyncMock()
@@ -283,3 +271,55 @@ def test_session_bank_linking():
     session = manager.create_session("bank_123", "user_1")
 
     assert session.bank_id == "bank_123"
+
+
+# 6) PRIMARY FAILURE TEST
+
+
+@pytest.mark.asyncio
+async def test_generator_fails_when_primary_generation_fails():
+    generator = BankQuestionsGenerator(client=AsyncMock())
+    docs = make_docs()
+
+    async def fake_generate(*args, **kwargs):
+        source_url = args[1]
+
+        if source_url == "http://primary.com":
+            raise LLMGenerationError("primary failed")
+
+        return [make_question()]
+
+    with patch.object(generator, "_generate_for_source", side_effect=fake_generate):
+        with pytest.raises(LLMGenerationError):
+            await generator.generate_bank_questions(
+                documents=docs,
+                subtopic_id="sub_1",
+                primary_url="http://primary.com",
+                bank_id="bank_123",
+            )
+
+
+# 7 )SECONDARY FAILURE TEST
+
+
+@pytest.mark.asyncio
+async def test_generator_continues_when_secondary_generation_fails():
+    generator = BankQuestionsGenerator(client=AsyncMock())
+    docs = make_docs()
+
+    async def fake_generate(*args, **kwargs):
+        source_url = args[1]
+
+        if source_url == "http://secondary1.com":
+            raise LLMGenerationError("secondary failed")
+
+        return [make_question() for _ in range(50)]
+
+    with patch.object(generator, "_generate_for_source", side_effect=fake_generate):
+        result = await generator.generate_bank_questions(
+            documents=docs,
+            subtopic_id="sub_1",
+            primary_url="http://primary.com",
+            bank_id="bank_123",
+        )
+    assert len(result.questions) > 0
