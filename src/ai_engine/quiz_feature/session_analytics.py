@@ -15,13 +15,13 @@ class SessionAnalytics:
         recent = cls.recent_answers(history, count)
         if not recent:
             return 0.0
-        return sum(1 for r in recent if r["is_correct"]) / len(recent)
+        return sum(1 for r in recent if r.get("is_correct", False)) / len(recent)
 
     @staticmethod
     def consecutive_correct(history):
         streak = 0
         for h in reversed(history):
-            if h["is_correct"]:
+            if h.get("is_correct", False):
                 streak += 1
             else:
                 break
@@ -31,7 +31,7 @@ class SessionAnalytics:
     def consecutive_wrong(history):
         streak = 0
         for h in reversed(history):
-            if not h["is_correct"]:
+            if not h.get("is_correct", False):
                 streak += 1
             else:
                 break
@@ -43,7 +43,7 @@ class SessionAnalytics:
         if len(recent) < 3:
             return 0.3
 
-        values = [1 if r["is_correct"] else 0 for r in recent]
+        values = [1 if r.get("is_correct", False) else 0 for r in recent]
         mean = sum(values) / len(values)
         variance = sum((x - mean) ** 2 for x in values) / len(values)
 
@@ -68,7 +68,7 @@ class SessionAnalytics:
             difficulty = h.get("difficulty", "medium")
             expected_time = expected_time_map.get(difficulty, 30)
 
-            actual_time = h["response_time"]
+            actual_time = h.get("response_time", expected_time)
             ratio = actual_time / expected_time
 
             if ratio <= 0.8:
