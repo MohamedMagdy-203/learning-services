@@ -80,6 +80,9 @@ async def generate_quiz_bank(
             bank_id=bank_id,
         )
 
+        if not quiz_bank.questions:
+            raise HTTPException(status_code=500, detail=AI_QUESTION_GENERATION_FAILED)
+
         store = QdrantQuestionStore(
             client=qdrant_client,
             collection_name=settings.QUIZ_COLLECTION_NAME,
