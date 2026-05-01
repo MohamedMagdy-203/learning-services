@@ -1,8 +1,12 @@
 import random
 from typing import List, Optional, Set
 from qdrant_client import AsyncQdrantClient
-from qdrant_client.http.models import Filter, FieldCondition, MatchValue
+from qdrant_client.http.models import Filter, FieldCondition, MatchValue, MatchAny
 from src.models.quiz_schemas import Question
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 
 class QuestionRetrieval:
@@ -32,9 +36,21 @@ class QuestionRetrieval:
                 )
             )
 
+        must_not_conditions = []
+        if exclude_ids:
+            must_not_conditions.append(
+                FieldCondition(
+                    key="question_id",
+                    match=MatchAny(any=list(exclude_ids)),
+                )
+            )
+
         result, _ = await self.client.scroll(
             collection_name=self.collection_name,
-            scroll_filter=Filter(must=must_conditions),
+            scroll_filter=Filter(
+                must=must_conditions,
+                must_not=must_not_conditions,
+            ),
             limit=limit,
             with_payload=True,
         )
@@ -44,10 +60,11 @@ class QuestionRetrieval:
         for r in result:
             p = r.payload
 
-            if exclude_ids and p["question_id"] in exclude_ids:
-                continue
-
             try:
+                if not p:
+                    logger.warning("Empty payload received from Qdrant")
+                    continue
+
                 candidates.append(
                     Question(
                         question_id=p["question_id"],
@@ -62,7 +79,12 @@ class QuestionRetrieval:
                         metadata=p.get("metadata", {}),
                     )
                 )
-            except Exception:
+            except KeyError as e:
+                logger.warning("Missing field in Qdrant payload: %s | payload=%s", e, p)
+                continue
+
+            except Exception as e:
+                logger.warning("Invalid Qdrant payload skipped: %s | payload=%s", e, p)
                 continue
 
         if not candidates:
