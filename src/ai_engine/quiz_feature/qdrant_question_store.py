@@ -9,17 +9,13 @@ class QdrantQuestionStore:
         self.client = client
         self.collection_name = collection_name
 
-    async def store_questions(
-        self,
-        questions: List[Question],
-        bank_id: str,
-    ):
+    async def store_questions(self, questions: List[Question]):
         points = []
 
         for q in questions:
             payload = {
                 "question_id": q.question_id,
-                "bank_id": bank_id,
+                "bank_id": q.bank_id,
                 "subtopic_id": q.subtopic_id,
                 "source_url": str(q.source_url),
                 "content": q.content,
