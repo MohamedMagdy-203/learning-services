@@ -88,10 +88,7 @@ async def generate_quiz_bank(
             collection_name=settings.QUIZ_COLLECTION_NAME,
         )
 
-        await store.store_questions(
-            questions=quiz_bank.questions,
-            bank_id=bank_id,
-        )
+        await store.store_questions(questions=quiz_bank.questions)
 
         logger.info(QUIZ_GENERATED_SUCCESSFULLY.format(count=len(quiz_bank.questions)))
 
