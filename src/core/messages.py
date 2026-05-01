@@ -7,7 +7,7 @@ FETCH_ROADMAP_CONTEXT_ERROR = "Failed to fetch roadmap context"
 RETRIEVE_CHUNKS_START = "Starting chunk retrieval for URL: %s"
 RETRIEVE_CHUNKS_SUCCESS = "Retrieved %s chunks for URL: %s"
 NO_CONTENT_FOUND = "No content found for URL: {url}"
-RETRIEVE_CHUNKS_ERROR = "Error retrieving chunks for URL: %s | Error: %s"
+RETRIEVE_ERROR = "Error retrieving chunks for URL: %s | Error: %s"
 QDRANT_RETRIEVE_FAILED = "Failed to retrieve data from Qdrant: {error}"
 RETRIEVE_MULTI_URL_START = "Starting multi-url chunk retrieval for URLs: %s"
 RETRIEVE_MULTI_URL_SKIP_URL = "Skipping failed URL: %s | Reason: %s"
@@ -64,9 +64,6 @@ AI_INSUFFICIENT_URL_CONTENT = (
 SUMMARIZATION_START = "Starting summarization for URL: %s"
 SUMMARIZATION_INVOKE_LLM = "Invoking LLM for summarization..."
 SUMMARIZATION_SUCCESS = "Summary generated successfully."
-
-# Retrieval Logs
-RETRIEVE_ERROR = "Error retrieving chunks for URL %s: %s"
 
 
 # LLM Errors
