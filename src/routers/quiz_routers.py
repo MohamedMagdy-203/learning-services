@@ -109,6 +109,9 @@ async def generate_quiz_bank(
             status_code=502, detail=AI_QUESTION_GENERATION_FAILED
         ) from e
 
+    except HTTPException:
+        raise
+
     except Exception as e:
         logger.error(
             BANK_GENERATION_FAILED.format(
