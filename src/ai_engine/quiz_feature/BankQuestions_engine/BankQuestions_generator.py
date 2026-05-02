@@ -134,6 +134,15 @@ class BankQuestionsGenerator:
             if difficulty not in {"easy", "medium", "hard"}:
                 continue
 
+            if not isinstance(explanations, dict):
+                continue
+            if any(
+                option not in explanations
+                or not isinstance(explanations[option], str)
+                or not explanations[option].strip()
+                for option in options
+            ):
+                continue
             try:
                 question_obj = Question(
                     question_id=str(uuid.uuid4()),

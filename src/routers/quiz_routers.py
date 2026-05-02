@@ -146,6 +146,8 @@ async def start_quiz(
     except Exception as e:
         raise HTTPException(status_code=404, detail=NO_QUESTIONS_AVAILABLE) from e
 
+    if not first_question:
+        raise HTTPException(status_code=404, detail=NO_QUESTIONS_AVAILABLE)
     session = session_manager.create_session(bank_id, user_id)
     session.asked_questions.add(first_question.question_id)
     session.last_difficulty = first_question.difficulty
