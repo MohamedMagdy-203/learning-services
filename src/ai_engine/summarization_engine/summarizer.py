@@ -94,7 +94,7 @@ class SummarizationService:
             )
 
         except NoContentFoundError:
-            logger.warning(NO_CONTENT_FOUND, primary_url)
+            logger.warning(NO_CONTENT_FOUND.format(url=primary_url))
             return {
                 "user_id": request.user_id,
                 "subtopic_id": request.subtopic_id,

@@ -203,57 +203,83 @@ learning-services/
 ├── src/
 │   ├── ai_engine/
 │   │   ├── data_fetchers/
-│   │   │   ├── cleaned_tavily_data.py     # Pipeline: fetch + clean subtopic content
-│   │   │   ├── data_cleaner.py            # Regex-based text sanitization
-│   │   │   ├── query_builder.py           # Build targeted search queries
-│   │   │   ├── tavily_client.py           # Async Tavily web search wrapper
-│   │   │   ├── chunks_retrieval.py        # Retrieve chunks from Qdrant by URL
+│   │   │   ├── cleaned_tavily_data.py      # Pipeline: fetch + clean subtopic content
+│   │   │   ├── data_cleaner.py             # Regex-based text sanitization
+│   │   │   ├── query_builder.py            # Build targeted search queries
+│   │   │   ├── tavily_client.py            # Async Tavily web search wrapper
 │   │   │   └── qdrant_client_dependency.py # Shared AsyncQdrantClient (DI)
+│   │   │
 │   │   ├── llm_generators/
-│   │   │   ├── reranker.py                # LLM reranking orchestrator
-│   │   │   ├── reranker_parser.py         # JSON parser + raw_content enricher
-│   │   │   ├── reranker_prompt.py         # Reranker prompt builder
-│   │   │   └── source_classifier.py       # URL-based source type classifier
+│   │   │   ├── reranker.py                 # LLM reranking orchestrator
+│   │   │   ├── reranker_parser.py          # JSON parser + raw_content enricher
+│   │   │   ├── reranker_prompt.py          # Reranker prompt builder
+│   │   │   └── source_classifier.py        # URL-based source type classifier
+│   │   │
 │   │   ├── mindmap_feature/
-│   │   │   ├── mindmap_generator.py       # Gemini mindmap generation
-│   │   │   ├── mindmap_parser.py          # JSON → MindmapNodeSchema validator
-│   │   │   ├── mindmap_prompt.py          # Mindmap prompt builder
-│   │   │   └── retriever.py               # Retrieve chunks for mindmap
+│   │   │   ├── mindmap_generator.py        # Gemini mindmap generation
+│   │   │   ├── mindmap_parser.py           # JSON → MindmapNodeSchema validator
+│   │   │   ├── mindmap_prompt.py           # Mindmap prompt builder
+│   │   │   └── retriever.py                # Retrieve chunks for mindmap
+│   │   │
 │   │   ├── summarization_engine/
-│   │   │   ├── summarizer.py              # Summarization orchestrator
-│   │   │   ├── summarization_prompt.py    # Summarization prompt builder
+│   │   │   ├── summarizer.py               # Summarization orchestrator
+│   │   │   ├── summarization_prompt.py     # Summarization prompt builder
 │   │   │   └── openai_client_dependency.py # Shared AsyncOpenAI client (DI)
+│   │   │
 │   │   ├── text_processing/
-│   │   │   └── chunker.py                 # Semantic chunker (multilingual)
-│   │   └── vector_store/
-│   │       ├── embedder.py                # HuggingFace embedding model loader
-│   │       ├── filters.py                 # Deduplication by URL
-│   │       ├── prepare_store_document.py  # Document preparation pipeline
-│   │       ├── qdrant_client.py           # Sync QdrantClient + collection setup
-│   │       ├── shared_retriever.py        # Shared scroll-based retriever
-│   │       └── store.py                   # Ingestion entry point
+│   │   │   └── chunker.py                  # Semantic chunker (multilingual)
+│   │   │
+│   │   ├── vector_store/
+│   │   │   ├── embedder.py                 # HuggingFace embedding model loader
+│   │   │   ├── filters.py                  # Deduplication by URL
+│   │   │   ├── prepare_store_document.py   # Document preparation pipeline
+│   │   │   ├── qdrant_client.py            # Sync QdrantClient + collection setup
+│   │   │   ├── shared_retriever.py         # Shared scroll-based retriever
+│   │   │   └── store.py                    # Ingestion entry point
+│   │   │
+│   │   └── quiz_feature/
+│   │       ├── adaptive_engine.py          # Adaptive quiz logic engine
+│   │       ├── session_manager.py          # Quiz session state manager
+│   │       ├── question_retrieval.py       # Retrieve quiz questions
+│   │       ├── qdrant_question_store.py    # Qdrant question storage layer
+│   │       ├── quiz_qdrant_client.py       # Qdrant client wrapper for quiz
+│   │       ├── ChunksRetrieval.py          # Retrieve chunks for quiz (NOTE: moved from data_fetchers)
+│   │       ├── BankQuestions_prompts.py    # Prompt builder for bank questions
+│   │       │
+│   │       └── BankQuestions_engine/
+│   │           ├── BankQuestions_generator.py   # LLM-based question generator
+│   │           └── openai_client_dependency.py  # AsyncOpenAI client for quiz
+│   │
 │   ├── core/
-│   │   ├── config.py                      # Pydantic BaseSettings
-│   │   ├── constants.py                   # Global constants
-│   │   ├── exceptions.py                  # Custom exception classes
-│   │   ├── messages.py                    # Standardized response messages
-│   │   └── mock_data.py                   # Static sample data for tests
+│   │   ├── config.py                       # Pydantic BaseSettings
+│   │   ├── constants.py                    # Global constants
+│   │   ├── exceptions.py                   # Custom exception classes
+│   │   ├── messages.py                     # Standardized response messages
+│   │   └── mock_data.py                    # Static sample data for tests
+│   │
 │   ├── models/
-│   │   ├── schemas.py                     # Pydantic schemas (Roadmap, Mindmap)
-│   │   └── summarization_schemas.py       # Summarization request/response schemas
+│   │   ├── schemas.py                      # Pydantic schemas (Roadmap, Mindmap)
+│   │   ├── summarization_schemas.py        # Summarization request/response schemas
+│   │   ├── quiz_schemas.py                 # Quiz request/response schemas
+│   │   └── BankQuestions_schemas.py        # Bank questions schemas
+│   │
 │   ├── routers/
-│   │   ├── base.py                        # Root/welcome endpoint
-│   │   ├── roadmap.py                     # Roadmap generation endpoints
-│   │   ├── mindmap.py                     # Mindmap generation endpoints
-│   │   └── summarization_router.py        # Summarization endpoints
+│   │   ├── base.py                         # Root/welcome endpoint
+│   │   ├── roadmap.py                      # Roadmap generation endpoints
+│   │   ├── mindmap.py                      # Mindmap generation endpoints
+│   │   ├── summarization_router.py         # Summarization endpoints
+│   │   └── quiz_routers.py                 # Quiz feature endpoints
+│   │
 │   ├── services/
-│   │   └── main_backend_client.py         # HTTPX client for main backend
-│   └── main.py                            # FastAPI app + startup/shutdown events
+│   │   └── main_backend_client.py          # HTTPX client for main backend
+│   │
+│   └── main.py                             # FastAPI app + startup/shutdown events
 │
 ├── tests/
 │   ├── mindmap/
 │   │   ├── unit/test_mindmap_unit.py
 │   │   └── integration/test_mindmap_integration.py
+│   │
 │   ├── roadmap/
 │   │   ├── unit/
 │   │   │   ├── test_reranker.py
@@ -262,22 +288,32 @@ learning-services/
 │   │   │   ├── test_vector_store_unit.py
 │   │   │   ├── test_chunker.py
 │   │   │   └── test_cleaned_tavily_data.py
+│   │   │
 │   │   └── integration/
 │   │       ├── test_full_pipeline_integration.py
 │   │       ├── test_chunker_integration.py
 │   │       ├── test_reranker_integration.py
 │   │       ├── test_tavily_integration.py
 │   │       └── test_vector_store_integration.py
+│   │
 │   ├── summarization/
 │   │   ├── unit/test_summarization_unit.py
 │   │   └── integration/test_summarization_integration.py
+│   │
+│   ├── quiz/
+│   │   └── unit/
+│   │       ├── test_bank_questions.py
+│   │       └── test_adaptive_engine.py
+│   │
 │   └── test_config.py
 │
 ├── docs/
 │   ├── Roadmap_API_Contract.md
 │   ├── Mindmap_API_Contract.md
 │   ├── Summarization_API_contract.md
-│   └── Qdrant_Schema.md
+│   ├── Qdrant_Schema.md
+│   └── Quiz_API_Contract.md
+│
 ├── .env.example
 ├── .gitignore
 ├── .pre-commit-config.yaml
@@ -345,6 +381,7 @@ TAVILY_API_KEY="your_tavily_key"
 GEMINI_API_KEY="your_gemini_key"
 QDRANT_URL="http://localhost:6333"
 QDRANT_COLLECTION_NAME="learning_materials"
+QUIZ_COLLECTION_NAME="quiz_questions"
 HF_TOKEN="your_huggingface_token"
 ```
 
@@ -420,7 +457,7 @@ pytest tests/mindmap/unit/test_mindmap_unit.py -v
 
 **Feature branch naming:**
 
-```
+```text
 feat/feature-name     → feat/pdf-extraction
 fix/bug-name          → fix/db-connection
 chore/task-name       → chore/update-dependencies
@@ -431,13 +468,14 @@ docs/document-name    → docs/api-contracts
 
 Use conventional commit messages:
 
-```
+```text
 ✅ feat: add Tavily web search integration
 ✅ fix: handle empty pdf files during extraction
 ✅ chore: update requirements.txt
 ❌ fixed bug
 ❌ updated files
 ❌ done
+
 ```
 
 ### 3. Pull Requests
