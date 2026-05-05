@@ -28,5 +28,4 @@ async def ensure_quiz_collection_exists() -> None:
         await client.create_collection(
             collection_name=settings.QUIZ_COLLECTION_NAME,
             vectors_config=VectorParams(size=VECTOR_SIZE, distance=Distance.DOT),
-            if_not_exists=True,
         )
