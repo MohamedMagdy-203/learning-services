@@ -1,4 +1,4 @@
-from typing import List, Literal, Dict, Any
+from typing import List, Dict, Any, Optional
 from pydantic import BaseModel, Field, HttpUrl, model_validator
 from src.core.messages import PRIMARY_URL_NOT_IN_URLS
 
@@ -11,7 +11,7 @@ class Question(BaseModel):
     content: str
     options: List[str]
     correct_answer: str
-    difficulty: Literal["easy", "medium", "hard"]
+    difficulty: Optional[str] = "Intermediate"
     explanations: Dict[str, str]
     metadata: Dict[str, Any] = Field(default_factory=dict)
 
@@ -34,8 +34,8 @@ class QuestionGenerationRequest(BaseModel):
     urls: List[HttpUrl]
     primary_url: HttpUrl
     subtopic_name: str
-    subtopic_difficulty: Literal["easy", "medium", "hard"]
-    weaknesses: Dict[str, str]
+    subtopic_difficulty: Optional[str] = "Intermediate"
+    weaknesses: Optional[Dict[str, str]]
 
     @model_validator(mode="after")
     def validate_primary_url(self):
