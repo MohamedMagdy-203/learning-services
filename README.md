@@ -9,8 +9,9 @@
     - [Step-by-Step Flow Explanation](#step-by-step-flow-explanation)
   - [Feature: Roadmap Generation](#feature-roadmap-generation)
   - [Feature: Mindmap Generation](#feature-mindmap-generation)
-    - [Mindmap Flow](#mindmap-flow)
   - [Feature: Quiz Generation](#feature-quiz-generation)
+    - [Quiz Bank Generation Flow](#quiz-bank-generation-flow)
+    - [Adaptive Quiz Session Flow](#adaptive-quiz-session-flow)
   - [Feature: Summarization](#feature-summarization)
   - [Project Structure](#project-structure)
   - [Tech Stack](#tech-stack)
@@ -33,13 +34,14 @@
 
 ## Overview
 
-The **Learning Services** is an intelligent backend AI engine designed to generate personalized educational roadmaps and learning materials. By leveraging user profile data (such as learning styles, study time, and goals) alongside specific target subtopics, the system dynamically fetches, processes, and curates educational content.
+The **Learning Services** is an intelligent backend AI engine designed to generate personalized educational content including roadmaps, mind maps, quizzes, and summaries. By leveraging user profile data (such as learning styles, study time, and goals) alongside specific target subtopics, the system dynamically fetches, processes, and curates educational content.
 
 It integrates:
 - **Tavily API** for real-time web search
-- **Google Gemini** as the core LLM for reranking and generation
-- **Qdrant** as a vector database for semantic retrieval
-- **HuggingFace** multilingual embeddings for Arabic & English support
+- **Google Gemini** (`gemini-2.5-flash-lite`) as the core LLM for reranking and generation
+- **Qdrant** as a vector database for semantic retrieval (two collections: `learning_materials` and `quiz_questions`)
+- **HuggingFace** multilingual embeddings (`paraphrase-multilingual-mpnet-base-v2`) for Arabic & English support
+- **OpenAI-compatible Gemini endpoint** for summarization and quiz question generation
 
 ---
 
@@ -64,28 +66,43 @@ flowchart TD
     H --> H1[Deduplication Filter]
     H1 --> H2[Semantic Chunker]
     H2 --> H3[HuggingFace Embedder]
-    H3 --> H4[(Qdrant Vector DB)]
+    H3 --> H4[(Qdrant — learning_materials)]
 
     F -->|Ranked URLs| A
 
     A -->|POST /api/v1/mindmap/generate| I[Mindmap Router]
     A -->|POST /api/v1/summarize/generate| J[Summarization Router]
+    A -->|POST /api/v1/question-bank/generate| K[Quiz Bank Router]
+    A -->|POST /api/v1/quiz/start| L[Quiz Execution Router]
 
-    I --> K[Qdrant Retriever - Scroll]
-    K --> H4
-    H4 --> K
-    K --> L[Mindmap Prompt Builder]
-    L --> M[Gemini LLM]
-    M --> N[Mindmap Parser & Validator]
-    N --> A
+    I --> M[Shared Retriever - Scroll]
+    M --> H4
+    H4 --> M
+    M --> N[Mindmap Prompt Builder]
+    N --> O[Gemini LLM\ntemp=0.2 · JSON mode]
+    O --> P[Mindmap Parser & Validator]
+    P --> A
 
-    J --> O[Shared Retriever - Scroll]
-    O --> H4
-    H4 --> O
-    O --> P[Summarization Prompt Builder]
-    P --> Q[OpenAI-compatible Gemini]
-    Q --> R[JSON Parser]
-    R --> A
+    J --> Q[Shared Retriever - Scroll]
+    Q --> H4
+    H4 --> Q
+    Q --> R[Summarization Prompt Builder]
+    R --> S[OpenAI-compatible Gemini]
+    S --> T[JSON Parser]
+    T --> A
+
+    K --> U[Multi-URL Chunk Retrieval]
+    U --> H4
+    H4 --> U
+    U --> V[BankQuestions Generator\n70% primary · 15% per secondary]
+    V --> W[(Qdrant — quiz_questions)]
+    W --> A
+
+    L --> X[Question Retrieval]
+    X --> W
+    W --> X
+    X --> Y[Adaptive Engine]
+    Y --> A
 ```
 
 ### Step-by-Step Flow Explanation
@@ -93,14 +110,15 @@ flowchart TD
 1. **Input Collection** — The Main Backend sends user profile (tracks, learning style, goals) and target subtopic (name, description, difficulty).
 2. **Web Search & Extraction** — A targeted query is built and sent to Tavily, fetching articles, courses (Coursera, Udemy), and YouTube videos. Raw content is cleaned (HTML tags, boilerplate, URLs removed).
 3. **LLM Reranker / Judge** — Gemini evaluates all sources and selects the single best course, video, and blog for this specific learner.
-4. **Vector Store Pipeline** — In the background, each selected source is deduplicated, semantically chunked, embedded, and stored in Qdrant.
-5. **Content Generation** — The user can then request a Mindmap or Summary. The system retrieves relevant chunks from Qdrant using `primary_url` filtering and feeds them to Gemini for generation.
+4. **Vector Store Pipeline** — In the background, each selected source is deduplicated (by `metadata.url`), semantically chunked, embedded, and stored in the `learning_materials` Qdrant collection.
+5. **Content Generation** — The user can then request a Mindmap, Summary, or Quiz. The system retrieves relevant chunks from Qdrant using `metadata.url` scroll-based filtering and feeds them to Gemini for generation.
+6. **Quiz Flow** — Questions are generated from retrieved chunks and stored in a separate `quiz_questions` Qdrant collection. An adaptive engine then manages the quiz session, adjusting difficulty based on performance.
 
 ---
 
 ## Feature: Roadmap Generation
 
-Generates a personalized learning roadmap by searching, ranking, and returning the best course, video, and blog for a given subtopic.
+Generates a personalized learning roadmap by searching, ranking, and returning the best course, video, and blog for a given subtopic. Qdrant ingestion runs as a fire-and-forget background task.
 
 ```mermaid
 sequenceDiagram
@@ -108,75 +126,118 @@ sequenceDiagram
     participant RR as Roadmap Router
     participant TV as Tavily API
     participant LLM as Gemini Reranker
-    participant QD as Qdrant
+    participant QD as Qdrant (Background)
 
     MB->>RR: POST /api/v1/roadmap/generate
-    RR->>TV: Search (query built from subtopic + user profile)
-    TV-->>RR: Raw results (general + courses + videos)
-    RR->>RR: Clean & filter content
-    RR->>LLM: Rerank sources (user profile + cleaned sources)
+    RR->>TV: Search (general 7 + courses 5 + videos 5)
+    TV-->>RR: Raw results
+    RR->>RR: Clean & deduplicate content
+    RR->>LLM: Rerank with user profile context
     LLM-->>RR: best_course, best_video, best_blog
-    RR-->>MB: Ranked result (title + url only)
-    RR-)QD: Background ingestion (chunk + embed + store)
+    RR-->>MB: 200 OK — title + url only (raw_content stripped)
+    RR-)QD: Background: deduplicate → chunk → embed → store
 ```
 
 ---
 
 ## Feature: Mindmap Generation
 
-Generates a hierarchical mind map from content already stored in Qdrant for a specific subtopic source.
+Generates a hierarchical mind map (max 2 levels deep, 4–5 main branches) from content already stored in Qdrant for a specific subtopic source. Uses scroll-based retrieval — not similarity search.
 
 ```mermaid
 flowchart TD
     A([Main Backend]) -->|POST /api/v1/mindmap/generate| B[Mindmap Router]
 
     B --> C{Retrieve Chunks}
-    C -->|primary_url filter - scroll| D[(Qdrant)]
+    C -->|primary_url scroll — up to 15 chunks| D[(Qdrant)]
     D --> C
-    C -->|if primary insufficient| E[Secondary URLs - scroll]
+    C -->|if primary insufficient| E[Secondary URLs — up to 5 chunks each]
     E --> D
 
-    C --> F[Build Mindmap Prompt]
+    C --> F[Build Mindmap Prompt\nsubtopic + difficulty + weaknesses + chunks]
     F --> G[Gemini LLM\ntemp=0.2 · max_tokens=8192\nresponse_mime_type=application/json]
     G --> H[Parse & Validate\nMindmapNodeSchema]
-    H --> I([Return Mindmap Tree])
+
+    H -->|Valid| I([200 OK — Mindmap Tree])
+    H -->|Invalid JSON or schema| J([500 LLM_GENERATION_ERROR])
+    C -->|No chunks found| K([404 CONTENT_NOT_FOUND])
+    C -->|Qdrant unreachable| L([503 RETRIEVAL_ERROR])
 ```
 
-### Mindmap Flow
-
-**Phase 1 — Request & Context**
-The router receives the request with `primary_url`, subtopic info, and user weaknesses. No additional backend call is made.
-
-**Phase 2 — Retrieval from Qdrant**
-Chunks are fetched using strict `metadata.url` scroll-based retrieval (not similarity search). Primary URL is fetched first; secondary URLs supplement if needed.
-
-**Phase 3 — Generation & Response**
-The chunks are assembled into a structured prompt. Gemini generates the mindmap. Output is parsed and validated into `MindmapNodeSchema` before returning.
+**Mindmap constraints enforced by the prompt:**
+- Root node topic always equals `subtopic_name`
+- Max 2 levels of depth (Root → Branch → Sub-topic)
+- 4–5 main branches, up to 4 sub-topics per branch
+- Leaf node descriptions are always empty string `""`
+- Vendor-neutral: source-specific jargon (e.g. PL/SQL, T-SQL) is mapped to standard concepts
 
 ---
 
 ## Feature: Quiz Generation
 
-An AI-powered feature that transforms a learner's selected content source into a personalized quiz experience with adaptive difficulty and instant corrective feedback.
+An AI-powered feature that transforms stored content into a personalized quiz bank and delivers questions adaptively.
+
+### Quiz Bank Generation Flow
 
 ```mermaid
 flowchart TD
-    A([Main Backend]) -->|POST /api/v1/quiz/generate| B[Quiz Router]
-    B --> C[Retrieve Chunks from Qdrant]
-    C --> D[Build Quiz Prompt\nwith weaknesses + difficulty]
-    D --> E[Gemini LLM]
-    E --> F[Parse Questions]
-    F --> G([Return Quiz])
-    G --> H[Learner Answers]
-    H --> I[Feedback Engine]
-    I --> J[Weakness Summary]
+    A([Main Backend]) -->|POST /api/v1/question-bank/generate| B[Quiz Bank Router]
+    B --> C[retrieve_chunks_multi_urls\nprimary + secondary in parallel]
+    C --> D[BankQuestionsGenerator\n70% primary · 15% per secondary source max 2]
+    D --> E[Gemini LLM — JSON mode\nDifficulty distribution: easy·medium·hard]
+    E --> F[Validate & Deduplicate Questions]
+    F --> G[Fill-remainder loop — up to 3 attempts]
+    G --> H[QdrantQuestionStore\ncollection: quiz_questions · vector size 1]
+    H --> I([Return bank_id + questions_count])
 ```
+
+**Key generation details:**
+- Total bank size: 100 questions (configurable via `QUIZ_BANK_SIZE`)
+- 70% from primary source, up to 15% per secondary (max 2 secondary sources used)
+- Each question includes: `content`, `options`, `correct_answer`, `difficulty`, `explanations` (per-option)
+- Deduplication uses normalized text comparison (punctuation stripped, lowercased)
+- Up to 3 fill-remainder attempts if target count not reached
+
+### Adaptive Quiz Session Flow
+
+```mermaid
+sequenceDiagram
+    participant MB as Main Backend
+    participant QR as Quiz Router
+    participant AE as AdaptiveQuizEngine
+    participant SM as SessionManager
+
+    MB->>QR: POST /api/v1/quiz/start {bank_id, user_id}
+    QR->>AE: get_initial_question(bank_id) — difficulty: medium
+    AE-->>QR: first_question
+    QR->>SM: create_session(bank_id, user_id)
+    QR-->>MB: {session_id, status: ongoing, question}
+
+    loop Until finished
+        MB->>QR: POST /api/v1/quiz/answer {session_id, question_id, is_correct, response_time}
+        QR->>AE: process_answer(session, ...)
+        AE->>AE: Update history · Check stopping conditions
+        AE->>AE: Calculate next difficulty
+        AE-->>QR: {status, next_question or summary}
+        QR-->>MB: Response
+    end
+```
+
+**Adaptive engine stopping conditions:**
+- Minimum 5 questions answered before any early stop
+- Maximum 15 questions
+- High confidence score (≥ 0.85) — composite of recent accuracy, consistency, speed, and question count
+- 3 consecutive correct answers at `hard` difficulty → mastery detected
+- 3 consecutive wrong answers at `easy` difficulty → struggling detected
+
+**Confidence score formula:**
+`recent_accuracy(last 5) × 0.35 + consistency × 0.25 + question_count_progress × 0.25 + speed_score × 0.15`
 
 ---
 
 ## Feature: Summarization
 
-Provides structured, beginner-friendly summaries by distilling content from Qdrant using vector scroll retrieval, then processing with an OpenAI-compatible Gemini pipeline.
+Provides structured, Markdown-formatted summaries by distilling content from Qdrant using scroll-based retrieval on `primary_url` only, then processing with an OpenAI-compatible Gemini pipeline.
 
 ```mermaid
 sequenceDiagram
@@ -186,12 +247,21 @@ sequenceDiagram
     participant LLM as Gemini (via OpenAI client)
 
     MB->>SR: POST /api/v1/summarize/generate
-    SR->>QD: Scroll by primary_url
-    QD-->>SR: Relevant chunks (Documents)
-    SR->>SR: Build prompt (subtopic + difficulty + weaknesses)
-    SR->>LLM: Chat completion (JSON mode)
-    LLM-->>SR: { "summary": "..." }
-    SR-->>MB: { user_id, subtopic_id, primary_url, summary }
+    SR->>QD: Scroll by primary_url (up to 15 chunks)
+    QD-->>SR: List[Document]
+
+    alt No chunks found
+        SR-->>MB: 200 OK — summary: "No content found to summarize."
+    else Chunks retrieved
+        SR->>SR: Build prompt (subtopic + difficulty + weaknesses + chunks)
+        SR->>LLM: chat.completions.create — json_object mode · temp=0.3 · timeout=30s · max 2 retries
+        LLM-->>SR: { "summary": "..." }
+        SR-->>MB: 200 OK — Markdown summary
+    end
+
+    alt LLM or retrieval error
+        SR-->>MB: 502 Bad Gateway
+    end
 ```
 
 ---
@@ -203,81 +273,86 @@ learning-services/
 ├── src/
 │   ├── ai_engine/
 │   │   ├── data_fetchers/
+│   │   │   ├── chunks_retrieval.py         # Single-URL scroll retrieval (used by quiz)
 │   │   │   ├── cleaned_tavily_data.py      # Pipeline: fetch + clean subtopic content
 │   │   │   ├── data_cleaner.py             # Regex-based text sanitization
 │   │   │   ├── query_builder.py            # Build targeted search queries
-│   │   │   ├── tavily_client.py            # Async Tavily web search wrapper
-│   │   │   └── qdrant_client_dependency.py # Shared AsyncQdrantClient (DI)
+│   │   │   ├── tavily_client.py            # Async Tavily: 3 parallel searches (general+courses+videos)
+│   │   │   └── qdrant_client_dependency.py # Shared AsyncQdrantClient (DI, startup/shutdown)
 │   │   │
 │   │   ├── llm_generators/
-│   │   │   ├── reranker.py                 # LLM reranking orchestrator
+│   │   │   ├── reranker.py                 # LLM reranking orchestrator (singleton Gemini client)
 │   │   │   ├── reranker_parser.py          # JSON parser + raw_content enricher
-│   │   │   ├── reranker_prompt.py          # Reranker prompt builder
-│   │   │   └── source_classifier.py        # URL-based source type classifier
+│   │   │   ├── reranker_prompt.py          # Reranker prompt builder (1500 char preview per source)
+│   │   │   └── source_classifier.py        # URL-based source type classifier (course/video/blog)
 │   │   │
 │   │   ├── mindmap_feature/
-│   │   │   ├── mindmap_generator.py        # Gemini mindmap generation
+│   │   │   ├── mindmap_generator.py        # Gemini mindmap generation (thread-safe singleton)
 │   │   │   ├── mindmap_parser.py           # JSON → MindmapNodeSchema validator
-│   │   │   ├── mindmap_prompt.py           # Mindmap prompt builder
-│   │   │   └── retriever.py                # Retrieve chunks for mindmap
+│   │   │   ├── mindmap_prompt.py           # Mindmap prompt (vendor-neutral, strict size limits)
+│   │   │   └── retriever.py                # Delegates to shared_retriever for chunk fetching
 │   │   │
 │   │   ├── summarization_engine/
-│   │   │   ├── summarizer.py               # Summarization orchestrator
-│   │   │   ├── summarization_prompt.py     # Summarization prompt builder
-│   │   │   └── openai_client_dependency.py # Shared AsyncOpenAI client (DI)
+│   │   │   ├── summarizer.py               # Summarization service (retry logic, JSON parse)
+│   │   │   ├── summarization_prompt.py     # Prompt builder (Markdown output, language-aware)
+│   │   │   └── openai_client_dependency.py # Shared AsyncOpenAI client for summarization
 │   │   │
 │   │   ├── text_processing/
-│   │   │   └── chunker.py                  # Semantic chunker (multilingual)
+│   │   │   └── chunker.py                  # SemanticChunker (percentile 85, max 4000 chars/chunk)
 │   │   │
 │   │   ├── vector_store/
-│   │   │   ├── embedder.py                 # HuggingFace embedding model loader
-│   │   │   ├── filters.py                  # Deduplication by URL
-│   │   │   ├── prepare_store_document.py   # Document preparation pipeline
-│   │   │   ├── qdrant_client.py            # Sync QdrantClient + collection setup
-│   │   │   ├── shared_retriever.py         # Shared scroll-based retriever
-│   │   │   └── store.py                    # Ingestion entry point
+│   │   │   ├── embedder.py                 # HuggingFace embeddings singleton (batch_size=32)
+│   │   │   ├── filters.py                  # Deduplication check by metadata.url (sync)
+│   │   │   ├── prepare_store_document.py   # Concurrent source processing + video transcript cleaning
+│   │   │   ├── qdrant_client.py            # Sync QdrantClient singleton + collection setup (768 dims)
+│   │   │   ├── shared_retriever.py         # Shared scroll retriever (primary + secondary URLs)
+│   │   │   └── store.py                    # Ingestion entry point (async, to_thread for CPU ops)
 │   │   │
 │   │   └── quiz_feature/
-│   │       ├── adaptive_engine.py          # Adaptive quiz logic engine
-│   │       ├── session_manager.py          # Quiz session state manager
-│   │       ├── question_retrieval.py       # Retrieve quiz questions
-│   │       ├── qdrant_question_store.py    # Qdrant question storage layer
-│   │       ├── quiz_qdrant_client.py       # Qdrant client wrapper for quiz
-│   │       ├── ChunksRetrieval.py          # Retrieve chunks for quiz (NOTE: moved from data_fetchers)
-│   │       ├── BankQuestions_prompts.py    # Prompt builder for bank questions
+│   │       ├── adaptive_engine.py          # AdaptiveQuizEngine (confidence scoring, difficulty routing)
+│   │       ├── session_analytics.py        # SessionAnalytics (accuracy, consistency, speed scores)
+│   │       ├── session_manager.py          # In-memory SessionManager (UUID sessions)
+│   │       ├── question_retrieval.py       # QuestionRetrieval (random selection from candidates)
+│   │       ├── qdrant_question_store.py    # QdrantQuestionStore (upsert with vector=[0.0])
+│   │       ├── quiz_qdrant_client.py       # Separate Qdrant client for quiz_questions collection
+│   │       ├── ChunksRetrieval.py          # Multi-URL parallel chunk retrieval with is_primary tagging
+│   │       ├── BankQuestions_prompts.py    # MCQ prompt builder (strict JSON, per-option explanations)
 │   │       │
 │   │       └── BankQuestions_engine/
-│   │           ├── BankQuestions_generator.py   # LLM-based question generator
-│   │           └── openai_client_dependency.py  # AsyncOpenAI client for quiz
+│   │           ├── BankQuestions_generator.py   # Generator: 70/15/15 split, dedup, fill-remainder
+│   │           └── openai_client_dependency.py  # Shared AsyncOpenAI client for quiz generation
 │   │
 │   ├── core/
-│   │   ├── config.py                       # Pydantic BaseSettings
-│   │   ├── constants.py                    # Global constants
+│   │   ├── config.py                       # Pydantic BaseSettings (all env vars + defaults)
+│   │   ├── constants.py                    # Global constants (currently empty)
 │   │   ├── exceptions.py                   # Custom exception classes
-│   │   ├── messages.py                     # Standardized response messages
+│   │   ├── messages.py                     # Standardized log/response messages
 │   │   └── mock_data.py                    # Static sample data for tests
 │   │
 │   ├── models/
 │   │   ├── schemas.py                      # Pydantic schemas (Roadmap, Mindmap)
 │   │   ├── summarization_schemas.py        # Summarization request/response schemas
-│   │   ├── quiz_schemas.py                 # Quiz request/response schemas
+│   │   ├── quiz_schemas.py                 # Quiz request/response + Question/QuizBank schemas
 │   │   └── BankQuestions_schemas.py        # Bank questions schemas
 │   │
 │   ├── routers/
-│   │   ├── base.py                         # Root/welcome endpoint
-│   │   ├── roadmap.py                      # Roadmap generation endpoints
-│   │   ├── mindmap.py                      # Mindmap generation endpoints
-│   │   ├── summarization_router.py         # Summarization endpoints
-│   │   └── quiz_routers.py                 # Quiz feature endpoints
+│   │   ├── base.py                         # Root/welcome endpoint (GET /api/v1/)
+│   │   ├── roadmap.py                      # POST /api/v1/roadmap/generate
+│   │   ├── mindmap.py                      # POST /api/v1/mindmap/generate
+│   │   ├── summarization_router.py         # POST /api/v1/summarize/generate
+│   │   └── quiz_routers.py                 # POST /api/v1/question-bank/generate · /quiz/start · /quiz/answer
 │   │
 │   ├── services/
 │   │   └── main_backend_client.py          # HTTPX client for main backend
 │   │
-│   └── main.py                             # FastAPI app + startup/shutdown events
+│   └── main.py                             # FastAPI app + startup/shutdown lifecycle
 │
 ├── tests/
+│   ├── conftest.py                         # pytest fixtures, --integration flag, shared embedding model
+│   ├── test_config.py                      # Settings defaults and env override tests
+│   │
 │   ├── mindmap/
-│   │   ├── unit/test_mindmap_unit.py
+│   │   ├── unit/test_mindmap_unit.py       # Parser, prompt builder, retriever, generator (mocked)
 │   │   └── integration/test_mindmap_integration.py
 │   │
 │   ├── roadmap/
@@ -288,7 +363,6 @@ learning-services/
 │   │   │   ├── test_vector_store_unit.py
 │   │   │   ├── test_chunker.py
 │   │   │   └── test_cleaned_tavily_data.py
-│   │   │
 │   │   └── integration/
 │   │       ├── test_full_pipeline_integration.py
 │   │       ├── test_chunker_integration.py
@@ -300,12 +374,10 @@ learning-services/
 │   │   ├── unit/test_summarization_unit.py
 │   │   └── integration/test_summarization_integration.py
 │   │
-│   ├── quiz/
-│   │   └── unit/
-│   │       ├── test_bank_questions.py
-│   │       └── test_adaptive_engine.py
-│   │
-│   └── test_config.py
+│   └── quiz/
+│       └── unit/
+│           ├── test_bank_questions.py      # Generator, store, retrieval, session manager
+│           └── test_adaptive_engine.py     # Adaptive engine flow and stopping conditions
 │
 ├── docs/
 │   ├── Roadmap_API_Contract.md
@@ -328,17 +400,17 @@ learning-services/
 
 | Layer | Technology |
 |---|---|
-| Framework | FastAPI + Uvicorn |
+| Framework | FastAPI 0.135 + Uvicorn 0.41 |
 | Validation | Pydantic v2 |
-| LLM | Google Gemini (via `google-genai` + OpenAI-compatible endpoint) |
-| Vector DB | Qdrant (AsyncQdrantClient) |
-| Embeddings | HuggingFace `paraphrase-multilingual-mpnet-base-v2` (768 dims) |
-| Web Search | Tavily Python Client |
+| LLM | Google Gemini `gemini-2.5-flash-lite` (via `google-genai` + OpenAI-compatible endpoint) |
+| Vector DB | Qdrant (AsyncQdrantClient) — two collections |
+| Embeddings | HuggingFace `paraphrase-multilingual-mpnet-base-v2` (768 dims, multilingual) |
+| Web Search | Tavily Python Client (3 parallel searches) |
 | HTTP Client | HTTPX |
-| Text Splitting | LangChain SemanticChunker |
-| Testing | Pytest + Pytest-Asyncio + Respx |
-| Code Quality | Pre-commit, Black, Ruff |
-| Database | PostgreSQL + SQLAlchemy (psycopg2) |
+| Text Splitting | LangChain `SemanticChunker` (percentile 85 breakpoint) |
+| Testing | Pytest + Pytest-Asyncio + Respx + unittest.mock |
+| Code Quality | Pre-commit, Black 24.2, Ruff 0.2.2 |
+| Database | PostgreSQL + SQLAlchemy + psycopg2 (via main backend) |
 
 ---
 
@@ -391,6 +463,8 @@ HF_TOKEN="your_huggingface_token"
 docker-compose up -d
 ```
 
+This starts Qdrant on port `6333` with persistent storage in a named Docker volume.
+
 ### 5. Install Dependencies
 
 ```bash
@@ -416,11 +490,13 @@ uvicorn src.main:app --reload
 - Swagger docs: `http://localhost:8000/docs`
 - ReDoc: `http://localhost:8000/redoc`
 
+**Startup sequence:** On startup, the app initializes the OpenAI client (for quiz + summarization), the shared Qdrant client (for all features), and ensures the `quiz_questions` collection exists. The `learning_materials` collection is created lazily on first ingestion.
+
 ---
 
 ## Testing
 
-Run all unit tests:
+Run all unit tests (no external services required):
 
 ```bash
 pytest -v -s
@@ -432,7 +508,7 @@ Run with live logs:
 pytest -v -s --log-cli-level=INFO
 ```
 
-Run integration tests (requires real API keys + running Qdrant):
+Run integration tests (requires real API keys + running Qdrant, and content already ingested via roadmap endpoint):
 
 ```bash
 pytest --integration -v -s --log-cli-level=INFO
@@ -442,7 +518,10 @@ Run a specific test file:
 
 ```bash
 pytest tests/mindmap/unit/test_mindmap_unit.py -v
+pytest tests/quiz/unit/test_adaptive_engine.py -v
 ```
+
+> **Note:** Integration tests for mindmap and summarization require content to already be stored in Qdrant (i.e., `POST /api/v1/roadmap/generate` must have been called first for the relevant URLs).
 
 ---
 
@@ -458,10 +537,10 @@ pytest tests/mindmap/unit/test_mindmap_unit.py -v
 **Feature branch naming:**
 
 ```text
-feat/feature-name     → feat/pdf-extraction
-fix/bug-name          → fix/db-connection
+feat/feature-name     → feat/quiz-adaptive-engine
+fix/bug-name          → fix/qdrant-scroll-offset
 chore/task-name       → chore/update-dependencies
-docs/document-name    → docs/api-contracts
+docs/document-name    → docs/quiz-api-contract
 ```
 
 ### 2. Commits
@@ -469,13 +548,12 @@ docs/document-name    → docs/api-contracts
 Use conventional commit messages:
 
 ```text
-✅ feat: add Tavily web search integration
-✅ fix: handle empty pdf files during extraction
+✅ feat: add adaptive quiz engine with confidence scoring
+✅ fix: handle empty primary chunks during mindmap retrieval
 ✅ chore: update requirements.txt
 ❌ fixed bug
 ❌ updated files
 ❌ done
-
 ```
 
 ### 3. Pull Requests
