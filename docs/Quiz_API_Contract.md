@@ -27,9 +27,11 @@ POST http://localhost:8000/api/v1/question-bank/generate
 }
 
 ```
+
 - `primary_url` must be one of the URLs provided in `urls`.
 
 **Response**
+
 ```json
 
 {
@@ -59,6 +61,7 @@ POST /api/v1/quiz/start
 ```
 
 **Response**
+
 ```json
 
 {
@@ -104,6 +107,7 @@ POST /api/v1/quiz/answer
 ```
 
 **Response**
+
 ```json
 {
   "session_id": "session_001",
